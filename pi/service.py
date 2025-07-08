@@ -5,13 +5,24 @@ import os
 
 import click
 
-@click.command()
+@click.group()
+def cli():
+    pass
+
+@cli.command()
 @click.option("--name", required=True)
 @click.option("--command", required=True)
-def install_service(name: str, command: str):
+def install(name: str, command: str):
     _write_service_file(name, command)
     _enable_service(name)
     _start_service(name)
+
+@cli.command()
+@click.option("--name", required=True)
+def uninstall(name: str):
+    _stop_service(name)
+    _disable_service(name)
+    _remove_service_file(name)
     
 
 def _write_service_file(name: str, command: str) -> None:
@@ -20,6 +31,10 @@ def _write_service_file(name: str, command: str) -> None:
     if file_path.exists():
         raise FileExistsError(f"{name} is already configured at {file_path}")
     file_path.write_text(content)
+
+
+def _remove_service_file(name: str) -> None:
+    _get_service_file_path(name).unlink()
 
 
 def _get_service_file_content(command: str) -> str:
@@ -47,8 +62,16 @@ def _enable_service(name: str) -> None:
     _run_systemctl_command("enable", name)
 
 
+def _disable_service(name: str) -> None:
+    _run_systemctl_command("disable", name)
+
+
 def _start_service(name: str) -> None:
     _run_systemctl_command("start", name)
+
+
+def _stop_service(name: str) -> None:
+    _run_systemctl_command("stop", name)
 
 
 def _run_systemctl_command(command: str, service_name: str) -> None:
@@ -58,4 +81,4 @@ def _run_systemctl_command(command: str, service_name: str) -> None:
 
 
 if __name__ == "__main__":
-    install_service()
+    cli()
