@@ -1,0 +1,9 @@
+[project]
+name = "pi-server"
+version = "0.1.0"
+requires-python = ">=3.13"
+dependencies = [
+    "click>=8.2.1",
+    "fastapi[standard]>=0.116.0",
+]
+
