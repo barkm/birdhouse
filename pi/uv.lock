@@ -262,7 +262,7 @@ wheels = [
 ]
 
 [[package]]
-name = "pi-server"
+name = "pi"
 version = "0.1.0"
 source = { virtual = "." }
 dependencies = [
