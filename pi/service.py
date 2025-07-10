@@ -14,6 +14,9 @@ def cli():
 @click.option("--command", required=True)
 @click.option("environment_variables", "--environment", multiple=True, default=[])
 def install(name: str, command: str, environment_variables: list[str]):
+    _install(name, command, environment_variables)
+
+def _install(name: str, command: str, environment_variables: list[str]):
     _write_service_file(name, command, environment_variables)
     _enable_service(name)
     _start_service(name)
@@ -21,6 +24,9 @@ def install(name: str, command: str, environment_variables: list[str]):
 @cli.command()
 @click.option("--name", required=True)
 def uninstall(name: str):
+    _uninstall(name)
+
+def _uninstall(name: str):
     _stop_service(name)
     _disable_service(name)
     _remove_service_file(name)
@@ -30,7 +36,7 @@ def _write_service_file(name: str, command: str, environment_variables: list[str
     file_path = _get_service_file_path(name)
     content = _get_service_file_content(command, environment_variables)
     if file_path.exists():
-        raise FileExistsError(f"{name} is already configured at {file_path}")
+        _uninstall(name)
     file_path.write_text(content)
 
 
