@@ -41,20 +41,20 @@ def _remove_service_file(name: str) -> None:
 def _get_service_file_content(command: str, environment_variables: list[str]) -> str:
     env_lines = "\n".join(f"Environment={var}" for var in environment_variables)
     return f"""
-    [Unit]
-    After=network-online.target
-    Wants=network-online.target
+[Unit]
+After=network-online.target
+Wants=network-online.target
 
-    [Service]
-    User={os.environ.get("SUDO_USER") or getpass.getuser()}
-    WorkingDirectory={Path.cwd()}
-    {env_lines}
-    ExecStart={command}
-    Restart=always
-    RestartSec=10
+[Service]
+User={os.environ.get("SUDO_USER") or getpass.getuser()}
+WorkingDirectory={Path.cwd()}
+{env_lines}
+ExecStart={command}
+Restart=always
+RestartSec=10
 
-    [Install]
-    WantedBy=multi-user.target
+[Install]
+WantedBy=multi-user.target
     """
 
 
