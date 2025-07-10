@@ -12,8 +12,9 @@ def cli():
 @cli.command()
 @click.option("--name", required=True)
 @click.option("--command", required=True)
-def install(name: str, command: str):
-    _write_service_file(name, command)
+@click.option("environment_variables", "--environment", multiple=True, default=[])
+def install(name: str, command: str, environment_variables: list[str]):
+    _write_service_file(name, command, environment_variables)
     _enable_service(name)
     _start_service(name)
 
@@ -25,9 +26,9 @@ def uninstall(name: str):
     _remove_service_file(name)
     
 
-def _write_service_file(name: str, command: str) -> None:
+def _write_service_file(name: str, command: str, environment_variables: list[str]) -> None:
     file_path = _get_service_file_path(name)
-    content = _get_service_file_content(command)
+    content = _get_service_file_content(command, environment_variables)
     if file_path.exists():
         raise FileExistsError(f"{name} is already configured at {file_path}")
     file_path.write_text(content)
@@ -37,14 +38,17 @@ def _remove_service_file(name: str) -> None:
     _get_service_file_path(name).unlink()
 
 
-def _get_service_file_content(command: str) -> str:
+def _get_service_file_content(command: str, environment_variables: list[str]) -> str:
+    env_lines = "\n".join(f"Environment={var}" for var in environment_variables)
     return f"""
     [Unit]
-    After=network.target
+    After=network-online.target
+    Wants=network-online.target
 
     [Service]
     User={os.environ.get("SUDO_USER") or getpass.getuser()}
     WorkingDirectory={Path.cwd()}
+    {env_lines}
     ExecStart={command}
     Restart=always
     RestartSec=10
