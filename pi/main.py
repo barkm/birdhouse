@@ -20,7 +20,9 @@ async def lifespan(app: FastAPI):
         yield
         video.terminate()
 
+
 app = FastAPI(lifespan=lifespan)
+
 
 @app.get("/hls/{path:path}")
 async def serve_hls_files(request: Request, path: str):
@@ -78,38 +80,74 @@ def _start_hls_video_stream(stream_dir: Path) -> subprocess.Popen:
 def _start_hls_video_stream_mac(stream_file_path: Path) -> subprocess.Popen:
     return subprocess.Popen(
         [
-            "ffmpeg", 
-            "-framerate", "30", 
-            "-f", "avfoundation", 
-            "-i", "0",
-            "-f", "hls",
-            "-hls_time", "2",
-            "-hls_list_size", "5",
-            "-hls_flags", "delete_segments", 
-            str(stream_file_path)
-        ])
+            "ffmpeg",
+            "-framerate",
+            "30",
+            "-f",
+            "avfoundation",
+            "-i",
+            "0",
+            "-f",
+            "hls",
+            "-hls_time",
+            "2",
+            "-hls_list_size",
+            "5",
+            "-hls_flags",
+            "delete_segments",
+            str(stream_file_path),
+        ]
+    )
+
 
 def _start_hls_video_stream_raspberry_pi(stream_file_path: Path) -> subprocess.Popen:
     rpicam = subprocess.Popen(
-        ["rpicam-vid", "-t", "0", "--width", "1920", "--height", "1080", "--framerate", "30", "-o", "-"],
-        stdout=subprocess.PIPE
+        [
+            "rpicam-vid",
+            "-t",
+            "0",
+            "--width",
+            "1920",
+            "--height",
+            "1080",
+            "--framerate",
+            "30",
+            "-o",
+            "-",
+        ],
+        stdout=subprocess.PIPE,
     )
     ffmpeg = subprocess.Popen(
-        ["ffmpeg", "-i", "-", "-c:v", "copy", "-f", "hls",
-         "-hls_time", "2", "-hls_list_size", "5",
-         "-hls_flags", "delete_segments", str(stream_file_path)],
-        stdin=rpicam.stdout
+        [
+            "ffmpeg",
+            "-i",
+            "-",
+            "-c:v",
+            "copy",
+            "-f",
+            "hls",
+            "-hls_time",
+            "2",
+            "-hls_list_size",
+            "5",
+            "-hls_flags",
+            "delete_segments",
+            str(stream_file_path),
+        ],
+        stdin=rpicam.stdout,
     )
     return ffmpeg
+
 
 def is_mac():
     """Checks if the code is running on a macOS machine."""
     return platform.system() == "Darwin"
 
+
 def is_raspberry_pi():
     """Checks if the code is running on a Raspberry Pi."""
     if not platform.system() == "Linux":
         return False
-        
-    model_file = Path('/sys/firmware/devicetree/base/model')
+
+    model_file = Path("/sys/firmware/devicetree/base/model")
     return model_file.exists() and "raspberry pi" in model_file.read_text().lower()

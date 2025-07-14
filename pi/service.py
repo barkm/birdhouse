@@ -5,9 +5,11 @@ import os
 
 import click
 
+
 @click.group()
 def cli():
     pass
+
 
 @cli.command()
 @click.option("--name", required=True)
@@ -16,23 +18,28 @@ def cli():
 def install(name: str, command: str, environment_variables: list[str]):
     _install(name, command, environment_variables)
 
+
 def _install(name: str, command: str, environment_variables: list[str]):
     _write_service_file(name, command, environment_variables)
     _enable_service(name)
     _start_service(name)
+
 
 @cli.command()
 @click.option("--name", required=True)
 def uninstall(name: str):
     _uninstall(name)
 
+
 def _uninstall(name: str):
     _stop_service(name)
     _disable_service(name)
     _remove_service_file(name)
-    
 
-def _write_service_file(name: str, command: str, environment_variables: list[str]) -> None:
+
+def _write_service_file(
+    name: str, command: str, environment_variables: list[str]
+) -> None:
     file_path = _get_service_file_path(name)
     content = _get_service_file_content(command, environment_variables)
     if file_path.exists():
@@ -85,9 +92,7 @@ def _stop_service(name: str) -> None:
 
 
 def _run_systemctl_command(command: str, service_name: str) -> None:
-    check_call([
-        "systemctl", command, service_name
-    ])
+    check_call(["systemctl", command, service_name])
 
 
 if __name__ == "__main__":
