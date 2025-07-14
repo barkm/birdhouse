@@ -96,7 +96,9 @@ def _start_hls_video_stream_mac(stream_file_path: Path) -> subprocess.Popen:
             "-hls_flags",
             "delete_segments",
             str(stream_file_path),
-        ]
+        ],
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
     )
 
 
@@ -116,6 +118,7 @@ def _start_hls_video_stream_raspberry_pi(stream_file_path: Path) -> subprocess.P
             "-",
         ],
         stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
     )
     ffmpeg = subprocess.Popen(
         [
@@ -135,6 +138,8 @@ def _start_hls_video_stream_raspberry_pi(stream_file_path: Path) -> subprocess.P
             str(stream_file_path),
         ],
         stdin=rpicam.stdout,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
     )
     return ffmpeg
 
