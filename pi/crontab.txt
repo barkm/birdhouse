@@ -1,0 +1,2 @@
+0 0 * * * /sbin/reboot
+5 * * * * curl http://localhost:5000/register
