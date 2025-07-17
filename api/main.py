@@ -1,6 +1,7 @@
 import httpx
 from fastapi import FastAPI, HTTPException, Response
 from pydantic_settings import BaseSettings
+from fastapi.middleware.cors import CORSMiddleware
 
 
 class Settings(BaseSettings):
@@ -9,6 +10,14 @@ class Settings(BaseSettings):
 
 settings = Settings()
 app = FastAPI()
+
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 
 @app.get("/hls/{name}/{path}")
