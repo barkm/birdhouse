@@ -5,7 +5,7 @@ import subprocess
 import tempfile
 
 from fastapi import FastAPI, HTTPException, Request
-from fastapi.responses import FileResponse, HTMLResponse
+from fastapi.responses import FileResponse
 
 
 PLAYLIST_FILENAME = "playlist.m3u8"
@@ -33,38 +33,6 @@ async def serve_hls_files(request: Request, path: str):
     if not file_path.is_file():
         raise HTTPException(status_code=404, detail="File not found")
     return FileResponse(file_path)
-
-
-@app.get("/")
-async def index():
-    return HTMLResponse("""
-    <!DOCTYPE html>
-    <html>
-      <head>
-        <title>HLS Stream</title>
-        <script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
-      </head>
-      <body>
-        <h1>Live HLS Stream (On-Demand)</h1>
-        <video id="video" width="640" height="360" controls autoplay muted></video>
-        <script>
-          const video = document.getElementById('video');
-          const src = "/hls/playlist.m3u8";
-
-          if (video.canPlayType('application/vnd.apple.mpegurl')) {
-            video.src = src;
-          } else if (Hls.isSupported()) {
-            const hls = new Hls();
-            hls.loadSource(src);
-            hls.attachMedia(video);
-            hls.on(Hls.Events.MANIFEST_PARSED, () => video.play());
-          } else {
-            alert("HLS is not supported in this browser.");
-          }
-        </script>
-      </body>
-    </html>
-    """)
 
 
 def _start_hls_video_stream(stream_dir: Path) -> subprocess.Popen:
