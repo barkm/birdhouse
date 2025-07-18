@@ -27,7 +27,7 @@ async def register_device(request: RegisterRequest) -> str:
 
 
 @app.get("/{name}/{path:path}")
-async def get_hls_stream(name: str, path: str) -> Response:
+async def forward(name: str, path: str) -> Response:
     if name not in PORT_FROM_NAME:
         raise HTTPException(status_code=404, detail="Name not registered")
     port = PORT_FROM_NAME[name]
