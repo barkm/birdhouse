@@ -6,9 +6,17 @@ import tempfile
 
 from fastapi import FastAPI, HTTPException, Request
 from fastapi.responses import FileResponse
+from pydantic_settings import BaseSettings
 
 
 PLAYLIST_FILENAME = "playlist.m3u8"
+
+
+class Settings(BaseSettings):
+    test_stream: bool = False
+
+
+settings = Settings()
 
 
 @asynccontextmanager
@@ -16,7 +24,7 @@ async def lifespan(app: FastAPI):
     with tempfile.TemporaryDirectory() as temp_dir_str:
         hls_dir = Path(temp_dir_str)
         app.state.hls_dir = hls_dir
-        video = _start_hls_video_stream(hls_dir)
+        video = _start_hls_video_stream(hls_dir, settings.test_stream)
         yield
         video.terminate()
 
@@ -35,14 +43,39 @@ async def serve_hls_files(request: Request, path: str):
     return FileResponse(file_path)
 
 
-def _start_hls_video_stream(stream_dir: Path) -> subprocess.Popen:
+def _start_hls_video_stream(stream_dir: Path, test_stream: bool) -> subprocess.Popen:
     stream_dir.mkdir(parents=True, exist_ok=True)
     stream_file_path = stream_dir / PLAYLIST_FILENAME
+    if test_stream:
+        return _start_test_stream(stream_file_path)
+    if is_raspberry_pi():
+        return _start_hls_video_stream_raspberry_pi(stream_file_path)
     if is_mac():
         return _start_hls_video_stream_mac(stream_file_path)
-    elif is_raspberry_pi():
-        return _start_hls_video_stream_raspberry_pi(stream_file_path)
-    raise RuntimeError("Unsupported platform for video input")
+    raise RuntimeError("Unsupported platform for HLS streaming")
+
+
+def _start_test_stream(stream_file_path: Path) -> subprocess.Popen:
+    return subprocess.Popen(
+        [
+            "ffmpeg",
+            "-f",
+            "lavfi",
+            "-i",
+            "testsrc=size=1280x720:rate=30",
+            "-f",
+            "hls",
+            "-hls_time",
+            "2",
+            "-hls_list_size",
+            "5",
+            "-hls_flags",
+            "delete_segments",
+            str(stream_file_path),
+        ],
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+    )
 
 
 def _start_hls_video_stream_mac(stream_file_path: Path) -> subprocess.Popen:
