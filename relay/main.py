@@ -12,26 +12,26 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-PORT_FROM_NAME: dict[str, int] = {}
+URL_FROM_NAME: dict[str, str] = {}
 
 
 class RegisterRequest(BaseModel):
     name: str
-    port: int
+    url: str
 
 
 @app.post("/register")
 async def register_device(request: RegisterRequest) -> str:
-    PORT_FROM_NAME[request.name] = request.port
+    URL_FROM_NAME[request.name] = request.url
     return "OK"
 
 
 @app.get("/{name}/{path:path}")
 async def forward(name: str, path: str) -> Response:
-    if name not in PORT_FROM_NAME:
+    if name not in URL_FROM_NAME:
         raise HTTPException(status_code=404, detail="Name not registered")
-    port = PORT_FROM_NAME[name]
-    device_url = f"http://localhost:{port}/{path}"
+    url = URL_FROM_NAME[name]
+    device_url = f"{url}/{path}"
     try:
         async with httpx.AsyncClient() as client:
             response = await client.get(device_url)
