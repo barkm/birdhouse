@@ -1,0 +1,30 @@
+services:
+  relay:
+    build: ./relay
+    ports:
+      - "8001:8001"
+    environment:
+      - PORT=8001
+
+  pi:
+    build: ./pi
+    ports:
+      - "8000:8000"
+    environment:
+      - PORT=8000
+      - URL=http://pi:8000
+      - REGISTER_URL=http://relay:8001/register
+      - TEST_STREAM=True
+    depends_on:
+      - relay
+  
+  api:
+    build: ./api
+    ports:
+      - "8002:8002"
+    environment:
+      - PORT=8002
+      - RELAY_URL=http://relay:8001
+    depends_on:
+      - relay
+      - pi
