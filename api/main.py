@@ -20,9 +20,9 @@ app.add_middleware(
 )
 
 
-@app.get("/hls/{name}/{path}")
+@app.get("/{name}/hls/{path}")
 async def get_hls_stream(name: str, path: str) -> Response:
-    device_url = f"{settings.relay_url}/hls/{name}/{path}"
+    device_url = f"{settings.relay_url}/{name}/hls/{path}"
     try:
         async with httpx.AsyncClient() as client:
             response = await client.get(device_url)
