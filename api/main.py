@@ -1,5 +1,5 @@
 import httpx
-from fastapi import FastAPI, HTTPException, Response
+from fastapi import FastAPI, Response
 from pydantic_settings import BaseSettings
 from fastapi.middleware.cors import CORSMiddleware
 
@@ -23,13 +23,9 @@ app.add_middleware(
 @app.get("/{name}/hls/{path}")
 async def get_hls_stream(name: str, path: str) -> Response:
     device_url = f"{settings.relay_url}/{name}/hls/{path}"
-    try:
-        async with httpx.AsyncClient() as client:
-            response = await client.get(device_url)
-            return Response(
-                content=response.content,
-                status_code=response.status_code,
-                headers=dict(response.headers),
-            )
-    except httpx.HTTPError as e:
-        raise HTTPException(status_code=500, detail=str(e))
+    response = httpx.get(device_url)
+    return Response(
+        content=response.content,
+        status_code=response.status_code,
+        headers=dict(response.headers),
+    )
