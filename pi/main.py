@@ -40,7 +40,8 @@ async def serve_hls_files(request: Request, path: str):
         raise HTTPException(status_code=403, detail="Forbidden")
     if not file_path.is_file():
         raise HTTPException(status_code=404, detail="File not found")
-    return FileResponse(file_path)
+    headers = {"Cache-Control": "no-store", "Pragma": "no-cache", "Expires": "0"}
+    return FileResponse(file_path, headers=headers)
 
 
 def _start_hls_video_stream(stream_dir: Path, test_stream: bool) -> subprocess.Popen:
