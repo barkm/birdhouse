@@ -32,13 +32,9 @@ async def forward(name: str, path: str) -> Response:
         raise HTTPException(status_code=404, detail="Name not registered")
     url = URL_FROM_NAME[name]
     device_url = f"{url}/{path}"
-    try:
-        async with httpx.AsyncClient() as client:
-            response = await client.get(device_url)
-            return Response(
-                content=response.content,
-                status_code=response.status_code,
-                headers=dict(response.headers),
-            )
-    except httpx.HTTPError as e:
-        raise HTTPException(status_code=500, detail=str(e))
+    response = httpx.get(device_url)
+    return Response(
+        content=response.content,
+        status_code=response.status_code,
+        headers=dict(response.headers),
+    )
