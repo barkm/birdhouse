@@ -3,6 +3,7 @@ from pathlib import Path
 import platform
 import subprocess
 import tempfile
+import uuid
 
 from fastapi import FastAPI, HTTPException, Request
 from fastapi.responses import FileResponse
@@ -47,16 +48,19 @@ async def serve_hls_files(request: Request, path: str):
 def _start_hls_video_stream(stream_dir: Path, test_stream: bool) -> subprocess.Popen:
     stream_dir.mkdir(parents=True, exist_ok=True)
     stream_file_path = stream_dir / PLAYLIST_FILENAME
+    segment_filename = stream_dir / (uuid.uuid4().hex + "_%04d.ts")
     if test_stream:
-        return _start_test_stream(stream_file_path)
+        return _start_test_stream(segment_filename, stream_file_path)
     if is_raspberry_pi():
-        return _start_hls_video_stream_raspberry_pi(stream_file_path)
+        return _start_hls_video_stream_raspberry_pi(segment_filename, stream_file_path)
     if is_mac():
-        return _start_hls_video_stream_mac(stream_file_path)
+        return _start_hls_video_stream_mac(segment_filename, stream_file_path)
     raise RuntimeError("Unsupported platform for HLS streaming")
 
 
-def _start_test_stream(stream_file_path: Path) -> subprocess.Popen:
+def _start_test_stream(
+    segment_filename: Path, stream_file_path: Path
+) -> subprocess.Popen:
     return subprocess.Popen(
         [
             "ffmpeg",
@@ -72,6 +76,8 @@ def _start_test_stream(stream_file_path: Path) -> subprocess.Popen:
             "5",
             "-hls_flags",
             "delete_segments",
+            "-hls_segment_filename",
+            str(segment_filename),
             str(stream_file_path),
         ],
         stdout=subprocess.PIPE,
@@ -79,7 +85,9 @@ def _start_test_stream(stream_file_path: Path) -> subprocess.Popen:
     )
 
 
-def _start_hls_video_stream_mac(stream_file_path: Path) -> subprocess.Popen:
+def _start_hls_video_stream_mac(
+    segment_filename: Path, stream_file_path: Path
+) -> subprocess.Popen:
     return subprocess.Popen(
         [
             "ffmpeg",
@@ -97,6 +105,8 @@ def _start_hls_video_stream_mac(stream_file_path: Path) -> subprocess.Popen:
             "5",
             "-hls_flags",
             "delete_segments",
+            "-hls_segment_filename",
+            str(segment_filename),
             str(stream_file_path),
         ],
         stdout=subprocess.PIPE,
@@ -104,7 +114,9 @@ def _start_hls_video_stream_mac(stream_file_path: Path) -> subprocess.Popen:
     )
 
 
-def _start_hls_video_stream_raspberry_pi(stream_file_path: Path) -> subprocess.Popen:
+def _start_hls_video_stream_raspberry_pi(
+    segment_filename: Path, stream_file_path: Path
+) -> subprocess.Popen:
     rpicam = subprocess.Popen(
         [
             "rpicam-vid",
@@ -137,6 +149,8 @@ def _start_hls_video_stream_raspberry_pi(stream_file_path: Path) -> subprocess.P
             "5",
             "-hls_flags",
             "delete_segments",
+            "-hls_segment_filename",
+            str(segment_filename),
             str(stream_file_path),
         ],
         stdin=rpicam.stdout,
