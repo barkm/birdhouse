@@ -26,7 +26,7 @@ async def get_hls_stream(name: str, path: str) -> Response:
     return _forward(name, path) if "m3u8" in path else _cached_forward(name, path)
 
 
-@cached
+@cached(max_size=100)
 def _cached_forward(name: str, path: str) -> Response:
     return _forward(name, path)
 
