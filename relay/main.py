@@ -2,6 +2,7 @@ import httpx
 from fastapi import FastAPI, HTTPException, Response
 from pydantic import BaseModel
 from fastapi.middleware.cors import CORSMiddleware
+from memoization import cached
 
 app = FastAPI()
 
@@ -28,6 +29,15 @@ async def register_device(request: RegisterRequest) -> str:
 
 @app.get("/{name}/{path:path}")
 async def forward(name: str, path: str) -> Response:
+    return _forward(name, path) if "m3u8" in path else _cached_forward(name, path)
+
+
+@cached
+def _cached_forward(name: str, path: str) -> Response:
+    return _forward(name, path)
+
+
+def _forward(name: str, path: str) -> Response:
     if name not in URL_FROM_NAME:
         raise HTTPException(status_code=404, detail="Name not registered")
     url = URL_FROM_NAME[name]

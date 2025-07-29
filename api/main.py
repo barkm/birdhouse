@@ -2,6 +2,7 @@ import httpx
 from fastapi import FastAPI, Response
 from pydantic_settings import BaseSettings
 from fastapi.middleware.cors import CORSMiddleware
+from memoization import cached
 
 
 class Settings(BaseSettings):
@@ -22,6 +23,15 @@ app.add_middleware(
 
 @app.get("/{name}/hls/{path}")
 async def get_hls_stream(name: str, path: str) -> Response:
+    return _forward(name, path) if "m3u8" in path else _cached_forward(name, path)
+
+
+@cached
+def _cached_forward(name: str, path: str) -> Response:
+    return _forward(name, path)
+
+
+def _forward(name: str, path: str) -> Response:
     device_url = f"{settings.relay_url}/{name}/hls/{path}"
     response = httpx.get(device_url)
     return Response(
