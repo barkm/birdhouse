@@ -17,17 +17,6 @@ services:
       - TEST_STREAM=True
     depends_on:
       - relay
-  
-  api:
-    build: ./api
-    ports:
-      - "8002:8002"
-    environment:
-      - PORT=8002
-      - RELAY_URL=http://relay:8001
-    depends_on:
-      - relay
-      - pi
 
   web:
     build:
