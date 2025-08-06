@@ -17,9 +17,6 @@ graph RL
         subgraph vm[Compute Engine]
             relay[Relay server]
         end
-        subgraph cloudrun[Cloud Run]
-            api[Public API]
-        end
     end
 
     subgraph browser[Browser]
@@ -30,7 +27,6 @@ graph RL
     pi -- reverse ssh --> vm
 
     relay -. http .-> pi-server
-    api -- http --> relay
     
-    browser -- https --> api
+    browser -- https --> relay
 ```
