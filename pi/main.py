@@ -6,6 +6,7 @@ import tempfile
 import uuid
 from typing import Generator
 import time
+from threading import Lock
 
 from fastapi import FastAPI, HTTPException, Request
 from fastapi.responses import FileResponse
@@ -47,6 +48,7 @@ class Stream:
         self.directory = directory
         self.test_stream = test_stream
         self.video = None
+        self.video_lock = Lock()
 
     def get_file(self, filename: str) -> Path | None:
         path = self.directory / filename
@@ -58,12 +60,14 @@ class Stream:
         return path if path.exists() else None
 
     def start(self) -> None:
-        if not self.video:
-            self.video = _start_hls_video_stream(self.directory, self.test_stream)
+        with self.video_lock:
+            if not self.video:
+                self.video = _start_hls_video_stream(self.directory, self.test_stream)
 
     def stop(self) -> None:
-        if self.video:
-            self.video.terminate()
+        with self.video_lock:
+            if self.video:
+                self.video.terminate()
 
 
 def _wait_until_exists(path: Path) -> None:
