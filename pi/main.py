@@ -1,4 +1,5 @@
 from contextlib import asynccontextmanager, contextmanager
+from dataclasses import dataclass
 from pathlib import Path
 import platform
 import subprocess
@@ -6,7 +7,7 @@ import tempfile
 import uuid
 from typing import Generator
 import time
-from threading import Lock
+from threading import Lock, Timer
 
 from fastapi import FastAPI, HTTPException, Request
 from fastapi.responses import FileResponse
@@ -43,39 +44,64 @@ async def serve_hls_files(request: Request, filename: str):
     return FileResponse(stream_path, headers=headers)
 
 
+@dataclass
+class Video:
+    process: subprocess.Popen
+    directory: Path
+    timer: Timer
+
+
 class Stream:
     def __init__(self, directory: Path, test_stream: bool):
-        self.directory = directory / "hls"
+        self.directory = directory
         self.test_stream = test_stream
         self.video = None
         self.video_lock = Lock()
 
     def get_file(self, filename: str) -> Path | None:
-        path = self.directory / filename
-        if path.suffix not in {".m3u8", ".ts"}:
+        print("Get file", filename)
+        if Path(filename).suffix not in {".m3u8", ".ts"}:
             return None
-        self.start()
-        if path.name == PLAYLIST_FILENAME:
-            _wait_until_exists(path)
+        path = self.start() / filename
         return path if path.exists() else None
 
-    def start(self) -> None:
+    def start(self) -> Path:
         with self.video_lock:
-            if not self.video:
-                self.directory.mkdir(parents=True, exist_ok=True)
-                self.video = _start_hls_video_stream(self.directory, self.test_stream)
+            if self.video:
+                self.video.timer.cancel()
+                self.video.timer = Timer(20.0, self.stop)
+            else:
+                directory = Path(tempfile.mkdtemp())
+                self.video = Video(
+                    process=_start_hls_video_stream(directory, self.test_stream),
+                    directory=directory,
+                    timer=Timer(20.0, self.stop),
+                )
+                _wait_until_exists(directory / PLAYLIST_FILENAME)
+            self.video.timer.start()
+        return self.video.directory
 
     def stop(self) -> None:
         with self.video_lock:
             if self.video:
-                self.video.terminate()
+                self.video.process.terminate()
+                _remove_directory(self.video.directory)
+                self.video.timer.cancel()
                 self.video = None
-                self.directory.rmdir()
 
 
 def _wait_until_exists(path: Path) -> None:
     while not path.exists():
         time.sleep(0.1)
+
+
+def _remove_directory(dirpath: Path) -> None:
+    for child in dirpath.iterdir():
+        if child.is_dir():
+            _remove_directory(child)
+        else:
+            child.unlink()
+    dirpath.rmdir()
 
 
 @contextmanager
