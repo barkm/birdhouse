@@ -1,11 +1,12 @@
-from contextlib import asynccontextmanager
+from contextlib import asynccontextmanager, contextmanager
 from pathlib import Path
 import platform
 import subprocess
 import tempfile
 import uuid
+from typing import Generator
 
-from fastapi import FastAPI, HTTPException, Request
+from fastapi import FastAPI, Request
 from fastapi.responses import FileResponse
 from pydantic_settings import BaseSettings
 
@@ -22,12 +23,9 @@ settings = Settings()
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    with tempfile.TemporaryDirectory() as temp_dir_str:
-        hls_dir = Path(temp_dir_str)
-        app.state.hls_dir = hls_dir
-        video = _start_hls_video_stream(hls_dir, settings.test_stream)
+    with _get_stream(settings.test_stream) as stream:
+        app.state.stream = stream
         yield
-        video.terminate()
 
 
 app = FastAPI(lifespan=lifespan)
@@ -35,14 +33,8 @@ app = FastAPI(lifespan=lifespan)
 
 @app.get("/hls/{path:path}")
 async def serve_hls_files(request: Request, path: str):
-    hls_dir: Path = request.app.state.hls_dir
-    file_path = hls_dir / path
-    if not file_path.resolve().is_relative_to(hls_dir.resolve()):
-        raise HTTPException(status_code=403, detail="Forbidden")
-    if not file_path.is_file():
-        raise HTTPException(status_code=404, detail="File not found")
     headers = {"Cache-Control": "no-store", "Pragma": "no-cache", "Expires": "0"}
-    return FileResponse(file_path, headers=headers)
+    return FileResponse(request.app.state.stream.get_file(path), headers=headers)
 
 
 def _start_hls_video_stream(stream_dir: Path, test_stream: bool) -> subprocess.Popen:
@@ -56,6 +48,28 @@ def _start_hls_video_stream(stream_dir: Path, test_stream: bool) -> subprocess.P
     if is_mac():
         return _start_hls_video_stream_mac(segment_filename, stream_file_path)
     raise RuntimeError("Unsupported platform for HLS streaming")
+
+
+class Stream:
+    def __init__(self, directory: Path, test_stream: bool):
+        self.directory = directory
+        self.video = _start_hls_video_stream(directory, test_stream)
+
+    def get_file(self, path: Path) -> Path:
+        return self.directory / path
+
+    def stop(self) -> None:
+        self.video.terminate()
+
+
+@contextmanager
+def _get_stream(test_stream: bool) -> Generator[Stream, None, None]:
+    with tempfile.TemporaryDirectory() as temp_dir_str:
+        stream = Stream(Path(temp_dir_str), test_stream)
+        try:
+            yield stream
+        finally:
+            stream.stop()
 
 
 def _start_test_stream(
