@@ -122,12 +122,18 @@ def _start_hls_video_stream(stream_dir: Path, test_stream: bool) -> subprocess.P
     stream_dir.mkdir(parents=True, exist_ok=True)
     stream_file_path = stream_dir / PLAYLIST_FILENAME
     segment_filename = stream_dir / (uuid.uuid4().hex + "_%04d.ts")
+    return _start_stream_process(stream_file_path, segment_filename, test_stream)
+
+
+def _start_stream_process(
+    stream_filepath: Path, segment_filepath: Path, test_stream: bool
+) -> subprocess.Popen:
     if test_stream:
-        return _start_test_stream(segment_filename, stream_file_path)
+        return _start_test_stream(segment_filepath, stream_filepath)
     if is_raspberry_pi():
-        return _start_hls_video_stream_raspberry_pi(segment_filename, stream_file_path)
+        return _start_hls_video_stream_raspberry_pi(segment_filepath, stream_filepath)
     if is_mac():
-        return _start_hls_video_stream_mac(segment_filename, stream_file_path)
+        return _start_hls_video_stream_mac(segment_filepath, stream_filepath)
     raise RuntimeError("Unsupported platform for HLS streaming")
 
 
