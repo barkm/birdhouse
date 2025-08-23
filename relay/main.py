@@ -42,7 +42,7 @@ def _forward(name: str, path: str) -> Response:
         raise HTTPException(status_code=404, detail="Name not registered")
     url = URL_FROM_NAME[name]
     device_url = f"{url}/{path}"
-    response = httpx.get(device_url)
+    response = httpx.get(device_url, timeout=20.0)
     return Response(
         content=response.content,
         status_code=response.status_code,
