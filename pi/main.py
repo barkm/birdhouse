@@ -26,7 +26,7 @@ settings = Settings()
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    app.state.stream = Stream(settings.test_stream)
+    app.state.stream = Stream(PLAYLIST_FILENAME, settings.test_stream)
     yield
     app.state.stream.stop()
 
@@ -63,7 +63,8 @@ class Video:
 
 
 class Stream:
-    def __init__(self, test_stream: bool):
+    def __init__(self, playlist_filename: str, test_stream: bool):
+        self.playlist_filename = playlist_filename
         self.test_stream = test_stream
         self.video = None
         self.video_lock = Lock()
@@ -83,7 +84,9 @@ class Stream:
                 logger.info("Starting video stream")
                 directory = Path(tempfile.mkdtemp())
                 self.video = Video(
-                    process=_start_hls_video_stream(directory, self.test_stream),
+                    process=_start_hls_video_stream(
+                        directory, self.playlist_filename, self.test_stream
+                    ),
                     directory=directory,
                     timer=self._get_video_timer(),
                 )
@@ -112,9 +115,11 @@ def _remove_directory(dirpath: Path) -> None:
     dirpath.rmdir()
 
 
-def _start_hls_video_stream(stream_dir: Path, test_stream: bool) -> subprocess.Popen:
+def _start_hls_video_stream(
+    stream_dir: Path, playlist_filename, test_stream: bool
+) -> subprocess.Popen:
     stream_dir.mkdir(parents=True, exist_ok=True)
-    stream_file_path = stream_dir / PLAYLIST_FILENAME
+    stream_file_path = stream_dir / playlist_filename
     segment_filename = stream_dir / (uuid.uuid4().hex + "_%04d.ts")
     process = _start_stream_process(stream_file_path, segment_filename, test_stream)
     _wait_until_exists(stream_file_path)
