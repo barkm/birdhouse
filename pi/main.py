@@ -68,6 +68,7 @@ class Stream:
         with self.video_lock:
             if self.video:
                 self.video.terminate()
+                self.video = None
 
 
 def _wait_until_exists(path: Path) -> None:
