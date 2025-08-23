@@ -13,7 +13,7 @@ logger = logging.getLogger(__name__)
 
 @dataclass
 class Video:
-    process: subprocess.Popen
+    process: list[subprocess.Popen]
     directory: Path
     timer: Timer
 
@@ -56,7 +56,8 @@ class Stream:
         with self.video_lock:
             if self.video:
                 logger.info("Stopping video stream")
-                self.video.process.terminate()
+                for process in self.video.process:
+                    process.terminate()
                 _remove_directory(self.video.directory)
                 self.video.timer.cancel()
                 self.video = None
@@ -73,7 +74,7 @@ def _remove_directory(dirpath: Path) -> None:
 
 def _start_hls_video_stream(
     stream_dir: Path, playlist_filename, test_stream: bool
-) -> subprocess.Popen:
+) -> list[subprocess.Popen]:
     stream_dir.mkdir(parents=True, exist_ok=True)
     stream_file_path = stream_dir / playlist_filename
     segment_filename = stream_dir / (uuid.uuid4().hex + "_%04d.ts")
@@ -84,13 +85,13 @@ def _start_hls_video_stream(
 
 def _start_stream_process(
     stream_filepath: Path, segment_filepath: Path, test_stream: bool
-) -> subprocess.Popen:
+) -> list[subprocess.Popen]:
     if test_stream:
-        return _start_test_stream(segment_filepath, stream_filepath)
+        return [_start_test_stream(segment_filepath, stream_filepath)]
     if is_raspberry_pi():
         return _start_hls_video_stream_raspberry_pi(segment_filepath, stream_filepath)
     if is_mac():
-        return _start_hls_video_stream_mac(segment_filepath, stream_filepath)
+        return [_start_hls_video_stream_mac(segment_filepath, stream_filepath)]
     raise RuntimeError("Unsupported platform for HLS streaming")
 
 
@@ -157,7 +158,7 @@ def _start_hls_video_stream_mac(
 
 def _start_hls_video_stream_raspberry_pi(
     segment_filename: Path, stream_file_path: Path
-) -> subprocess.Popen:
+) -> list[subprocess.Popen]:
     # fmt: off
     frame_rate = 24
     rpicam = subprocess.Popen(
@@ -201,7 +202,7 @@ def _start_hls_video_stream_raspberry_pi(
         stdout=subprocess.PIPE,
         stderr=subprocess.PIPE,
     )
-    return ffmpeg
+    return [rpicam, ffmpeg]
 
 
 def is_mac():
