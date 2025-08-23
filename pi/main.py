@@ -32,11 +32,11 @@ async def lifespan(app: FastAPI):
 app = FastAPI(lifespan=lifespan)
 
 
-@app.get("/hls/{path:path}")
-async def serve_hls_files(request: Request, path: str):
+@app.get("/hls/{filename:path}")
+async def serve_hls_files(request: Request, filename: str):
     headers = {"Cache-Control": "no-store", "Pragma": "no-cache", "Expires": "0"}
     stream: Stream = request.app.state.stream
-    stream_path = stream.get_file(Path(path))
+    stream_path = stream.get_file(filename)
     if not stream_path:
         raise HTTPException(status_code=404, detail="File not found")
     return FileResponse(stream_path, headers=headers)
@@ -61,14 +61,12 @@ class Stream:
         self.test_stream = test_stream
         self.video = None
 
-    def get_file(self, relative_path: Path) -> Path | None:
-        if relative_path.is_absolute():
-            return None
-        if relative_path.suffix not in {".m3u8", ".ts"}:
+    def get_file(self, filename: str) -> Path | None:
+        path = self.directory / filename
+        if path.suffix not in {".m3u8", ".ts"}:
             return None
         if not self.video:
             self.video = _start_hls_video_stream(self.directory, self.test_stream)
-        path = self.directory / relative_path
         if path.name == PLAYLIST_FILENAME:
             _wait_until_exists(path)
         return path if path.exists() else None
