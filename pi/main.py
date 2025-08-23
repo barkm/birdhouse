@@ -76,18 +76,21 @@ class Stream:
         with self.video_lock:
             if self.video:
                 self.video.timer.cancel()
-                self.video.timer = Timer(20.0, self.stop)
+                self.video.timer = self._get_video_timer()
             else:
                 logger.info("Starting video stream")
                 directory = Path(tempfile.mkdtemp())
                 self.video = Video(
                     process=_start_hls_video_stream(directory, self.test_stream),
                     directory=directory,
-                    timer=Timer(20.0, self.stop),
+                    timer=self._get_video_timer(),
                 )
                 _wait_until_exists(directory / PLAYLIST_FILENAME)
             self.video.timer.start()
         return self.video.directory
+
+    def _get_video_timer(self) -> Timer:
+        return Timer(20.0, self.stop)
 
     def stop(self) -> None:
         with self.video_lock:
