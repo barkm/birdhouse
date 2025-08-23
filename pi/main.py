@@ -1,11 +1,10 @@
-from contextlib import asynccontextmanager, contextmanager
+from contextlib import asynccontextmanager
 from dataclasses import dataclass
 from pathlib import Path
 import platform
 import subprocess
 import tempfile
 import uuid
-from typing import Generator
 import time
 from threading import Lock, Timer
 import logging
@@ -27,9 +26,9 @@ settings = Settings()
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    with _get_stream(settings.test_stream) as stream:
-        app.state.stream = stream
-        yield
+    app.state.stream = Stream(settings.test_stream)
+    yield
+    app.state.stream.stop()
 
 
 logging.basicConfig(
@@ -64,8 +63,7 @@ class Video:
 
 
 class Stream:
-    def __init__(self, directory: Path, test_stream: bool):
-        self.directory = directory
+    def __init__(self, test_stream: bool):
         self.test_stream = test_stream
         self.video = None
         self.video_lock = Lock()
@@ -118,16 +116,6 @@ def _remove_directory(dirpath: Path) -> None:
         else:
             child.unlink()
     dirpath.rmdir()
-
-
-@contextmanager
-def _get_stream(test_stream: bool) -> Generator[Stream, None, None]:
-    with tempfile.TemporaryDirectory() as temp_dir_str:
-        stream = Stream(Path(temp_dir_str), test_stream)
-        try:
-            yield stream
-        finally:
-            stream.stop()
 
 
 def _start_hls_video_stream(stream_dir: Path, test_stream: bool) -> subprocess.Popen:
