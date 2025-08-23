@@ -52,11 +52,14 @@ class Stream:
         path = self.directory / filename
         if path.suffix not in {".m3u8", ".ts"}:
             return None
-        if not self.video:
-            self.video = _start_hls_video_stream(self.directory, self.test_stream)
+        self.start()
         if path.name == PLAYLIST_FILENAME:
             _wait_until_exists(path)
         return path if path.exists() else None
+
+    def start(self) -> None:
+        if not self.video:
+            self.video = _start_hls_video_stream(self.directory, self.test_stream)
 
     def stop(self) -> None:
         if self.video:
