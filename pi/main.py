@@ -5,8 +5,9 @@ import subprocess
 import tempfile
 import uuid
 from typing import Generator
+import time
 
-from fastapi import FastAPI, Request
+from fastapi import FastAPI, HTTPException, Request
 from fastapi.responses import FileResponse
 from pydantic_settings import BaseSettings
 
@@ -34,7 +35,11 @@ app = FastAPI(lifespan=lifespan)
 @app.get("/hls/{path:path}")
 async def serve_hls_files(request: Request, path: str):
     headers = {"Cache-Control": "no-store", "Pragma": "no-cache", "Expires": "0"}
-    return FileResponse(request.app.state.stream.get_file(path), headers=headers)
+    stream: Stream = request.app.state.stream
+    stream_path = stream.get_file(Path(path))
+    if not stream_path:
+        raise HTTPException(status_code=404, detail="File not found")
+    return FileResponse(stream_path, headers=headers)
 
 
 def _start_hls_video_stream(stream_dir: Path, test_stream: bool) -> subprocess.Popen:
@@ -53,13 +58,29 @@ def _start_hls_video_stream(stream_dir: Path, test_stream: bool) -> subprocess.P
 class Stream:
     def __init__(self, directory: Path, test_stream: bool):
         self.directory = directory
-        self.video = _start_hls_video_stream(directory, test_stream)
+        self.test_stream = test_stream
+        self.video = None
 
-    def get_file(self, path: Path) -> Path:
-        return self.directory / path
+    def get_file(self, relative_path: Path) -> Path | None:
+        if relative_path.is_absolute():
+            return None
+        if relative_path.suffix not in {".m3u8", ".ts"}:
+            return None
+        if not self.video:
+            self.video = _start_hls_video_stream(self.directory, self.test_stream)
+        path = self.directory / relative_path
+        if path.name == PLAYLIST_FILENAME:
+            _wait_until_exists(path)
+        return path if path.exists() else None
 
     def stop(self) -> None:
-        self.video.terminate()
+        if self.video:
+            self.video.terminate()
+
+
+def _wait_until_exists(path: Path) -> None:
+    while not path.exists():
+        time.sleep(0.1)
 
 
 @contextmanager
