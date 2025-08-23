@@ -158,23 +158,26 @@ def _start_hls_video_stream_mac(
 def _start_hls_video_stream_raspberry_pi(
     segment_filename: Path, stream_file_path: Path
 ) -> subprocess.Popen:
+    # fmt: off
+    frame_rate = 24
     rpicam = subprocess.Popen(
         [
             "rpicam-vid",
-            "-t",
-            "0",
-            "--width",
-            "1920",
-            "--height",
-            "1080",
-            "--framerate",
-            "30",
+            "-t", "0",
+            "--width", "1920",
+            "--height", "1080",
+            "--framerate", f"{frame_rate}",
+            "--intra", f"{frame_rate * 2}",
+            "--codec", "h264",
+            "--profile", "high",
+            "--bitrate", "2000k",
             "-o",
             "-",
         ],
         stdout=subprocess.PIPE,
         stderr=subprocess.PIPE,
     )
+    # fmt: on
     ffmpeg = subprocess.Popen(
         [
             "ffmpeg",
