@@ -87,7 +87,6 @@ class Stream:
                     directory=directory,
                     timer=self._get_video_timer(),
                 )
-                _wait_until_exists(directory / PLAYLIST_FILENAME)
             self.video.timer.start()
         return self.video.directory
 
@@ -104,11 +103,6 @@ class Stream:
                 self.video = None
 
 
-def _wait_until_exists(path: Path) -> None:
-    while not path.exists():
-        time.sleep(0.1)
-
-
 def _remove_directory(dirpath: Path) -> None:
     for child in dirpath.iterdir():
         if child.is_dir():
@@ -122,7 +116,9 @@ def _start_hls_video_stream(stream_dir: Path, test_stream: bool) -> subprocess.P
     stream_dir.mkdir(parents=True, exist_ok=True)
     stream_file_path = stream_dir / PLAYLIST_FILENAME
     segment_filename = stream_dir / (uuid.uuid4().hex + "_%04d.ts")
-    return _start_stream_process(stream_file_path, segment_filename, test_stream)
+    process = _start_stream_process(stream_file_path, segment_filename, test_stream)
+    _wait_until_exists(stream_file_path)
+    return process
 
 
 def _start_stream_process(
@@ -135,6 +131,11 @@ def _start_stream_process(
     if is_mac():
         return _start_hls_video_stream_mac(segment_filepath, stream_filepath)
     raise RuntimeError("Unsupported platform for HLS streaming")
+
+
+def _wait_until_exists(path: Path) -> None:
+    while not path.exists():
+        time.sleep(0.1)
 
 
 def _start_test_stream(
