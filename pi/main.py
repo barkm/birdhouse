@@ -8,6 +8,7 @@ import uuid
 from typing import Generator
 import time
 from threading import Lock, Timer
+import logging
 
 from fastapi import FastAPI, HTTPException, Request
 from fastapi.responses import FileResponse
@@ -30,6 +31,13 @@ async def lifespan(app: FastAPI):
         app.state.stream = stream
         yield
 
+
+logging.basicConfig(
+    level=logging.INFO,
+    format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
+    datefmt="%Y-%m-%d %H:%M:%S",
+)
+logger = logging.getLogger(__name__)
 
 app = FastAPI(lifespan=lifespan)
 
@@ -59,7 +67,6 @@ class Stream:
         self.video_lock = Lock()
 
     def get_file(self, filename: str) -> Path | None:
-        print("Get file", filename)
         if Path(filename).suffix not in {".m3u8", ".ts"}:
             return None
         path = self.start() / filename
@@ -71,6 +78,7 @@ class Stream:
                 self.video.timer.cancel()
                 self.video.timer = Timer(20.0, self.stop)
             else:
+                logger.info("Starting video stream")
                 directory = Path(tempfile.mkdtemp())
                 self.video = Video(
                     process=_start_hls_video_stream(directory, self.test_stream),
@@ -84,6 +92,7 @@ class Stream:
     def stop(self) -> None:
         with self.video_lock:
             if self.video:
+                logger.info("Stopping video stream")
                 self.video.process.terminate()
                 _remove_directory(self.video.directory)
                 self.video.timer.cancel()
