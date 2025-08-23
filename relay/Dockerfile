@@ -3,4 +3,5 @@ COPY pyproject.toml .
 COPY uv.lock .
 RUN uv sync
 COPY main.py .
+ENV PYTHONUNBUFFERED=1
 CMD uv run fastapi run main.py --port $PORT
