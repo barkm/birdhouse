@@ -42,19 +42,6 @@ async def serve_hls_files(request: Request, filename: str):
     return FileResponse(stream_path, headers=headers)
 
 
-def _start_hls_video_stream(stream_dir: Path, test_stream: bool) -> subprocess.Popen:
-    stream_dir.mkdir(parents=True, exist_ok=True)
-    stream_file_path = stream_dir / PLAYLIST_FILENAME
-    segment_filename = stream_dir / (uuid.uuid4().hex + "_%04d.ts")
-    if test_stream:
-        return _start_test_stream(segment_filename, stream_file_path)
-    if is_raspberry_pi():
-        return _start_hls_video_stream_raspberry_pi(segment_filename, stream_file_path)
-    if is_mac():
-        return _start_hls_video_stream_mac(segment_filename, stream_file_path)
-    raise RuntimeError("Unsupported platform for HLS streaming")
-
-
 class Stream:
     def __init__(self, directory: Path, test_stream: bool):
         self.directory = directory
@@ -89,6 +76,19 @@ def _get_stream(test_stream: bool) -> Generator[Stream, None, None]:
             yield stream
         finally:
             stream.stop()
+
+
+def _start_hls_video_stream(stream_dir: Path, test_stream: bool) -> subprocess.Popen:
+    stream_dir.mkdir(parents=True, exist_ok=True)
+    stream_file_path = stream_dir / PLAYLIST_FILENAME
+    segment_filename = stream_dir / (uuid.uuid4().hex + "_%04d.ts")
+    if test_stream:
+        return _start_test_stream(segment_filename, stream_file_path)
+    if is_raspberry_pi():
+        return _start_hls_video_stream_raspberry_pi(segment_filename, stream_file_path)
+    if is_mac():
+        return _start_hls_video_stream_mac(segment_filename, stream_file_path)
+    raise RuntimeError("Unsupported platform for HLS streaming")
 
 
 def _start_test_stream(
