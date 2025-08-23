@@ -170,7 +170,7 @@ def _start_hls_video_stream_raspberry_pi(
             "--intra", f"{frame_rate * 2}",
             "--codec", "h264",
             "--profile", "high",
-            "--bitrate", "2000k",
+            "--bitrate", "1000k",
             "-o",
             "-",
         ],
