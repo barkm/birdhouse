@@ -45,7 +45,7 @@ async def serve_hls_files(request: Request, filename: str):
 
 class Stream:
     def __init__(self, directory: Path, test_stream: bool):
-        self.directory = directory
+        self.directory = directory / "hls"
         self.test_stream = test_stream
         self.video = None
         self.video_lock = Lock()
@@ -62,6 +62,7 @@ class Stream:
     def start(self) -> None:
         with self.video_lock:
             if not self.video:
+                self.directory.mkdir(parents=True, exist_ok=True)
                 self.video = _start_hls_video_stream(self.directory, self.test_stream)
 
     def stop(self) -> None:
@@ -69,6 +70,7 @@ class Stream:
             if self.video:
                 self.video.terminate()
                 self.video = None
+                self.directory.rmdir()
 
 
 def _wait_until_exists(path: Path) -> None:
