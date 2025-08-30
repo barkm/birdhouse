@@ -9,7 +9,7 @@ on:
 
 
 jobs:
-  deploy:
+  run:
     runs-on: ubuntu-latest
     defaults:
       run:
