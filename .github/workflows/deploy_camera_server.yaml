@@ -1,6 +1,15 @@
 name: Deploy camera server
 
-on: workflow_dispatch
+on:
+  workflow_dispatch:
+  push:
+    branches: main
+    paths:
+      - pi/**
+      - ansible/playbooks/camera_server.yaml
+      - ./github/workflows/deploy_camera_server.yaml
+
+
 
 jobs:
   deploy:

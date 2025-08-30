@@ -1,6 +1,13 @@
 name: Deploy relay
 
-on: workflow_dispatch
+on:
+  workflow_dispatch:
+  push:
+    branches: main
+    paths:
+      - relay/**
+      - ansible/playbooks/relay.yaml
+      - ./github/workflows/deploy_relay.yaml
 
 jobs:
   deploy:
