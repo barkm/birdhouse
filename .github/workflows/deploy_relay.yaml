@@ -1,0 +1,10 @@
+name: Deploy relay
+
+on: workflow_dispatch
+
+jobs:
+  deploy:
+    uses: ./.github/workflows/run_ansible.yaml
+    with:
+      command: uv run ansible-playbook -i ansible/inventory.yaml ansible/playbooks/relay.yaml
+    secrets: inherit
