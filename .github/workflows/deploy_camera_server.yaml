@@ -53,7 +53,9 @@ jobs:
       - name: Sanity check SSH connectivity
         run: |
           uv run ansible all -m ping  -i ansible/inventory.yaml
+        working-directory: ./deployment
 
       - name: Deploy camera server
         run: |
           uv run ansible-playbook -i ansible/inventory.yaml ansible/playbooks/camera_server.yaml
+        working-directory: ./deployment
