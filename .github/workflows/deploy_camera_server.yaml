@@ -1,62 +1,10 @@
 name: Deploy camera server
 
-on:
-  workflow_dispatch:
-
-permissions:
-  contents: read
-
-concurrency:
-  group: deploy-${{ github.ref }}
-  cancel-in-progress: true
+on: workflow_dispatch
 
 jobs:
   deploy:
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout repo
-        uses: actions/checkout@v4
-      
-      - name: Install uv
-        uses: astral-sh/setup-uv@v6
-
-      - name: Start ssh-agent and add key
-        uses: webfactory/ssh-agent@v0.9.0
-        with:
-          ssh-private-key: ${{ secrets.SSH_PRIVATE_KEY }}
-
-      - name: Configure SSH
-        run: |
-          mkdir -p ~/.ssh
-          chmod 700 ~/.ssh
-          cat >> ~/.ssh/config <<'EOF'
-          Host relay
-            HostName ${{ secrets.RELAY_HOST }}
-            User ${{ secrets.RELAY_USER }}
-            ForwardAgent yes
-
-          Host birdhouse
-            HostName localhost
-            Port 2222
-            ProxyJump relay
-            User ${{ secrets.RELAY_USER }}
-            ForwardAgent yes
-          EOF
-          chmod 600 ~/.ssh/config
-
-      - name: Preload known_hosts
-        run: |
-          ssh-keyscan -H "${{ secrets.RELAY_HOST }}" >> ~/.ssh/known_hosts
-          ssh-keyscan -H github.com >> ~/.ssh/known_hosts
-          ssh relay "ssh-keyscan -p 2222 localhost" >> ~/.ssh/known_hosts
-          chmod 600 ~/.ssh/known_hosts
-
-      - name: Sanity check SSH connectivity
-        run: |
-          uv run ansible all -m ping  -i ansible/inventory.yaml
-        working-directory: ./deployment
-
-      - name: Deploy camera server
-        run: |
-          uv run ansible-playbook -i ansible/inventory.yaml ansible/playbooks/camera_server.yaml
-        working-directory: ./deployment
+    uses: ./.github/workflows/run_ansible.yaml
+    with:
+      command: uv run ansible-playbook -i ansible/inventory.yaml ansible/playbooks/camera_server.yaml
+    secrets: inherit
