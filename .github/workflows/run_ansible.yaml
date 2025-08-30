@@ -53,10 +53,5 @@ jobs:
           ssh relay "ssh-keyscan -p 2222 localhost" >> ~/.ssh/known_hosts
           chmod 600 ~/.ssh/known_hosts
 
-      - name: Sanity check SSH connectivity
-        run: |
-          uv run ansible all -m ping  -i ansible/inventory.yaml
-        working-directory: ./deployment
-
       - name: Run
         run: ${{ inputs.command }}
