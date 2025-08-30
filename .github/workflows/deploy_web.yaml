@@ -1,8 +1,12 @@
 name: Deploy to GitHub Pages
 
 on:
+  workflow_dispatch:
   push:
-    branches: 'main'
+    branches: main
+    paths:
+      - web/**
+      - ./github/workflows/deploy_web.yaml
 
 jobs:
   build_site:
