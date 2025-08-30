@@ -1,0 +1,22 @@
+- name: Deploy camera server
+  hosts: pis
+  gather_facts: true
+  become: false
+
+  vars:
+    uv_binary_path: "{{ ansible_user_dir }}/.local/bin/uv"
+    repo_url: "git@github.com:barkm/birdhouse.git"
+    repo_dest: "{{ ansible_user_dir }}/code/birdhouse"
+    repo_version: "main"
+
+  pre_tasks:
+    - include_tasks: tasks/uv.yaml
+    - include_tasks: tasks/git.yaml
+
+  tasks:
+    - name: Install camera server
+      ansible.builtin.command: ./camera_server.sh install
+      args:
+        chdir: "{{ repo_dest }}/pi"
+      environment:
+        PATH: "{{ uv_binary_path | dirname }}:{{ ansible_env.PATH }}"

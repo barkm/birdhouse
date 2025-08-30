@@ -1,0 +1,14 @@
+- name: Check if uv is installed
+  ansible.builtin.stat:
+    path: "{{ uv_binary_path }}"
+  register: uv_binary
+
+- name: Install uv
+  ansible.builtin.shell: |
+    curl -LsSf https://astral.sh/uv/install.sh | sh
+  args:
+    executable: /bin/bash
+  when: not uv_binary.stat.exists
+
+- name: Verify that uv is callable
+  ansible.builtin.command: "{{ uv_binary_path }} --version"

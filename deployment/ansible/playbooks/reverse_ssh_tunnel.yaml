@@ -1,0 +1,23 @@
+- name: Deploy reverse ssh tunnel
+  hosts: pis
+  gather_facts: true
+  become: false
+
+  vars:
+    uv_binary_path: "{{ ansible_user_dir }}/.local/bin/uv"
+    repo_url: "git@github.com:barkm/birdhouse.git"
+    repo_dest: "{{ ansible_user_dir }}/code/birdhouse"
+    repo_version: "main"
+
+  pre_tasks:
+    - include_tasks: tasks/uv.yaml
+    - include_tasks: tasks/git.yaml
+
+  tasks:
+    - name: Install reverse ssh tunnel
+      ansible.builtin.command: ./reverse_ssh_tunnel.sh install $RELAY_HOST
+      args:
+        chdir: "{{ repo_dest }}/pi"
+      environment:
+        PATH: "{{ uv_binary_path | dirname }}:{{ ansible_env.PATH }}"
+        RELAY_HOST: "{{ lookup('env', 'RELAY_HOST') }}"

@@ -1,0 +1,12 @@
+relays:
+  hosts:
+    relay:
+
+pis:
+  hosts:
+    birdhouse:
+
+all:
+  children:
+    relays:
+    pis:

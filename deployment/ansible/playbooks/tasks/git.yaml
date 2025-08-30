@@ -1,0 +1,15 @@
+- name: Ensure destination parent exists
+  ansible.builtin.file:
+    path: "{{ repo_dest | dirname }}"
+    state: directory
+    mode: "0755"
+
+- name: Checkout/update repo
+  ansible.builtin.git:
+    repo: "{{ repo_url }}"
+    dest: "{{ repo_dest }}"
+    version: "{{ repo_version }}"
+    update: true
+    force: false
+    accept_hostkey: true
+  register: git_result
