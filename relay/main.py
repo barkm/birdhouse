@@ -27,6 +27,11 @@ async def register_device(request: RegisterRequest) -> str:
     return "OK"
 
 
+@app.get("/list")
+async def list_devices():
+    return [{"name": name} for name in URL_FROM_NAME.keys()]
+
+
 @app.get("/{name}/{path:path}")
 async def forward(name: str, path: str) -> Response:
     return _forward(name, path) if "m3u8" in path else _cached_forward(name, path)
