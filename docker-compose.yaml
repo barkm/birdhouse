@@ -25,6 +25,6 @@ services:
       - "8003:8003"
     environment:
       - PORT=8003
-      - PUBLIC_API_URL=http://localhost:8001/birdhouse/hls/playlist.m3u8
+      - PUBLIC_RELAY_URL=http://localhost:8001/
     depends_on:
       - api

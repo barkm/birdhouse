@@ -46,3 +46,10 @@ async def serve_hls_files(request: Request, filename: str):
         else {}
     )
     return FileResponse(stream_path, headers=headers)
+
+
+@app.get("/start")
+async def start_stream(request: Request):
+    stream: Stream = request.app.state.stream
+    stream.start()
+    return {"playlist": f"/hls/{PLAYLIST_FILENAME}"}
