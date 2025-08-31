@@ -18,13 +18,37 @@ services:
     depends_on:
       - relay
 
+  recorder:
+    build:
+      context: ./recorder
+    ports:
+      - "8003:8003"
+    secrets:
+      - gcp_key
+    environment:
+      - PORT=8003
+      - RELAY_URL=http://relay:8001
+      # - RECORDING_DIR=/recordings
+      - RECORDING_DIR=gs://birdhouse-recordings
+      - GOOGLE_APPLICATION_CREDENTIALS=/run/secrets/gcp_key
+    volumes:
+      - ./recordings:/recordings
+    depends_on:
+      - relay
+      - pi
+
   web:
     build:
       context: ./web
     ports:
-      - "8003:8003"
+      - "8004:8004"
     environment:
-      - PORT=8003
+      - PORT=8004
       - PUBLIC_RELAY_URL=http://localhost:8001/
     depends_on:
-      - api
+      - relay
+
+
+secrets:
+  gcp_key:
+    file: ~/.config/gcloud/application_default_credentials.json
