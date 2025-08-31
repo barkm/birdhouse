@@ -8,6 +8,7 @@ import httpx
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic_settings import BaseSettings
+from pydantic import BaseModel
 from google.cloud import storage
 
 logging.basicConfig(
@@ -107,6 +108,35 @@ def _upload_to_gcs(source: str, gcs_path: str) -> None:
     logging.info(f"File {source} uploaded to {dest} in {bucket_name}.")
 
 
-@app.get("/list")
-async def list_recordings():
-    return "OK"
+class Recording(BaseModel):
+    time: str
+    url: str
+
+
+@app.get("/recordings/{device}")
+def list_recordings(device: str) -> list[Recording]:
+    device_path = f"{settings.recording_dir}/{device}"
+    if settings.recording_dir.startswith("gs://"):
+        return _list_gcs_recordings(device_path)
+    return _list_local_recordings(device_path)
+
+
+def _list_local_recordings(recording_dir: str) -> list[Recording]:
+    return [
+        Recording(time=path.stem, url=f"file://{path.resolve()}")
+        for path in Path(recording_dir).iterdir()
+    ]
+
+
+def _list_gcs_recordings(gcs_dirpath: str) -> list[Recording]:
+    *_, bucket_name, dest = gcs_dirpath.split("/", maxsplit=3)
+    client = storage.Client(project="birdhouse-464804")
+    bucket = client.bucket(bucket_name)
+    blobs = bucket.list_blobs(prefix=dest)
+    return [
+        Recording(
+            time=Path(blob.name).stem,
+            url=f"https://storage.googleapis.com/{bucket_name}/{blob.name}",
+        )
+        for blob in blobs
+    ]
