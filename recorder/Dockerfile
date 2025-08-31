@@ -1,5 +1,5 @@
 FROM ghcr.io/astral-sh/uv:debian-slim
-RUN apt-get update && apt-get install -y ffmpeg curl
+RUN apt-get update && apt-get install -y ffmpeg
 COPY pyproject.toml .
 COPY uv.lock .
 RUN uv sync
