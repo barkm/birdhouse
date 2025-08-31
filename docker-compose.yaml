@@ -28,8 +28,8 @@ services:
     environment:
       - PORT=8003
       - RELAY_URL=http://relay:8001
-      # - RECORDING_DIR=/recordings
-      - RECORDING_DIR=gs://birdhouse-recordings
+      - RECORDING_DIR=/recordings
+      # - RECORDING_DIR=gs://birdhouse-recordings
       - GOOGLE_APPLICATION_CREDENTIALS=/run/secrets/gcp_key
     volumes:
       - ./recordings:/recordings

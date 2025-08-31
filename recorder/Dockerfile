@@ -5,4 +5,4 @@ COPY uv.lock .
 RUN uv sync
 COPY main.py .
 ENV PYTHONUNBUFFERED=1
-CMD sh -c 'curl --retry 5 --retry-all-errors http://localhost:$PORT/record & uv run fastapi run main.py --port $PORT' 
+CMD uv run fastapi run main.py --port $PORT
