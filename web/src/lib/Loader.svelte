@@ -51,10 +51,10 @@
 	:global(.reflection) {
 		animation: wave 1.5s infinite steps(1, end);
 	}
-    :global(.reflection:nth-of-type(1)) {
-        animation-delay: 0.25s;
-    }
-    :global(.reflection:nth-of-type(2)) {
-        animation-delay: 0.5s;
-    }
+	:global(.reflection:nth-of-type(1)) {
+		animation-delay: 0.25s;
+	}
+	:global(.reflection:nth-of-type(2)) {
+		animation-delay: 0.5s;
+	}
 </style>
