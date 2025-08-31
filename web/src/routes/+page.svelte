@@ -36,7 +36,7 @@
 
 <column>
 	{#await device_playlists_promise then device_playlists}
-		{#each device_playlists as device_playlist}
+		{#each device_playlists as device_playlist (device_playlist.device.name)}
 			<stream>
 				<VideoWithLoader
 					src={`${PUBLIC_RELAY_URL}${device_playlist.device.name}${device_playlist.playlist.path}`}
