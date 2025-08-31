@@ -99,7 +99,7 @@ def _record(relay_url: str, device: str, output_path: str) -> None:
 
 
 def _upload_to_gcs(source: str, gcs_path: str) -> None:
-    *_, bucket_name, dest = gcs_path.split("/", maxsplit=3)
+    bucket_name, dest = _get_bucket_and_blob_name(gcs_path)
     logging.info(f"Uploading {source} to {dest} in {bucket_name}.")
     client = storage.Client(project="birdhouse-464804")
     bucket = client.bucket(bucket_name)
@@ -129,10 +129,10 @@ def _list_local_recordings(recording_dir: str) -> list[Recording]:
 
 
 def _list_gcs_recordings(gcs_dirpath: str) -> list[Recording]:
-    *_, bucket_name, dest = gcs_dirpath.split("/", maxsplit=3)
+    bucket_name, prefix = _get_bucket_and_blob_name(gcs_dirpath)
     client = storage.Client(project="birdhouse-464804")
     bucket = client.bucket(bucket_name)
-    blobs = bucket.list_blobs(prefix=dest)
+    blobs = bucket.list_blobs(prefix=prefix)
     return [
         Recording(
             time=Path(blob.name).stem,
@@ -140,3 +140,8 @@ def _list_gcs_recordings(gcs_dirpath: str) -> list[Recording]:
         )
         for blob in blobs
     ]
+
+
+def _get_bucket_and_blob_name(gcs_path: str) -> tuple[str, str]:
+    *_, bucket_name, blob_name = gcs_path.split("/", maxsplit=3)
+    return bucket_name, blob_name
