@@ -47,7 +47,7 @@
 </script>
 
 <column>
-	{#await Promise.all([device_playlist_promise, sorted_recordings_promise]) then [device_playlist, recordings]}
+	{#await Promise.all( [device_playlist_promise, sorted_recordings_promise] ) then [device_playlist, recordings]}
 		<stream>
 			<VideoWithLoader
 				src={`${PUBLIC_RELAY_URL}${device_playlist.device.name}${device_playlist.playlist.path}`}

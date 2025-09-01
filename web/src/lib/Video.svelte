@@ -20,7 +20,7 @@
 
 		if (videoElement.canPlayType('application/vnd.apple.mpegurl')) {
 			videoElement.src = src;
-			return
+			return;
 		}
 
 		if (Hls.isSupported()) {
