@@ -21,9 +21,7 @@
 			{src}
 			{...rest}
 			onplaying={() => {
-				setTimeout(() => {
-					isLoading = false;
-				}, 4000);
+				isLoading = false;
 			}}
 		/>
 	</stream>
