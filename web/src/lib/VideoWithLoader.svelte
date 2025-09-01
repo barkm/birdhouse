@@ -2,8 +2,12 @@
 	import Video from '$lib/Video.svelte';
 	import { fade } from 'svelte/transition';
 	import Loader from './Loader.svelte';
+	import type { HTMLVideoAttributes } from 'svelte/elements';
+
+	type Props = { src: string } & HTMLVideoAttributes;
+	const { src, ...rest }: Props = $props();
+
 	let isLoading = $state(true);
-	let props: { src: string } = $props();
 </script>
 
 <stream-with-loader>
@@ -14,11 +18,8 @@
 	{/if}
 	<stream class:loading={isLoading}>
 		<Video
-			src={props.src}
-			controls
-			autoplay
-			muted
-			playsinline
+			{src}
+			{...rest}
 			onplaying={() => {
 				setTimeout(() => {
 					isLoading = false;

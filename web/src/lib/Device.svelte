@@ -49,6 +49,10 @@
 		<stream>
 			<VideoWithLoader
 				src={`${PUBLIC_RELAY_URL}${device_playlist.device.name}${device_playlist.playlist.path}`}
+				controls
+				autoplay
+				muted
+				playsinline
 			/>
 		</stream>
 	{/await}
@@ -57,7 +61,7 @@
 			{#each recordings as recording (recording.url)}
 				<recording>
 					<strong>{recording.time}</strong>
-					<VideoWithLoader src={recording.url} />
+					<VideoWithLoader src={recording.url} autoplay muted playsinline loop />
 				</recording>
 			{/each}
 		</recordings>
