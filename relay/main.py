@@ -1,5 +1,6 @@
+from fastapi.datastructures import QueryParams
 import httpx
-from fastapi import FastAPI, HTTPException, Response
+from fastapi import FastAPI, HTTPException, Request, Response
 from pydantic import BaseModel
 from fastapi.middleware.cors import CORSMiddleware
 from memoization import cached
@@ -33,21 +34,22 @@ async def list_devices():
 
 
 @app.get("/{name}/{path:path}")
-async def forward(name: str, path: str) -> Response:
-    return _forward(name, path) if "m3u8" in path else _cached_forward(name, path)
+async def forward(request: Request, name: str, path: str) -> Response:
+    forward_func = _cached_forward if ".ts" in path else _forward
+    return forward_func(name, path, request.query_params)
 
 
 @cached(max_size=100)
-def _cached_forward(name: str, path: str) -> Response:
-    return _forward(name, path)
+def _cached_forward(name: str, path: str, query_params: QueryParams) -> Response:
+    return _forward(name, path, query_params)
 
 
-def _forward(name: str, path: str) -> Response:
+def _forward(name: str, path: str, query_params: QueryParams) -> Response:
     if name not in URL_FROM_NAME:
         raise HTTPException(status_code=404, detail="Name not registered")
     url = URL_FROM_NAME[name]
     device_url = f"{url}/{path}"
-    response = httpx.get(device_url, timeout=20.0)
+    response = httpx.get(device_url, timeout=20.0, params=query_params)
     return Response(
         content=response.content,
         status_code=response.status_code,
