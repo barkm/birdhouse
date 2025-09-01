@@ -172,15 +172,14 @@ def _start_hls_video_stream_raspberry_pi(
     segment_filename: Path, stream_file_path: Path, bitrate: int, framerate: int
 ) -> list[subprocess.Popen]:
     # fmt: off
-    frame_rate = 24
     rpicam = subprocess.Popen(
         [
             "rpicam-vid",
             "-t", "0",
             "--width", "1920",
             "--height", "1080",
-            "--framerate", f"{frame_rate}",
-            "--intra", f"{frame_rate * 2}",
+            "--framerate", f"{framerate}",
+            "--intra", f"{framerate * 2}",
             "--codec", "h264",
             "--profile", "high",
             "--bitrate", f"{bitrate}",
