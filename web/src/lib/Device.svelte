@@ -83,6 +83,7 @@
 
 	recordings {
 		width: 90%;
+		justify-items: center;
 		display: grid;
 		grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
 		gap: 1rem;
@@ -92,5 +93,7 @@
 		display: flex;
 		flex-direction: column;
 		align-items: center;
+		width: 100%;
+		max-width: 500px;
 	}
 </style>
