@@ -31,7 +31,7 @@ class Stream:
         path = self.start() / filename
         return path if path.exists() else None
 
-    def start(self) -> Path:
+    def start(self, bitrate: int = 500000) -> Path:
         with self.video_lock:
             if self.video:
                 self.video.timer.cancel()
@@ -41,7 +41,7 @@ class Stream:
                 directory = Path(tempfile.mkdtemp())
                 self.video = Video(
                     process=_start_hls_video_stream(
-                        directory, self.playlist_filename, self.test_stream
+                        directory, self.playlist_filename, self.test_stream, bitrate
                     ),
                     directory=directory,
                     timer=self._get_video_timer(),
@@ -73,23 +73,27 @@ def _remove_directory(dirpath: Path) -> None:
 
 
 def _start_hls_video_stream(
-    stream_dir: Path, playlist_filename, test_stream: bool
+    stream_dir: Path, playlist_filename, test_stream: bool, bitrate: int
 ) -> list[subprocess.Popen]:
     stream_dir.mkdir(parents=True, exist_ok=True)
     stream_file_path = stream_dir / playlist_filename
     segment_filename = stream_dir / (uuid.uuid4().hex + "_%04d.ts")
-    process = _start_stream_process(stream_file_path, segment_filename, test_stream)
+    process = _start_stream_process(
+        stream_file_path, segment_filename, test_stream, bitrate
+    )
     _wait_until_exists(stream_file_path)
     return process
 
 
 def _start_stream_process(
-    stream_filepath: Path, segment_filepath: Path, test_stream: bool
+    stream_filepath: Path, segment_filepath: Path, test_stream: bool, bitrate: int
 ) -> list[subprocess.Popen]:
     if test_stream:
         return [_start_test_stream(segment_filepath, stream_filepath)]
     if is_raspberry_pi():
-        return _start_hls_video_stream_raspberry_pi(segment_filepath, stream_filepath)
+        return _start_hls_video_stream_raspberry_pi(
+            segment_filepath, stream_filepath, bitrate
+        )
     if is_mac():
         return [_start_hls_video_stream_mac(segment_filepath, stream_filepath)]
     raise RuntimeError("Unsupported platform for HLS streaming")
@@ -157,7 +161,7 @@ def _start_hls_video_stream_mac(
 
 
 def _start_hls_video_stream_raspberry_pi(
-    segment_filename: Path, stream_file_path: Path
+    segment_filename: Path, stream_file_path: Path, bitrate: int
 ) -> list[subprocess.Popen]:
     # fmt: off
     frame_rate = 24
@@ -171,7 +175,7 @@ def _start_hls_video_stream_raspberry_pi(
             "--intra", f"{frame_rate * 2}",
             "--codec", "h264",
             "--profile", "high",
-            "--bitrate", "500k",
+            "--bitrate", f"{bitrate}",
             "-o",
             "-",
         ],

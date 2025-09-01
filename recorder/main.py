@@ -70,7 +70,7 @@ def _record_and_save(relay_url: str, device: str, recording_dir: str) -> None:
 def _record(relay_url: str, device: str, output_path: str) -> None:
     logging.info(f"Saving recording for {device}")
     start_url = f"{relay_url}/{device}/start"
-    start_response = httpx.get(start_url)
+    start_response = httpx.get(start_url, params={"bitrate": 1000000})
     start_response.raise_for_status()
     playlist_path = start_response.json()["playlist"]
     playlist_url = f"{relay_url}/{device}{playlist_path}"
