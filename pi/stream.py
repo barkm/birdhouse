@@ -31,7 +31,7 @@ class Stream:
         path = self.start() / filename
         return path if path.exists() else None
 
-    def start(self, bitrate: int = 500000) -> Path:
+    def start(self, bitrate: int = 500000, framerate: int = 24) -> Path:
         with self.video_lock:
             if self.video:
                 self.video.timer.cancel()
@@ -41,7 +41,11 @@ class Stream:
                 directory = Path(tempfile.mkdtemp())
                 self.video = Video(
                     process=_start_hls_video_stream(
-                        directory, self.playlist_filename, self.test_stream, bitrate
+                        directory,
+                        self.playlist_filename,
+                        self.test_stream,
+                        bitrate,
+                        framerate,
                     ),
                     directory=directory,
                     timer=self._get_video_timer(),
@@ -73,26 +77,30 @@ def _remove_directory(dirpath: Path) -> None:
 
 
 def _start_hls_video_stream(
-    stream_dir: Path, playlist_filename, test_stream: bool, bitrate: int
+    stream_dir: Path, playlist_filename, test_stream: bool, bitrate: int, framerate: int
 ) -> list[subprocess.Popen]:
     stream_dir.mkdir(parents=True, exist_ok=True)
     stream_file_path = stream_dir / playlist_filename
     segment_filename = stream_dir / (uuid.uuid4().hex + "_%04d.ts")
     process = _start_stream_process(
-        stream_file_path, segment_filename, test_stream, bitrate
+        stream_file_path, segment_filename, test_stream, bitrate, framerate
     )
     _wait_until_exists(stream_file_path)
     return process
 
 
 def _start_stream_process(
-    stream_filepath: Path, segment_filepath: Path, test_stream: bool, bitrate: int
+    stream_filepath: Path,
+    segment_filepath: Path,
+    test_stream: bool,
+    bitrate: int,
+    framerate: int,
 ) -> list[subprocess.Popen]:
     if test_stream:
         return [_start_test_stream(segment_filepath, stream_filepath)]
     if is_raspberry_pi():
         return _start_hls_video_stream_raspberry_pi(
-            segment_filepath, stream_filepath, bitrate
+            segment_filepath, stream_filepath, bitrate, framerate
         )
     if is_mac():
         return [_start_hls_video_stream_mac(segment_filepath, stream_filepath)]
@@ -161,7 +169,7 @@ def _start_hls_video_stream_mac(
 
 
 def _start_hls_video_stream_raspberry_pi(
-    segment_filename: Path, stream_file_path: Path, bitrate: int
+    segment_filename: Path, stream_file_path: Path, bitrate: int, framerate: int
 ) -> list[subprocess.Popen]:
     # fmt: off
     frame_rate = 24

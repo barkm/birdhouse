@@ -49,7 +49,7 @@ async def serve_hls_files(request: Request, filename: str):
 
 
 @app.get("/start")
-async def start_stream(request: Request, bitrate: int = 500000):
+async def start_stream(request: Request, bitrate: int = 500000, framerate: int = 24):
     stream: Stream = request.app.state.stream
-    stream.start(bitrate)
+    stream.start(bitrate, framerate)
     return {"playlist": f"/hls/{PLAYLIST_FILENAME}"}
