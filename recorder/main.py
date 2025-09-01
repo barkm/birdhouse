@@ -4,8 +4,9 @@ from subprocess import CalledProcessError, run
 from tempfile import NamedTemporaryFile
 import logging
 
+from fastapi.responses import FileResponse
 import httpx
-from fastapi import FastAPI
+from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic_settings import BaseSettings
 from pydantic import BaseModel
@@ -113,18 +114,26 @@ class Recording(BaseModel):
     url: str
 
 
+@app.get("/recording/{path:path}")
+def get_recording(path: str) -> FileResponse:
+    return FileResponse(f"{settings.recording_dir}/{path}")
+
+
 @app.get("/recordings/{device}")
-def list_recordings(device: str) -> list[Recording]:
-    device_path = f"{settings.recording_dir}/{device}"
+def list_recordings(request: Request, device: str) -> list[Recording]:
     if settings.recording_dir.startswith("gs://"):
-        return _list_gcs_recordings(device_path)
-    return _list_local_recordings(device_path)
+        return _list_gcs_recordings(f"{settings.recording_dir}/{device}")
+    return _list_local_recordings(str(request.base_url), settings.recording_dir, device)
 
 
-def _list_local_recordings(recording_dir: str) -> list[Recording]:
+def _list_local_recordings(
+    url: str, recording_dir: str, device: str
+) -> list[Recording]:
     return [
-        Recording(time=path.stem, url=f"file://{path.resolve()}")
-        for path in Path(recording_dir).iterdir()
+        Recording(
+            time=path.stem, url=f"{url}recording/{path.relative_to(recording_dir)}"
+        )
+        for path in Path(recording_dir, device).iterdir()
     ]
 
 
