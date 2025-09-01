@@ -13,6 +13,11 @@
 		if (!videoElement) {
 			return;
 		}
+		if (!src.endsWith('.m3u8')) {
+			videoElement.src = src;
+			return;
+		}
+
 		if (Hls.isSupported()) {
 			hls = new Hls();
 			hls.loadSource(src);
