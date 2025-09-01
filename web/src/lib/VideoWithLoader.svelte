@@ -31,6 +31,7 @@
 <style>
 	stream-with-loader {
 		width: 100%;
+		aspect-ratio: 16 / 9;
 		display: block;
 		position: relative;
 	}
@@ -43,7 +44,6 @@
 
 	stream {
 		width: 100%;
-		aspect-ratio: 16 / 9;
 		transition: opacity 500ms ease-in-out;
 		transition-delay: 500ms;
 		position: absolute;

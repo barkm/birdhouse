@@ -1,14 +1,9 @@
 <script lang="ts">
 	import { PUBLIC_RELAY_URL } from '$env/static/public';
 	import Device from '$lib/Device.svelte';
-	import VideoWithLoader from '$lib/VideoWithLoader.svelte';
 
 	interface Device {
 		name: string;
-	}
-
-	interface Playlist {
-		path: string;
 	}
 
 	const fetch_devices = async (): Promise<Device[]> => {
@@ -20,7 +15,18 @@
 </script>
 
 {#await devices_promise then devices}
-	{#each devices as device (device.name)}
-		<Device {device} />
-	{/each}
+	<devices>
+		{#each devices as device (device.name)}
+			<Device {device} />
+		{/each}
+	</devices>
 {/await}
+
+<style>
+	devices {
+		width: 100%;
+		display: flex;
+		flex-direction: column;
+		align-items: center;
+	}
+</style>
