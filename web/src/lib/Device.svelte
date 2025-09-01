@@ -20,7 +20,9 @@
 	const fetch_device_playlists = async (
 		device: Device
 	): Promise<{ device: Device; playlist: Playlist }> => {
-		const playlist_response = await fetch(`${PUBLIC_RELAY_URL}${device.name}/start?bitrate=500000&framerate=24`);
+		const playlist_response = await fetch(
+			`${PUBLIC_RELAY_URL}${device.name}/start?bitrate=500000&framerate=24`
+		);
 		const data = await playlist_response.json();
 		return {
 			device,
@@ -45,7 +47,7 @@
 </script>
 
 <column>
-	{#await device_playlist_promise then device_playlist}
+	{#await Promise.all([device_playlist_promise, sorted_recordings_promise]) then [device_playlist, recordings]}
 		<stream>
 			<VideoWithLoader
 				src={`${PUBLIC_RELAY_URL}${device_playlist.device.name}${device_playlist.playlist.path}`}
@@ -55,8 +57,6 @@
 				playsinline
 			/>
 		</stream>
-	{/await}
-	{#await sorted_recordings_promise then recordings}
 		<recordings>
 			{#each recordings as recording (recording.url)}
 				<recording>
