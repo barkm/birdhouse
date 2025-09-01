@@ -37,6 +37,11 @@
 
 	const device_playlist_promise = $derived(fetch_device_playlists(props.device));
 	const recordings_promise = $derived(fetch_recordings(props.device));
+	const sorted_recordings_promise = $derived(
+		recordings_promise.then((recordings) =>
+			recordings.sort((a, b) => a.time.localeCompare(b.time)).reverse()
+		)
+	);
 </script>
 
 <column>
@@ -47,7 +52,7 @@
 			/>
 		</stream>
 	{/await}
-	{#await recordings_promise then recordings}
+	{#await sorted_recordings_promise then recordings}
 		<recordings>
 			{#each recordings as recording (recording.url)}
 				<recording>
