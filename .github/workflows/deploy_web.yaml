@@ -31,6 +31,7 @@ jobs:
         env:
           BASE_PATH: '/${{ github.event.repository.name }}'
           PUBLIC_RELAY_URL: ${{ vars.RELAY_URL }}
+          PUBLIC_RECORDER_URL: ${{ vars.RECORDER_URL }}
         run: |
           npm run build
         working-directory: ./web
