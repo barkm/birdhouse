@@ -18,19 +18,24 @@
 			return;
 		}
 
+		if (videoElement.canPlayType('application/vnd.apple.mpegurl')) {
+			videoElement.src = src;
+			return
+		}
+
 		if (Hls.isSupported()) {
 			hls = new Hls();
 			hls.loadSource(src);
 			hls.attachMedia(videoElement);
-		} else if (videoElement.canPlayType('application/vnd.apple.mpegurl')) {
-			videoElement.src = src;
+			return () => {
+				if (hls) {
+					hls.destroy();
+					hls = null;
+				}
+			};
 		}
-		return () => {
-			if (hls) {
-				hls.destroy();
-				hls = null;
-			}
-		};
+
+		throw new Error('Video not supported!');
 	});
 </script>
 
