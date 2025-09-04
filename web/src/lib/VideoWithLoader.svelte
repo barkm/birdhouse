@@ -4,27 +4,29 @@
 	import Loader from './Loader.svelte';
 	import type { HTMLVideoAttributes } from 'svelte/elements';
 
-	type Props = { src: string } & HTMLVideoAttributes;
+	type Props = { src: string | null } & HTMLVideoAttributes;
 	const { src, ...rest }: Props = $props();
 
 	let isLoading = $state(true);
 </script>
 
 <stream-with-loader>
-	{#if isLoading}
+	{#if isLoading || !src}
 		<loader transition:fade|global={{ duration: 500 }}>
 			<Loader />
 		</loader>
 	{/if}
-	<stream class:loading={isLoading}>
-		<Video
-			{src}
-			{...rest}
-			onplaying={() => {
-				isLoading = false;
-			}}
-		/>
-	</stream>
+	{#if src}
+		<stream class:loading={isLoading}>
+			<Video
+				{src}
+				{...rest}
+				onplaying={() => {
+					isLoading = false;
+				}}
+			/>
+		</stream>
+	{/if}
 </stream-with-loader>
 
 <style>

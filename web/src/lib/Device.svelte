@@ -37,7 +37,14 @@
 		return await recordings_response.json();
 	};
 
-	const device_playlist_promise = $derived(fetch_device_playlists(props.device));
+	let device_playlist = $state<{ device: Device; playlist: Playlist } | null>(null);
+
+	$effect(() => {
+		fetch_device_playlists(props.device).then((playlist) => {
+			device_playlist = playlist;
+		});
+	});
+
 	const recordings_promise = $derived(fetch_recordings(props.device));
 	const sorted_recordings_promise = $derived(
 		recordings_promise.then((recordings) =>
@@ -47,16 +54,18 @@
 </script>
 
 <column>
-	{#await Promise.all( [device_playlist_promise, sorted_recordings_promise] ) then [device_playlist, recordings]}
-		<stream>
-			<VideoWithLoader
-				src={`${PUBLIC_RELAY_URL}${device_playlist.device.name}${device_playlist.playlist.path}`}
-				controls
-				autoplay
-				muted
-				playsinline
-			/>
-		</stream>
+	<stream>
+		<VideoWithLoader
+			src={device_playlist
+				? `${PUBLIC_RELAY_URL}${device_playlist.device.name}${device_playlist.playlist.path}`
+				: null}
+			controls
+			autoplay
+			muted
+			playsinline
+		/>
+	</stream>
+	{#await sorted_recordings_promise then recordings}
 		<recordings>
 			{#each recordings as recording (recording.url)}
 				<recording>
