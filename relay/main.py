@@ -1,5 +1,6 @@
 from dataclasses import dataclass
 from threading import Timer
+import logging
 
 from fastapi.datastructures import QueryParams
 import httpx
@@ -7,6 +8,12 @@ from fastapi import FastAPI, HTTPException, Request, Response
 from pydantic import BaseModel
 from fastapi.middleware.cors import CORSMiddleware
 from memoization import cached
+
+logging.basicConfig(
+    level=logging.INFO,
+    format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
+    datefmt="%Y-%m-%d %H:%M:%S",
+)
 
 app = FastAPI()
 
@@ -34,7 +41,10 @@ class RegisterRequest(BaseModel):
 
 @app.post("/register")
 async def register_device(request: RegisterRequest) -> str:
+    logging.info(f"Registering device {request.name} with url {request.url}")
+
     def remove_device():
+        logging.info(f"Removing device {request.name}")
         URL_FROM_NAME.pop(request.name, None)
 
     timer = Timer(60 * 5, remove_device)
