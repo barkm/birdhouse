@@ -1,3 +1,6 @@
+from dataclasses import dataclass
+from threading import Timer
+
 from fastapi.datastructures import QueryParams
 import httpx
 from fastapi import FastAPI, HTTPException, Request, Response
@@ -14,7 +17,14 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-URL_FROM_NAME: dict[str, str] = {}
+
+@dataclass
+class Device:
+    url: str
+    removalTimer: Timer
+
+
+URL_FROM_NAME: dict[str, Device] = {}
 
 
 class RegisterRequest(BaseModel):
@@ -24,7 +34,17 @@ class RegisterRequest(BaseModel):
 
 @app.post("/register")
 async def register_device(request: RegisterRequest) -> str:
-    URL_FROM_NAME[request.name] = request.url
+    def remove_device():
+        URL_FROM_NAME.pop(request.name, None)
+
+    timer = Timer(60 * 5, remove_device)
+    if request.name in URL_FROM_NAME:
+        URL_FROM_NAME[request.name].removalTimer.cancel()
+    URL_FROM_NAME[request.name] = Device(
+        request.url,
+        timer,
+    )
+    timer.start()
     return "OK"
 
 
@@ -47,7 +67,7 @@ def _cached_forward(name: str, path: str, query_params: QueryParams) -> Response
 def _forward(name: str, path: str, query_params: QueryParams) -> Response:
     if name not in URL_FROM_NAME:
         raise HTTPException(status_code=404, detail="Name not registered")
-    url = URL_FROM_NAME[name]
+    url = URL_FROM_NAME[name].url
     device_url = f"{url}/{path}"
     response = httpx.get(device_url, timeout=20.0, params=query_params)
     return Response(
