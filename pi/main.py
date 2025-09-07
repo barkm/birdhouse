@@ -1,5 +1,6 @@
 from contextlib import asynccontextmanager
 import logging
+from pathlib import Path
 
 from fastapi import FastAPI, HTTPException, Request
 from fastapi.responses import FileResponse
@@ -36,6 +37,8 @@ app = FastAPI(lifespan=lifespan)
 
 @app.get("/hls/{filename:path}")
 async def serve_hls_files(request: Request, filename: str):
+    if not _is_filename(filename):
+        raise HTTPException(status_code=400, detail="Invalid filename")
     stream: Stream = request.app.state.stream
     stream_path = stream.get_file(filename)
     if not stream_path:
@@ -53,3 +56,10 @@ async def start_stream(request: Request, bitrate: int = 500000, framerate: int =
     stream: Stream = request.app.state.stream
     stream.start(bitrate, framerate)
     return {"playlist": f"/hls/{PLAYLIST_FILENAME}"}
+
+
+def _is_filename(filename: str) -> bool:
+    path = Path(filename)
+    return (
+        len(path.parts) == 1 and not path.is_absolute() and filename not in {"..", "."}
+    )
