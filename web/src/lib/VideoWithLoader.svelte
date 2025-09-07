@@ -1,11 +1,11 @@
 <script lang="ts">
-	import Video from '$lib/Video.svelte';
+	import type { ComponentProps } from 'svelte';
 	import { fade } from 'svelte/transition';
-	import Loader from './Loader.svelte';
-	import type { HTMLVideoAttributes } from 'svelte/elements';
 
-	type Props = { src: string | null } & HTMLVideoAttributes;
-	const { src, ...rest }: Props = $props();
+	import Video from '$lib/Video.svelte';
+	import Loader from './Loader.svelte';
+
+	const { src, ...rest }: ComponentProps<typeof Video> = $props();
 
 	let isLoading = $state(true);
 </script>

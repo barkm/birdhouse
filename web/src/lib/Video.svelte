@@ -2,27 +2,23 @@
 	import Hls from 'hls.js';
 	import type { HTMLVideoAttributes } from 'svelte/elements';
 
-	type Props = { src: string } & HTMLVideoAttributes;
-
-	const { src, ...rest }: Props = $props();
+	const { src, ...rest }: HTMLVideoAttributes = $props();
 
 	let videoElement: HTMLVideoElement;
 	let hls: Hls | null = null;
 
-	$effect(() => {
-		if (!videoElement) {
+	const initialize = (): (() => void) | undefined => {
+		if (!videoElement || !src) {
 			return;
 		}
 		if (!src.endsWith('.m3u8')) {
 			videoElement.src = src;
 			return;
 		}
-
 		if (videoElement.canPlayType('application/vnd.apple.mpegurl')) {
 			videoElement.src = src;
 			return;
 		}
-
 		if (Hls.isSupported()) {
 			hls = new Hls();
 			hls.loadSource(src);
@@ -34,8 +30,11 @@
 				}
 			};
 		}
-
 		throw new Error('Video not supported!');
+	};
+
+	$effect(() => {
+		return initialize();
 	});
 </script>
 
