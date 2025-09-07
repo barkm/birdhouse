@@ -21,7 +21,7 @@
 		device: Device
 	): Promise<{ device: Device; playlist: Playlist }> => {
 		const playlist_response = await fetch(
-			`${PUBLIC_RELAY_URL}${device.name}/start?bitrate=500000&framerate=30`
+			`${PUBLIC_RELAY_URL}${device.name}/start?bitrate=500000&framerate=24`
 		);
 		const data = await playlist_response.json();
 		return {
