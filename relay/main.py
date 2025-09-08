@@ -28,7 +28,7 @@ async def lifespan(_: FastAPI):
 
 class Settings(BaseSettings):
     ALLOWED_EMAILS: list[str] | None = None
-    ALLOWED_HOSTS: list[str] | None = None
+    ALLOWED_HOSTS: list[str] = ["localhost"]
 
 
 settings = Settings()
@@ -37,7 +37,6 @@ app = FastAPI(lifespan=lifespan)
 
 @app.middleware("http")
 async def firebase_middleware(request: Request, call_next):
-    logging.info(f"Allowed origins: {settings.ALLOWED_HOSTS}")
     return await validate(
         request,
         call_next,
