@@ -20,3 +20,4 @@
         chdir: "{{ repo_dest }}/relay"
       environment:
         PATH: "{{ uv_binary_path | dirname }}:{{ ansible_env.PATH }}"
+        ALLOWED_EMAILS: "{{ allowed_emails | default('[]') }}"
