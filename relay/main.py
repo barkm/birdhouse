@@ -1,3 +1,4 @@
+from contextlib import asynccontextmanager
 from dataclasses import dataclass
 from threading import Timer
 import logging
@@ -6,8 +7,11 @@ from fastapi.datastructures import QueryParams
 import httpx
 from fastapi import FastAPI, HTTPException, Request, Response
 from pydantic import BaseModel
+from pydantic_settings import BaseSettings
 from fastapi.middleware.cors import CORSMiddleware
 from memoization import cached
+
+from firebase import validate, initialize_firebase
 
 logging.basicConfig(
     level=logging.INFO,
@@ -15,7 +19,32 @@ logging.basicConfig(
     datefmt="%Y-%m-%d %H:%M:%S",
 )
 
-app = FastAPI()
+
+@asynccontextmanager
+async def lifespan(_: FastAPI):
+    initialize_firebase()
+    yield
+
+
+class Settings(BaseSettings):
+    ALLOWED_EMAILS: list[str] | None = None
+    ALLOWED_HOSTS: list[str] | None = None
+
+
+settings = Settings()
+app = FastAPI(lifespan=lifespan)
+
+
+@app.middleware("http")
+async def firebase_middleware(request: Request, call_next):
+    logging.info(f"Allowed origins: {settings.ALLOWED_HOSTS}")
+    return await validate(
+        request,
+        call_next,
+        allowed_emails=settings.ALLOWED_EMAILS,
+        allowed_hosts=settings.ALLOWED_HOSTS,
+    )
+
 
 app.add_middleware(
     CORSMiddleware,
