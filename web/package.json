@@ -33,6 +33,7 @@
 		"vite": "^7.0.4"
 	},
 	"dependencies": {
+		"firebase": "^12.2.1",
 		"hls": "^0.0.1",
 		"hls.js": "^1.6.7"
 	}

@@ -1,26 +1,42 @@
 <script lang="ts">
 	import { PUBLIC_RELAY_URL } from '$env/static/public';
 	import Device from '$lib/Device.svelte';
+	import { loginWithGoogle, logout, user } from '$lib/firebase';
+	import Loader from '$lib/Loader.svelte';
+	import { authorizedRequest } from '$lib/request';
 
 	interface Device {
 		name: string;
 	}
 
 	const fetch_devices = async (): Promise<Device[]> => {
-		const device_response = await fetch(`${PUBLIC_RELAY_URL}list`);
+		if (!$user) return [];
+		const device_response = await authorizedRequest($user, PUBLIC_RELAY_URL, 'list');
 		return await device_response.json();
 	};
 
-	const devices_promise = fetch_devices();
+	const devices_promise = $derived(fetch_devices());
 </script>
 
-{#await devices_promise then devices}
-	<devices>
-		{#each devices as device (device.name)}
-			<Device {device} />
-		{/each}
-	</devices>
-{/await}
+{#if $user}
+	<column style="width: 100%">
+		{#await devices_promise then devices}
+			<devices>
+				{#each devices as device (device.name)}
+					<Device {device} />
+				{/each}
+			</devices>
+		{/await}
+		<button onclick={logout}>Logga ut</button>
+	</column>
+{:else}
+	<row>
+		<column style="width: 25%">
+			<Loader />
+			<button onclick={loginWithGoogle}>Logga in</button>
+		</column>
+	</row>
+{/if}
 
 <style>
 	devices {
@@ -28,5 +44,36 @@
 		display: flex;
 		flex-direction: column;
 		align-items: center;
+	}
+
+	row {
+		width: 100%;
+		height: 100vh;
+		display: flex;
+		justify-content: center;
+		align-items: center;
+	}
+
+	column {
+		min-width: 300px;
+		display: flex;
+		flex-direction: column;
+		align-items: center;
+		gap: 5rem;
+	}
+
+	button {
+		padding: 0.5rem 1rem;
+		font-size: 1.2rem;
+		background-color: white;
+		color: black;
+		border: 1px solid black;
+		border-radius: none;
+		cursor: pointer;
+	}
+
+	button:hover {
+		background-color: black;
+		color: white;
 	}
 </style>

@@ -1,6 +1,8 @@
 <script lang="ts">
-	import { PUBLIC_RELAY_URL, PUBLIC_RECORDER_URL } from '$env/static/public';
+	import { PUBLIC_RECORDER_URL, PUBLIC_RELAY_URL } from '$env/static/public';
 	import VideoWithLoader from '$lib/VideoWithLoader.svelte';
+	import { user } from './firebase';
+	import { authorizedRequest } from './request';
 
 	interface Device {
 		name: string;
@@ -20,8 +22,13 @@
 	const fetch_device_playlists = async (
 		device: Device
 	): Promise<{ device: Device; playlist: Playlist }> => {
-		const playlist_response = await fetch(
-			`${PUBLIC_RELAY_URL}${device.name}/start?bitrate=500000&framerate=24`
+		if (!$user) {
+			throw new Error('User not authenticated');
+		}
+		const playlist_response = await authorizedRequest(
+			$user,
+			PUBLIC_RELAY_URL,
+			`${device.name}/start?bitrate=500000&framerate=24`
 		);
 		const data = await playlist_response.json();
 		return {
@@ -33,7 +40,14 @@
 	};
 
 	const fetch_recordings = async (device: Device): Promise<Recording[]> => {
-		const recordings_response = await fetch(`${PUBLIC_RECORDER_URL}recordings/${device.name}`);
+		if (!$user) {
+			return [];
+		}
+		const recordings_response = await authorizedRequest(
+			$user,
+			PUBLIC_RECORDER_URL,
+			`recordings/${device.name}`
+		);
 		return await recordings_response.json();
 	};
 
@@ -54,17 +68,22 @@
 </script>
 
 <column>
-	<stream>
-		<VideoWithLoader
-			src={device_playlist
-				? `${PUBLIC_RELAY_URL}${device_playlist.device.name}${device_playlist.playlist.path}`
-				: null}
-			controls
-			autoplay
-			muted
-			playsinline
-		/>
-	</stream>
+	{#if $user}
+		{#await $user.getIdToken() then id_token}
+			<stream>
+				<VideoWithLoader
+					{id_token}
+					src={device_playlist
+						? `${PUBLIC_RELAY_URL}${device_playlist.device.name}${device_playlist.playlist.path}`
+						: null}
+					controls
+					autoplay
+					muted
+					playsinline
+				/>
+			</stream>
+		{/await}
+	{/if}
 	{#await sorted_recordings_promise then recordings}
 		<recordings>
 			{#each recordings as recording (recording.url)}
