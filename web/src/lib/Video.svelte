@@ -2,7 +2,7 @@
 	import Hls from 'hls.js';
 	import type { HTMLVideoAttributes } from 'svelte/elements';
 
-	const { src, ...rest }: HTMLVideoAttributes = $props();
+	const { id_token, src, ...rest }: { id_token?: string } & HTMLVideoAttributes = $props();
 
 	let videoElement: HTMLVideoElement;
 	let hls: Hls | null = null;
@@ -20,7 +20,14 @@
 			return;
 		}
 		if (Hls.isSupported()) {
-			hls = new Hls();
+			const hls_config = id_token
+				? {
+						xhrSetup: (xhr: XMLHttpRequest) => {
+							xhr.setRequestHeader('Authorization', `Bearer ${id_token}`);
+						}
+					}
+				: undefined;
+			hls = new Hls(hls_config);
 			hls.loadSource(src);
 			hls.attachMedia(videoElement);
 			return () => {
