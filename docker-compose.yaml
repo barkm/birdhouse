@@ -1,10 +1,25 @@
+networks:
+  relay_network:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 172.23.0.0/16
+
 services:
   relay:
     build: ./relay
     ports:
       - "8001:8001"
+    secrets:
+      - gcp_key
     environment:
       - PORT=8001
+      - GOOGLE_APPLICATION_CREDENTIALS=/run/secrets/gcp_key
+      - ALLOWED_HOSTS=["172.23.0.10"]
+    env_file:
+      - ./relay/.env
+    networks:
+      - relay_network
 
   pi:
     build: ./pi
@@ -17,6 +32,10 @@ services:
       - TEST_STREAM=True
     depends_on:
       - relay
+    networks:
+      relay_network:
+        ipv4_address: 172.23.0.10
+
 
   recorder:
     build:
@@ -28,7 +47,7 @@ services:
     environment:
       - PORT=8003
       - RELAY_URL=http://relay:8001
-      # - RECORDING_DIR=gs://birdhouse-recordings
+      - RECORDING_DIR=gs://birdhouse-recordings
       - GOOGLE_APPLICATION_CREDENTIALS=/run/secrets/gcp_key
     depends_on:
       - relay
