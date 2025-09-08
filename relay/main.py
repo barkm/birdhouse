@@ -28,7 +28,7 @@ async def lifespan(_: FastAPI):
 
 class Settings(BaseSettings):
     ALLOWED_EMAILS: list[str] | None = None
-    ALLOWED_HOSTS: list[str] = ["localhost"]
+    ALLOWED_HOSTS: list[str] = ["localhost", "127.0.0.1"]
 
 
 settings = Settings()
