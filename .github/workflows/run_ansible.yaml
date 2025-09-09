@@ -11,6 +11,7 @@ on:
 jobs:
   run:
     runs-on: ubuntu-latest
+    environment: relay
     defaults:
       run:
         working-directory: ${{ github.workspace }}/deployment
@@ -54,4 +55,4 @@ jobs:
           chmod 600 ~/.ssh/known_hosts
 
       - name: Run
-        run: ${{ inputs.command }}
+        run: ${{ inputs.command }} -e "allowed_emails=${{ secrets.ALLOWED_EMAILS }}"

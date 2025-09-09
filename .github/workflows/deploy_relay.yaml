@@ -12,7 +12,6 @@ on:
 jobs:
   deploy:
     uses: ./.github/workflows/run_ansible.yaml
-    environment: relay
     with:
-      command: uv run ansible-playbook -i ansible/inventory.yaml  -e "allowed_emails=${{ secrets.ALLOWED_EMAILS }}" ansible/playbooks/relay.yaml
+      command: uv run ansible-playbook -i ansible/inventory.yaml ansible/playbooks/relay.yaml
     secrets: inherit
