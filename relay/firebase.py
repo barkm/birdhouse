@@ -18,6 +18,8 @@ async def validate(
     allowed_emails: list[str] | None = None,
     allowed_hosts: list[str] | None = None,
 ):
+    if not request.headers.get("x-external", "false").lower() == "true":
+        return await call_next(request)
     if allowed_hosts is not None and is_from_allowed_host(request, allowed_hosts):
         return await call_next(request)
     auth_header = request.headers.get("authorization", "")
