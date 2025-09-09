@@ -55,4 +55,4 @@ jobs:
           chmod 600 ~/.ssh/known_hosts
 
       - name: Run
-        run: ${{ inputs.command }} -e "allowed_emails=${{ secrets.ALLOWED_EMAILS }}"
+        run: ${{ inputs.command }} -e 'allowed_emails=${{ secrets.ALLOWED_EMAILS }}'
