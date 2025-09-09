@@ -1,3 +1,5 @@
 ${DOMAIN} {
-        reverse_proxy localhost:${PORT}
+        reverse_proxy localhost:${PORT} {
+            header_up X-External true
+        }
 }
