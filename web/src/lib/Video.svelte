@@ -15,10 +15,6 @@
 			videoElement.src = src;
 			return;
 		}
-		if (videoElement.canPlayType('application/vnd.apple.mpegurl')) {
-			videoElement.src = src;
-			return;
-		}
 		if (Hls.isSupported()) {
 			const hls_config = id_token
 				? {
