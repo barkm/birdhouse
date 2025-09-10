@@ -13,14 +13,9 @@ def initialize_firebase(cert_path: str | None = None):
 
 
 async def validate(
-    request: Request,
-    call_next,
-    allowed_emails: list[str] | None = None,
-    allowed_hosts: list[str] | None = None,
+    request: Request, call_next, allowed_emails: list[str] | None = None
 ):
     if not request.headers.get("x-external", "false").lower() == "true":
-        return await call_next(request)
-    if allowed_hosts is not None and is_from_allowed_host(request, allowed_hosts):
         return await call_next(request)
     auth_header = request.headers.get("authorization", "")
     scheme, _, token = auth_header.partition(" ")
@@ -44,10 +39,3 @@ async def validate(
             return JSONResponse({"detail": "Email not authorized"}, status_code=403)
 
     return await call_next(request)
-
-
-def is_from_allowed_host(request: Request, allowed_hosts: list[str]) -> bool:
-    client = request.client
-    if client is None:
-        return False
-    return client.host in allowed_hosts

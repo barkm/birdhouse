@@ -28,7 +28,6 @@ async def lifespan(_: FastAPI):
 
 class Settings(BaseSettings):
     ALLOWED_EMAILS: list[str] | None = None
-    ALLOWED_HOSTS: list[str] = ["localhost", "127.0.0.1"]
 
 
 settings = Settings()
@@ -41,7 +40,6 @@ async def firebase_middleware(request: Request, call_next):
         request,
         call_next,
         allowed_emails=settings.ALLOWED_EMAILS,
-        allowed_hosts=settings.ALLOWED_HOSTS,
     )
 
 

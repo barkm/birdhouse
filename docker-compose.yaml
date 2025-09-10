@@ -1,10 +1,3 @@
-networks:
-  relay_network:
-    driver: bridge
-    ipam:
-      config:
-        - subnet: 172.23.0.0/16
-
 services:
   relay:
     build: ./relay
@@ -15,11 +8,8 @@ services:
     environment:
       - PORT=8001
       - GOOGLE_APPLICATION_CREDENTIALS=/run/secrets/gcp_key
-      - ALLOWED_HOSTS=["172.23.0.10"]
     env_file:
       - ./relay/.env
-    networks:
-      - relay_network
 
   pi:
     build: ./pi
@@ -32,9 +22,6 @@ services:
       - TEST_STREAM=True
     depends_on:
       - relay
-    networks:
-      relay_network:
-        ipv4_address: 172.23.0.10
 
 
   recorder:
@@ -60,8 +47,8 @@ services:
       - "8004:8004"
     environment:
       - PORT=8004
-      - PUBLIC_RELAY_URL=http://localhost:8001/
-      - PUBLIC_RECORDER_URL=http://localhost:8003/
+    env_file:
+      - ./web/.env.local
     depends_on:
       - relay
 
