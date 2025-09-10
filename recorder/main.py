@@ -36,13 +36,13 @@ app.add_middleware(
 
 
 @app.get("/record")
-async def record() -> dict:
+async def record(duration: int = 10) -> dict:
     if settings.relay_url is None:
         logging.error("Relay url not set")
         return {"error": "Relay url not set"}
     devices = _get_devices(settings.relay_url)
     for device in devices:
-        _record_and_save(settings.relay_url, device, settings.recording_dir)
+        _record_and_save(settings.relay_url, device, settings.recording_dir, duration)
     return {}
 
 
@@ -57,17 +57,19 @@ def _get_devices(relay_url: str) -> list[str]:
         return []
 
 
-def _record_and_save(relay_url: str, device: str, recording_dir: str) -> None:
+def _record_and_save(
+    relay_url: str, device: str, recording_dir: str, duration: int
+) -> None:
     output_path = f"{recording_dir}/{device}/{datetime.now().isoformat()}.mp4"
     if recording_dir.startswith("gs://"):
         with NamedTemporaryFile(suffix=".mp4") as temp_file:
-            _record(relay_url, device, temp_file.name)
+            _record(relay_url, device, temp_file.name, duration)
             _upload_to_gcs(temp_file.name, output_path)
     else:
-        _record(relay_url, device, output_path)
+        _record(relay_url, device, output_path, duration)
 
 
-def _record(relay_url: str, device: str, output_path: str) -> None:
+def _record(relay_url: str, device: str, output_path: str, duration: int) -> None:
     logging.info(f"Saving recording for {device}")
     start_url = f"{relay_url}/{device}/start"
     start_response = httpx.get(
@@ -81,7 +83,7 @@ def _record(relay_url: str, device: str, output_path: str) -> None:
     command = [
         "ffmpeg", "-y",
         "-i", playlist_url,
-        "-t", "10",
+        "-t", str(duration),
         "-c:v", "libx264",
         "-c:a", "aac",
         "-movflags", "+faststart",
