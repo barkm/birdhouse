@@ -156,6 +156,9 @@ wheels = [
 name = "common"
 version = "0.1.0"
 source = { editable = "../common" }
+dependencies = [
+    { name = "click" },
+]
 
 [package.optional-dependencies]
 auth = [
@@ -163,7 +166,10 @@ auth = [
 ]
 
 [package.metadata]
-requires-dist = [{ name = "firebase-admin", marker = "extra == 'auth'", specifier = ">=7.1.0" }]
+requires-dist = [
+    { name = "click", specifier = ">=8.2.1" },
+    { name = "firebase-admin", marker = "extra == 'auth'", specifier = ">=7.1.0" },
+]
 provides-extras = ["auth"]
 
 [[package]]
