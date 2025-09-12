@@ -13,7 +13,7 @@ from pydantic_settings import BaseSettings
 from pydantic import BaseModel
 from google.cloud import storage
 
-from common.firebase import validate, initialize_firebase
+from common.firebase import verify, initialize_firebase
 
 logging.basicConfig(
     level=logging.INFO,
@@ -41,7 +41,7 @@ app = FastAPI(lifespan=lifespan)
 @app.middleware("http")
 async def auth_middleware(request: Request, call_next):
     auth_header = request.headers.get("authorization", "")
-    return validate(
+    return verify(
         auth_header, allowed_emails=settings.allowed_emails
     ) or await call_next(request)
 

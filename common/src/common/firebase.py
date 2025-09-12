@@ -11,7 +11,7 @@ def initialize_firebase(cert_path: str | None = None):
     initialize_app(credentials.Certificate(cert_path) if cert_path else None)
 
 
-def validate(
+def verify(
     auth_header: str,
     allowed_emails: list[str] | None = None,
 ) -> JSONResponse | None:

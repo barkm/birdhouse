@@ -11,7 +11,7 @@ from pydantic_settings import BaseSettings
 from fastapi.middleware.cors import CORSMiddleware
 from memoization import cached
 
-from common.firebase import validate, initialize_firebase
+from common.firebase import verify, initialize_firebase
 
 logging.basicConfig(
     level=logging.INFO,
@@ -39,7 +39,7 @@ async def auth_middleware(request: Request, call_next):
     if "x-external" not in request.headers:
         return await call_next(request)
     auth_header = request.headers.get("authorization", "")
-    return validate(
+    return verify(
         auth_header, allowed_emails=settings.ALLOWED_EMAILS
     ) or await call_next(request)
 
