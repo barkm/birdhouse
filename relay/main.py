@@ -35,7 +35,7 @@ app = FastAPI(lifespan=lifespan)
 
 
 @app.middleware("http")
-async def firebase_middleware(request: Request, call_next):
+async def auth_middleware(request: Request, call_next):
     if "x-external" not in request.headers:
         return await call_next(request)
     return await validate(request, call_next, allowed_emails=settings.ALLOWED_EMAILS)
