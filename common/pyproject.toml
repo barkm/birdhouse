@@ -3,7 +3,9 @@ name = "common"
 version = "0.1.0"
 description = "Add your description here"
 requires-python = ">=3.13"
-dependencies = []
+dependencies = [
+    "click>=8.2.1",
+]
 
 [project.scripts]
 service = "common.service:cli"
