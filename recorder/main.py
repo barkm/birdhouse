@@ -40,7 +40,10 @@ app = FastAPI(lifespan=lifespan)
 
 @app.middleware("http")
 async def auth_middleware(request: Request, call_next):
-    return await validate(request, call_next, allowed_emails=settings.allowed_emails)
+    auth_header = request.headers.get("authorization", "")
+    return validate(
+        auth_header, allowed_emails=settings.allowed_emails
+    ) or await call_next(request)
 
 
 app.add_middleware(

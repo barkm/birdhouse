@@ -2,7 +2,6 @@ import logging
 
 from fastapi.responses import JSONResponse
 from firebase_admin import credentials, initialize_app
-from fastapi import Request
 from firebase_admin import auth
 
 logger = logging.getLogger(__name__)
@@ -12,12 +11,10 @@ def initialize_firebase(cert_path: str | None = None):
     initialize_app(credentials.Certificate(cert_path) if cert_path else None)
 
 
-async def validate(
-    request: Request,
-    call_next,
+def validate(
+    auth_header: str,
     allowed_emails: list[str] | None = None,
-):
-    auth_header = request.headers.get("authorization", "")
+) -> JSONResponse | None:
     scheme, _, token = auth_header.partition(" ")
     if scheme != "Bearer" or not token:
         return JSONResponse({"detail": "Missing Bearer token"}, status_code=401)
@@ -38,4 +35,4 @@ async def validate(
         if email not in allowed_emails:
             return JSONResponse({"detail": "Email not authorized"}, status_code=403)
 
-    return await call_next(request)
+    return None

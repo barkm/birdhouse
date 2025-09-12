@@ -38,7 +38,10 @@ app = FastAPI(lifespan=lifespan)
 async def auth_middleware(request: Request, call_next):
     if "x-external" not in request.headers:
         return await call_next(request)
-    return await validate(request, call_next, allowed_emails=settings.ALLOWED_EMAILS)
+    auth_header = request.headers.get("authorization", "")
+    return validate(
+        auth_header, allowed_emails=settings.ALLOWED_EMAILS
+    ) or await call_next(request)
 
 
 app.add_middleware(
