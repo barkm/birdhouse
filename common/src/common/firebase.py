@@ -16,10 +16,7 @@ async def validate(
     request: Request,
     call_next,
     allowed_emails: list[str] | None = None,
-    allow_internal: bool = False,
 ):
-    if allow_internal and "x-external" not in request.headers:
-        return await call_next(request)
     auth_header = request.headers.get("authorization", "")
     scheme, _, token = auth_header.partition(" ")
     if scheme != "Bearer" or not token:
