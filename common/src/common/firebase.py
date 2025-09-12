@@ -13,9 +13,12 @@ def initialize_firebase(cert_path: str | None = None):
 
 
 async def validate(
-    request: Request, call_next, allowed_emails: list[str] | None = None
+    request: Request,
+    call_next,
+    allowed_emails: list[str] | None = None,
+    allow_internal: bool = False,
 ):
-    if not request.headers.get("x-external", "false").lower() == "true":
+    if allow_internal and "x-external" not in request.headers:
         return await call_next(request)
     auth_header = request.headers.get("authorization", "")
     scheme, _, token = auth_header.partition(" ")

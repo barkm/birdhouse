@@ -4,7 +4,7 @@ services:
       context: .
       dockerfile: ./docker/Dockerfile.relay
     ports:
-      - "8001:8001"
+      - "8001"
     secrets:
       - gcp_key
     environment:
@@ -12,13 +12,15 @@ services:
       - GOOGLE_APPLICATION_CREDENTIALS=/run/secrets/gcp_key
     env_file:
       - ./relay/.env
+    networks:
+      - relay_net
 
   pi:
     build:
       context: .
       dockerfile: ./docker/Dockerfile.pi
     ports:
-      - "8000:8000"
+      - "8000"
     environment:
       - PORT=8000
       - URL=http://pi:8000
@@ -26,6 +28,8 @@ services:
       - TEST_STREAM=True
     depends_on:
       - relay
+    networks:
+      - relay_net
 
 
   recorder:
@@ -46,6 +50,22 @@ services:
     depends_on:
       - relay
       - pi
+    networks:
+      - relay_net
+    
+  caddy:
+    image: caddy:2
+    volumes:
+      - ./relay/Caddyfile:/etc/caddy/Caddyfile:ro
+    ports:
+      - "8080:8080"
+    environment:
+      - DOMAIN=:8080
+      - SERVER=relay:8001
+    depends_on:
+      - relay
+    networks:
+      - relay_net
 
   web:
     build:
@@ -60,6 +80,10 @@ services:
     depends_on:
       - relay
 
+
+networks:
+  relay_net:
+    driver: bridge
 
 secrets:
   gcp_key:

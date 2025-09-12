@@ -41,9 +41,7 @@ app = FastAPI(lifespan=lifespan)
 @app.middleware("http")
 async def firebase_middleware(request: Request, call_next):
     return await validate(
-        request,
-        call_next,
-        allowed_emails=settings.allowed_emails,
+        request, call_next, allowed_emails=settings.allowed_emails, allow_internal=False
     )
 
 
