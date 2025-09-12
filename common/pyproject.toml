@@ -1,0 +1,15 @@
+[project]
+name = "common"
+version = "0.1.0"
+description = "Add your description here"
+requires-python = ">=3.13"
+dependencies = [
+    "firebase-admin>=7.1.0",
+]
+
+[project.scripts]
+service = "common.service:cli"
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"

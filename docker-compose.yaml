@@ -1,6 +1,8 @@
 services:
   relay:
-    build: ./relay
+    build:
+      context: .
+      dockerfile: ./docker/Dockerfile.relay
     ports:
       - "8001:8001"
     secrets:
@@ -12,7 +14,9 @@ services:
       - ./relay/.env
 
   pi:
-    build: ./pi
+    build:
+      context: .
+      dockerfile: ./docker/Dockerfile.pi
     ports:
       - "8000:8000"
     environment:
@@ -26,7 +30,8 @@ services:
 
   recorder:
     build:
-      context: ./recorder
+      context: .
+      dockerfile: ./docker/Dockerfile.recorder
     ports:
       - "8003:8003"
     secrets:
@@ -42,7 +47,8 @@ services:
 
   web:
     build:
-      context: ./web
+      context: .
+      dockerfile: ./docker/Dockerfile.web
     ports:
       - "8004:8004"
     environment:

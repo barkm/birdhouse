@@ -1,0 +1,12 @@
+FROM ghcr.io/astral-sh/uv:debian-slim
+RUN apt-get update && apt-get install -y ffmpeg curl
+COPY common/pyproject.toml common/pyproject.toml
+COPY common/uv.lock common/uv.lock
+COPY common/src common/src 
+COPY pi/pyproject.toml pi/pyproject.toml
+COPY pi/uv.lock pi/uv.lock
+RUN uv --project pi sync
+COPY pi/main.py pi/main.py
+COPY pi/stream.py pi/stream.py
+ENV PYTHONUNBUFFERED=1
+CMD sh -c 'while true; do  curl --silent --retry 5 --retry-connrefused -H "Content-Type: application/json" -d "{\"name\": \"docker-test\", \"url\": \"$URL\"}" "$REGISTER_URL"; sleep 60; done & uv --project pi run fastapi run pi/main.py --port $PORT'

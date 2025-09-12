@@ -1,0 +1,14 @@
+FROM node:24-slim as builder
+
+WORKDIR /app
+COPY web/package.json ./
+COPY web/package-lock.json ./
+RUN npm install
+
+COPY web/src ./src
+COPY web/static ./static
+COPY web/svelte.config.js ./svelte.config.js
+COPY web/vite.config.ts ./vite.config.ts
+COPY web/tsconfig.json ./tsconfig.json
+COPY web/.svelte-kit/tsconfig.json ./.svelte-kit/tsconfig.json
+CMD npm run build && npm run preview -- --host 0.0.0.0 --port $PORT

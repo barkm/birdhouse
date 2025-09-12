@@ -9,12 +9,12 @@ if [[ "$1" == "install" ]]; then
     echo "Usage: $0 install <remote_host>"
     exit 1
   fi
-  sudo $UV run service.py install \
+  sudo $UV run service install \
       --name $SERVICE_NAME \
       --command "$(which autossh) -M 0 -N -o "ServerAliveInterval=60" -o "ServerAliveCountMax=3" -R 8000:localhost:8000 -R 2222:localhost:22 -L 5000:localhost:5000 ${REMOTE_HOST}" \
       --environment "AUTOSSH_GATETIME=0"
 elif [[ "$1" == "uninstall" ]]; then
-  sudo $UV run service.py uninstall --name $SERVICE_NAME 
+  sudo $UV run service uninstall --name $SERVICE_NAME 
 else
   echo "Usage: $0 install <remote_host> or $0 uninstall"
   exit 1
