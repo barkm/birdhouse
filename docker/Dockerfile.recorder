@@ -1,8 +1,11 @@
 FROM ghcr.io/astral-sh/uv:debian-slim
 RUN apt-get update && apt-get install -y ffmpeg
-COPY recorder/pyproject.toml .
-COPY recorder/uv.lock .
-RUN uv sync
-COPY recorder/main.py .
+COPY common/pyproject.toml common/pyproject.toml
+COPY common/uv.lock common/uv.lock
+COPY common/src common/src 
+COPY recorder/pyproject.toml recorder/pyproject.toml
+COPY recorder/uv.lock recorder/uv.lock
+RUN uv --project recorder sync
+COPY recorder/main.py recorder/main.py
 ENV PYTHONUNBUFFERED=1
-CMD uv run fastapi run main.py --port $PORT
+CMD uv --project recorder run fastapi run recorder/main.py --port $PORT

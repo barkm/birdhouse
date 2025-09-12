@@ -3,9 +3,13 @@ name = "recorder"
 version = "0.1.0"
 description = "Add your description here"
 readme = "README.md"
-requires-python = ">=3.9"
+requires-python = ">=3.13"
 dependencies = [
+    "common[auth]",
     "fastapi[standard]>=0.116.1",
     "google-cloud-storage>=3.3.0",
     "pydantic-settings>=2.10.1",
 ]
+
+[tool.uv.sources]
+common = { path = "../common", editable = true }

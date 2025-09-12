@@ -1,3 +1,4 @@
+from contextlib import asynccontextmanager
 from pathlib import Path
 from datetime import datetime
 from subprocess import CalledProcessError, run
@@ -12,6 +13,8 @@ from pydantic_settings import BaseSettings
 from pydantic import BaseModel
 from google.cloud import storage
 
+from common.firebase import validate, initialize_firebase
+
 logging.basicConfig(
     level=logging.INFO,
     format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
@@ -22,10 +25,27 @@ logging.basicConfig(
 class Settings(BaseSettings):
     relay_url: str | None = None
     recording_dir: str = "/recordings"
+    allowed_emails: list[str] | None = None
+
+
+@asynccontextmanager
+async def lifespan(_: FastAPI):
+    initialize_firebase()
+    yield
 
 
 settings = Settings()
-app = FastAPI()
+app = FastAPI(lifespan=lifespan)
+
+
+@app.middleware("http")
+async def firebase_middleware(request: Request, call_next):
+    return await validate(
+        request,
+        call_next,
+        allowed_emails=settings.allowed_emails,
+    )
+
 
 app.add_middleware(
     CORSMiddleware,
