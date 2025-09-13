@@ -32,7 +32,7 @@ class Settings(BaseSettings):
 
 @asynccontextmanager
 async def lifespan(_: FastAPI):
-    firebase.initialize_firebase()
+    firebase.initialize()
     yield
 
 

@@ -7,7 +7,7 @@ from firebase_admin import auth
 logger = logging.getLogger(__name__)
 
 
-def initialize_firebase(cert_path: str | None = None):
+def initialize(cert_path: str | None = None):
     initialize_app(credentials.Certificate(cert_path) if cert_path else None)
 
 
