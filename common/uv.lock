@@ -156,12 +156,20 @@ auth = [
     { name = "firebase-admin" },
 ]
 
+[package.dev-dependencies]
+auth = [
+    { name = "google-auth" },
+]
+
 [package.metadata]
 requires-dist = [
     { name = "click", specifier = ">=8.2.1" },
     { name = "firebase-admin", marker = "extra == 'auth'", specifier = ">=7.1.0" },
 ]
 provides-extras = ["auth"]
+
+[package.metadata.requires-dev]
+auth = [{ name = "google-auth", specifier = ">=2.40.3" }]
 
 [[package]]
 name = "cryptography"

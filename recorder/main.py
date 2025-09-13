@@ -14,7 +14,7 @@ from pydantic import BaseModel
 from google.cloud import storage
 
 import common.firebase as firebase
-import google_auth
+import common.google as google
 
 logging.basicConfig(
     level=logging.INFO,
@@ -48,9 +48,7 @@ async def auth_middleware(request: Request, call_next):
     firebase_response = firebase.verify(
         auth_header, allowed_emails=settings.allowed_emails
     )
-    google_response = google_auth.verify(
-        auth_header, allowed_emails=settings.allowed_emails
-    )
+    google_response = google.verify(auth_header, allowed_emails=settings.allowed_emails)
     if any(response is None for response in [firebase_response, google_response]):
         return await call_next(request)
     return next(

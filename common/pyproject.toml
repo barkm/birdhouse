@@ -17,4 +17,5 @@ build-backend = "hatchling.build"
 [project.optional-dependencies]
 auth = [
     "firebase-admin>=7.1.0",
+    "google-auth>=2.40.3",
 ]
