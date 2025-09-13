@@ -13,7 +13,8 @@ from pydantic_settings import BaseSettings
 from pydantic import BaseModel
 from google.cloud import storage
 
-from common.firebase import verify, initialize_firebase
+import common.firebase as firebase
+import google_auth
 
 logging.basicConfig(
     level=logging.INFO,
@@ -30,7 +31,7 @@ class Settings(BaseSettings):
 
 @asynccontextmanager
 async def lifespan(_: FastAPI):
-    initialize_firebase()
+    firebase.initialize_firebase()
     yield
 
 
@@ -41,9 +42,19 @@ app = FastAPI(lifespan=lifespan)
 @app.middleware("http")
 async def auth_middleware(request: Request, call_next):
     auth_header = request.headers.get("authorization", "")
-    return verify(
+    firebase_response = firebase.verify(
         auth_header, allowed_emails=settings.allowed_emails
-    ) or await call_next(request)
+    )
+    google_response = google_auth.verify(
+        auth_header, allowed_emails=settings.allowed_emails
+    )
+    if any(response is None for response in [firebase_response, google_response]):
+        return await call_next(request)
+    return next(
+        response
+        for response in [firebase_response, google_response]
+        if response is not None
+    )
 
 
 app.add_middleware(
