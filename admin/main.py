@@ -2,7 +2,7 @@ import click
 
 from firebase_admin import auth
 
-from common.auth.firebase import initialize
+from common.auth.firebase import initialize, set_authorization
 
 
 @click.group()
@@ -15,23 +15,16 @@ def cli():
 @click.argument("uids", nargs=-1, required=True)
 def authorize(uids: tuple[str, ...]):
     for uid in uids:
-        _set_authorization(uid, True)
+        set_authorization(uid, True)
+        click.echo(f"User {uid} authorized")
 
 
 @cli.command()
 @click.argument("uids", nargs=-1, required=True)
 def unauthorize(uids: tuple[str, ...]):
     for uid in uids:
-        _set_authorization(uid, False)
-
-
-def _set_authorization(uid: str, authorized: bool):
-    user = auth.get_user(uid)
-    claims = user.custom_claims or {}
-    claims["authorized"] = authorized
-    auth.set_custom_user_claims(uid, claims)
-    status = "authorized" if authorized else "unauthorized"
-    click.echo(f"User {uid} {status}")
+        set_authorization(uid, False)
+        click.echo(f"User {uid} unauthorized")
 
 
 @cli.command()

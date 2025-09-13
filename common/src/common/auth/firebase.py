@@ -33,3 +33,10 @@ def verify(
         email = decoded.get("email")
         if email not in allowed_emails:
             raise AuthException("Email not authorized", status_code=403)
+
+
+def set_authorization(uid: str, authorized: bool):
+    user = auth.get_user(uid)
+    claims = user.custom_claims or {}
+    claims["authorized"] = authorized
+    auth.set_custom_user_claims(uid, claims)
