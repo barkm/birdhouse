@@ -11,4 +11,6 @@ COPY web/svelte.config.js ./svelte.config.js
 COPY web/vite.config.ts ./vite.config.ts
 COPY web/tsconfig.json ./tsconfig.json
 COPY web/.svelte-kit/tsconfig.json ./.svelte-kit/tsconfig.json
-CMD npm run build && npm run preview -- --host 0.0.0.0 --port $PORT
+COPY web/.env.local ./.env.local
+RUN npm run build
+CMD npm run preview -- --host 0.0.0.0 --port $PORT

@@ -75,8 +75,6 @@ services:
       - "8004:8004"
     environment:
       - PORT=8004
-    env_file:
-      - ./web/.env.local
     depends_on:
       - relay
 
