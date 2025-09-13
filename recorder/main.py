@@ -4,6 +4,7 @@ from datetime import datetime
 from subprocess import CalledProcessError, run
 from tempfile import NamedTemporaryFile
 import logging
+from typing import Callable
 
 from common.auth.exception import AuthException
 from fastapi.responses import FileResponse, JSONResponse
@@ -46,28 +47,24 @@ app = FastAPI(lifespan=lifespan)
 async def auth_middleware(request: Request, call_next):
     headers = dict(request.headers)
 
-    try:
-        firebase_response = firebase.verify(
-            headers, allowed_emails=settings.allowed_emails
-        )
-    except AuthException as e:
-        firebase_response = JSONResponse(
-            {"detail": e.detail}, status_code=e.status_code
-        )
+    verifiers = [firebase.verify, google.verify]
 
-    try:
-        google_response = google.verify(headers, allowed_emails=settings.allowed_emails)
-    except AuthException as e:
-        google_response = JSONResponse({"detail": e.detail}, status_code=e.status_code)
+    responses = [get_auth_response(headers, verify) for verify in verifiers]
 
-    if any(response is None for response in [firebase_response, google_response]):
+    if any(response is None for response in responses):
         return await call_next(request)
 
-    return next(
-        response
-        for response in [firebase_response, google_response]
-        if response is not None
-    )
+    return next(response for response in responses if response is not None)
+
+
+def get_auth_response(
+    headers: dict[str, str],
+    verify: Callable[[dict[str, str], list[str] | None], JSONResponse | None],
+) -> JSONResponse | None:
+    try:
+        return verify(headers, settings.allowed_emails)
+    except AuthException as e:
+        return JSONResponse({"detail": e.detail}, status_code=e.status_code)
 
 
 app.add_middleware(
