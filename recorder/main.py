@@ -46,8 +46,6 @@ app = FastAPI(lifespan=lifespan)
 async def auth_middleware(request: Request, call_next):
     headers = dict(request.headers)
 
-    print(settings.allowed_emails)
-
     try:
         firebase_response = firebase.verify(
             headers, allowed_emails=settings.allowed_emails
