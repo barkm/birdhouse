@@ -45,10 +45,8 @@ async def auth_middleware(request: Request, call_next):
     scheme, _, token = auth_header.partition(" ")
     if scheme != "Bearer" or not token:
         return JSONResponse({"detail": "Missing Bearer token"}, status_code=401)
-    firebase_response = firebase.verify(
-        auth_header, allowed_emails=settings.allowed_emails
-    )
-    google_response = google.verify(auth_header, allowed_emails=settings.allowed_emails)
+    firebase_response = firebase.verify(token, allowed_emails=settings.allowed_emails)
+    google_response = google.verify(token, allowed_emails=settings.allowed_emails)
     if any(response is None for response in [firebase_response, google_response]):
         return await call_next(request)
     return next(
