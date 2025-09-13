@@ -11,7 +11,6 @@ on:
 jobs:
   run:
     runs-on: ubuntu-latest
-    environment: relay
     defaults:
       run:
         working-directory: ${{ github.workspace }}/deployment
