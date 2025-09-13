@@ -1,6 +1,7 @@
 import logging
 
 from common.auth.exception import AuthException
+from common.auth.token import get_token
 from firebase_admin import credentials, initialize_app
 from firebase_admin import auth
 
@@ -12,9 +13,10 @@ def initialize(cert_path: str | None = None):
 
 
 def verify(
-    token: str,
+    headers: dict[str, str],
     allowed_emails: list[str] | None = None,
 ) -> None:
+    token = get_token(headers)
     try:
         decoded = auth.verify_id_token(token, check_revoked=True)
     except auth.ExpiredIdTokenError:

@@ -6,7 +6,6 @@ from tempfile import NamedTemporaryFile
 import logging
 
 from common.auth.exception import AuthException
-from common.auth.token import get_token
 from fastapi.responses import FileResponse, JSONResponse
 import httpx
 from fastapi import FastAPI, Request
@@ -43,13 +42,11 @@ app = FastAPI(lifespan=lifespan)
 
 @app.middleware("http")
 async def auth_middleware(request: Request, call_next):
-    token = get_token(dict(request.headers))
-    if not token:
-        return JSONResponse({"detail": "Missing Bearer token"}, status_code=401)
+    headers = dict(request.headers)
 
     try:
         firebase_response = firebase.verify(
-            token, allowed_emails=settings.allowed_emails
+            headers, allowed_emails=settings.allowed_emails
         )
     except AuthException as e:
         firebase_response = JSONResponse(
@@ -57,7 +54,7 @@ async def auth_middleware(request: Request, call_next):
         )
 
     try:
-        google_response = google.verify(token, allowed_emails=settings.allowed_emails)
+        google_response = google.verify(headers, allowed_emails=settings.allowed_emails)
     except AuthException as e:
         google_response = JSONResponse({"detail": e.detail}, status_code=e.status_code)
 
