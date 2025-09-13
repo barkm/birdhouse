@@ -20,5 +20,5 @@ def verify(
     if decoded.get("iss") not in {"https://accounts.google.com", "accounts.google.com"}:
         raise AuthException("Wrong issuer", status_code=401)
 
-    if decoded.get("email") not in allowed_emails:
+    if allowed_emails is not None and decoded.get("email") not in allowed_emails:
         raise AuthException("Unauthorized", status_code=403)
