@@ -2,7 +2,7 @@ import click
 
 from firebase_admin import auth
 
-from common.auth.firebase import initialize, set_authorization
+from common.auth.firebase import initialize, set_authorization, get_authorization
 
 
 @click.group()
@@ -33,9 +33,7 @@ def list():
     click.echo(click.style("UID \t\t\t\t Authorized \t Email", bold=True))
     while page:
         for u in page.users:
-            authorized = (
-                u.custom_claims.get("authorized", False) if u.custom_claims else False
-            )
+            authorized = get_authorization(u.custom_claims or {})
             click.echo(f"{u.uid} \t {authorized} \t\t {u.email}")
         page = page.get_next_page()
 

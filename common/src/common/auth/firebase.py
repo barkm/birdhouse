@@ -26,11 +26,11 @@ def verify(headers: dict[str, str]) -> None:
         logger.exception(f"Token verification failed: {e}")
         raise AuthException("Token verification failed", status_code=401)
 
-    if not _is_allowed_user(claims):
+    if not get_authorization(claims):
         raise AuthException("User not authorized", status_code=403)
 
 
-def _is_allowed_user(claims: dict) -> bool:
+def get_authorization(claims: dict) -> bool:
     return claims.get("authorized", False)
 
 
