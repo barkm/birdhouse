@@ -12,13 +12,10 @@ def initialize(cert_path: str | None = None):
     initialize_app(credentials.Certificate(cert_path) if cert_path else None)
 
 
-def verify(
-    headers: dict[str, str],
-    allowed_emails: list[str] | None = None,
-) -> None:
+def verify(headers: dict[str, str]) -> None:
     token = get_token(headers)
     try:
-        decoded = auth.verify_id_token(token, check_revoked=True)
+        claims = auth.verify_id_token(token, check_revoked=True)
     except auth.ExpiredIdTokenError:
         raise AuthException("Token expired", status_code=401)
     except auth.RevokedIdTokenError:
@@ -29,10 +26,12 @@ def verify(
         logger.exception(f"Token verification failed: {e}")
         raise AuthException("Token verification failed", status_code=401)
 
-    if allowed_emails is not None:
-        email = decoded.get("email")
-        if email not in allowed_emails:
-            raise AuthException("Email not authorized", status_code=403)
+    if not _is_allowed_user(claims):
+        raise AuthException("User not authorized", status_code=403)
+
+
+def _is_allowed_user(claims: dict) -> bool:
+    return claims.get("authorized", False)
 
 
 def set_authorization(uid: str, authorized: bool):

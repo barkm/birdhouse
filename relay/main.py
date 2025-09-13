@@ -9,7 +9,6 @@ from fastapi.responses import JSONResponse
 import httpx
 from fastapi import FastAPI, HTTPException, Request, Response
 from pydantic import BaseModel
-from pydantic_settings import BaseSettings, SettingsConfigDict
 from fastapi.middleware.cors import CORSMiddleware
 from memoization import cached
 
@@ -28,13 +27,6 @@ async def lifespan(_: FastAPI):
     yield
 
 
-class Settings(BaseSettings):
-    ALLOWED_EMAILS: list[str] | None = None
-
-    model_config = SettingsConfigDict(env_file=".env", extra="ignore")
-
-
-settings = Settings()
 app = FastAPI(lifespan=lifespan)
 
 
@@ -44,7 +36,7 @@ async def auth_middleware(request: Request, call_next):
     if "x-external" not in headers:
         return await call_next(request)
     try:
-        firebase.verify(headers, allowed_emails=settings.ALLOWED_EMAILS)
+        firebase.verify(headers)
     except AuthException as e:
         return JSONResponse({"detail": e.detail}, status_code=e.status_code)
     return await call_next(request)

@@ -47,7 +47,10 @@ app = FastAPI(lifespan=lifespan)
 async def auth_middleware(request: Request, call_next):
     headers = dict(request.headers)
 
-    verifiers = [firebase.verify, google.verify]
+    verifiers = [
+        firebase.verify,
+        lambda headers: google.verify(headers, settings.allowed_emails),
+    ]
 
     responses = [get_auth_response(headers, verify) for verify in verifiers]
 
@@ -59,10 +62,10 @@ async def auth_middleware(request: Request, call_next):
 
 def get_auth_response(
     headers: dict[str, str],
-    verify: Callable[[dict[str, str], list[str] | None], JSONResponse | None],
+    verify: Callable[[dict[str, str]], JSONResponse | None],
 ) -> JSONResponse | None:
     try:
-        return verify(headers, settings.allowed_emails)
+        return verify(headers)
     except AuthException as e:
         return JSONResponse({"detail": e.detail}, status_code=e.status_code)
 
