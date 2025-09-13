@@ -12,7 +12,7 @@ from pydantic_settings import BaseSettings
 from fastapi.middleware.cors import CORSMiddleware
 from memoization import cached
 
-from common.firebase import verify, initialize_firebase
+from common.auth.firebase import verify, initialize_firebase
 
 logging.basicConfig(
     level=logging.INFO,
