@@ -5,6 +5,7 @@ from subprocess import CalledProcessError, run
 from tempfile import NamedTemporaryFile
 import logging
 
+from common.auth.token import get_token
 from fastapi.responses import FileResponse, JSONResponse
 import httpx
 from fastapi import FastAPI, Request
@@ -41,9 +42,8 @@ app = FastAPI(lifespan=lifespan)
 
 @app.middleware("http")
 async def auth_middleware(request: Request, call_next):
-    auth_header = request.headers.get("authorization", "")
-    scheme, _, token = auth_header.partition(" ")
-    if scheme != "Bearer" or not token:
+    token = get_token(dict(request.headers))
+    if not token:
         return JSONResponse({"detail": "Missing Bearer token"}, status_code=401)
     firebase_response = firebase.verify(token, allowed_emails=settings.allowed_emails)
     google_response = google.verify(token, allowed_emails=settings.allowed_emails)

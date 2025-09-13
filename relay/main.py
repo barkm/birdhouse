@@ -13,6 +13,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from memoization import cached
 
 from common.auth.firebase import verify, initialize_firebase
+from common.auth.token import get_token
 
 logging.basicConfig(
     level=logging.INFO,
@@ -39,9 +40,8 @@ app = FastAPI(lifespan=lifespan)
 async def auth_middleware(request: Request, call_next):
     if "x-external" not in request.headers:
         return await call_next(request)
-    auth_header = request.headers.get("authorization", "")
-    scheme, _, token = auth_header.partition(" ")
-    if scheme != "Bearer" or not token:
+    token = get_token(dict(request.headers))
+    if not token:
         return JSONResponse({"detail": "Missing Bearer token"}, status_code=401)
     return verify(token, allowed_emails=settings.ALLOWED_EMAILS) or await call_next(
         request
