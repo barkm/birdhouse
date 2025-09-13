@@ -3,6 +3,7 @@ from dataclasses import dataclass
 from threading import Timer
 import logging
 
+from common.auth.exception import AuthException
 from fastapi.datastructures import QueryParams
 from fastapi.responses import JSONResponse
 import httpx
@@ -43,9 +44,11 @@ async def auth_middleware(request: Request, call_next):
     token = get_token(dict(request.headers))
     if not token:
         return JSONResponse({"detail": "Missing Bearer token"}, status_code=401)
-    return verify(token, allowed_emails=settings.ALLOWED_EMAILS) or await call_next(
-        request
-    )
+    try:
+        verify(token, allowed_emails=settings.ALLOWED_EMAILS)
+    except AuthException as e:
+        return JSONResponse({"detail": e.detail}, status_code=e.status_code)
+    return await call_next(request)
 
 
 app.add_middleware(

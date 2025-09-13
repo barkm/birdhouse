@@ -5,6 +5,7 @@ from subprocess import CalledProcessError, run
 from tempfile import NamedTemporaryFile
 import logging
 
+from common.auth.exception import AuthException
 from common.auth.token import get_token
 from fastapi.responses import FileResponse, JSONResponse
 import httpx
@@ -45,10 +46,24 @@ async def auth_middleware(request: Request, call_next):
     token = get_token(dict(request.headers))
     if not token:
         return JSONResponse({"detail": "Missing Bearer token"}, status_code=401)
-    firebase_response = firebase.verify(token, allowed_emails=settings.allowed_emails)
-    google_response = google.verify(token, allowed_emails=settings.allowed_emails)
+
+    try:
+        firebase_response = firebase.verify(
+            token, allowed_emails=settings.allowed_emails
+        )
+    except AuthException as e:
+        firebase_response = JSONResponse(
+            {"detail": e.detail}, status_code=e.status_code
+        )
+
+    try:
+        google_response = google.verify(token, allowed_emails=settings.allowed_emails)
+    except AuthException as e:
+        google_response = JSONResponse({"detail": e.detail}, status_code=e.status_code)
+
     if any(response is None for response in [firebase_response, google_response]):
         return await call_next(request)
+
     return next(
         response
         for response in [firebase_response, google_response]
