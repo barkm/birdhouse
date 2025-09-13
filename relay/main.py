@@ -13,7 +13,7 @@ from pydantic_settings import BaseSettings
 from fastapi.middleware.cors import CORSMiddleware
 from memoization import cached
 
-from common.auth.firebase import verify, initialize
+from common.auth import firebase
 
 logging.basicConfig(
     level=logging.INFO,
@@ -24,7 +24,7 @@ logging.basicConfig(
 
 @asynccontextmanager
 async def lifespan(_: FastAPI):
-    initialize()
+    firebase.initialize()
     yield
 
 
@@ -42,7 +42,7 @@ async def auth_middleware(request: Request, call_next):
     if "x-external" not in headers:
         return await call_next(request)
     try:
-        verify(headers, allowed_emails=settings.ALLOWED_EMAILS)
+        firebase.verify(headers, allowed_emails=settings.ALLOWED_EMAILS)
     except AuthException as e:
         return JSONResponse({"detail": e.detail}, status_code=e.status_code)
     return await call_next(request)

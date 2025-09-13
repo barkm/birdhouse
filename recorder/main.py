@@ -14,8 +14,8 @@ from pydantic_settings import BaseSettings
 from pydantic import BaseModel
 from google.cloud import storage
 
-import common.auth.firebase as firebase
-import common.auth.google as google
+from common.auth import firebase
+from common.auth import google
 
 logging.basicConfig(
     level=logging.INFO,
