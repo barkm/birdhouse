@@ -12,12 +12,9 @@ def initialize_firebase(cert_path: str | None = None):
 
 
 def verify(
-    auth_header: str,
+    token: str,
     allowed_emails: list[str] | None = None,
 ) -> JSONResponse | None:
-    scheme, _, token = auth_header.partition(" ")
-    if scheme != "Bearer" or not token:
-        return JSONResponse({"detail": "Missing Bearer token"}, status_code=401)
     try:
         decoded = auth.verify_id_token(token, check_revoked=True)
     except auth.ExpiredIdTokenError:

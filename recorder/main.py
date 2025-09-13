@@ -5,7 +5,7 @@ from subprocess import CalledProcessError, run
 from tempfile import NamedTemporaryFile
 import logging
 
-from fastapi.responses import FileResponse
+from fastapi.responses import FileResponse, JSONResponse
 import httpx
 from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
@@ -42,6 +42,9 @@ app = FastAPI(lifespan=lifespan)
 @app.middleware("http")
 async def auth_middleware(request: Request, call_next):
     auth_header = request.headers.get("authorization", "")
+    scheme, _, token = auth_header.partition(" ")
+    if scheme != "Bearer" or not token:
+        return JSONResponse({"detail": "Missing Bearer token"}, status_code=401)
     firebase_response = firebase.verify(
         auth_header, allowed_emails=settings.allowed_emails
     )

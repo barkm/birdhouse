@@ -4,13 +4,10 @@ from google.auth.transport import requests
 
 
 def verify(
-    auth_header: str,
+    token: str,
     allowed_emails: list[str] | None = None,
     audience: str | None = None,
 ) -> JSONResponse | None:
-    scheme, _, token = auth_header.partition(" ")
-    if scheme != "Bearer" or not token:
-        return JSONResponse({"detail": "Missing Bearer token"}, status_code=401)
     try:
         decoded = id_token.verify_oauth2_token(
             token, requests.Request(), audience=audience
