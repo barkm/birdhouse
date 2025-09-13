@@ -9,7 +9,7 @@ from fastapi.responses import JSONResponse
 import httpx
 from fastapi import FastAPI, HTTPException, Request, Response
 from pydantic import BaseModel
-from pydantic_settings import BaseSettings
+from pydantic_settings import BaseSettings, SettingsConfigDict
 from fastapi.middleware.cors import CORSMiddleware
 from memoization import cached
 
@@ -30,6 +30,8 @@ async def lifespan(_: FastAPI):
 
 class Settings(BaseSettings):
     ALLOWED_EMAILS: list[str] | None = None
+
+    model_config = SettingsConfigDict(env_file=".env", extra="ignore")
 
 
 settings = Settings()

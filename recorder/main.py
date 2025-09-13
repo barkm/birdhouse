@@ -10,7 +10,7 @@ from fastapi.responses import FileResponse, JSONResponse
 import httpx
 from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
-from pydantic_settings import BaseSettings
+from pydantic_settings import BaseSettings, SettingsConfigDict
 from pydantic import BaseModel
 from google.cloud import storage
 
@@ -29,6 +29,8 @@ class Settings(BaseSettings):
     recording_dir: str = "/recordings"
     allowed_emails: list[str] | None = None
 
+    model_config = SettingsConfigDict(env_file=".env", extra="ignore")
+
 
 @asynccontextmanager
 async def lifespan(_: FastAPI):
@@ -43,6 +45,8 @@ app = FastAPI(lifespan=lifespan)
 @app.middleware("http")
 async def auth_middleware(request: Request, call_next):
     headers = dict(request.headers)
+
+    print(settings.allowed_emails)
 
     try:
         firebase_response = firebase.verify(

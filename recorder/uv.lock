@@ -163,12 +163,14 @@ dependencies = [
 [package.optional-dependencies]
 auth = [
     { name = "firebase-admin" },
+    { name = "google-auth" },
 ]
 
 [package.metadata]
 requires-dist = [
     { name = "click", specifier = ">=8.2.1" },
     { name = "firebase-admin", marker = "extra == 'auth'", specifier = ">=7.1.0" },
+    { name = "google-auth", marker = "extra == 'auth'", specifier = ">=2.40.3" },
 ]
 provides-extras = ["auth"]
 
@@ -824,6 +826,11 @@ dependencies = [
     { name = "pydantic-settings" },
 ]
 
+[package.dev-dependencies]
+dev = [
+    { name = "python-dotenv" },
+]
+
 [package.metadata]
 requires-dist = [
     { name = "common", extras = ["auth"], editable = "../common" },
@@ -831,6 +838,9 @@ requires-dist = [
     { name = "google-cloud-storage", specifier = ">=3.3.0" },
     { name = "pydantic-settings", specifier = ">=2.10.1" },
 ]
+
+[package.metadata.requires-dev]
+dev = [{ name = "python-dotenv", specifier = ">=1.1.1" }]
 
 [[package]]
 name = "requests"
