@@ -7,6 +7,16 @@
 	let videoElement: HTMLVideoElement;
 	let hls: Hls | null = null;
 
+	const get_hls_config = () => {
+		return id_token
+			? {
+					xhrSetup: (xhr: XMLHttpRequest) => {
+						xhr.setRequestHeader('Authorization', `Bearer ${id_token}`);
+					}
+				}
+			: undefined;
+	};
+
 	const initialize = (): (() => void) | undefined => {
 		if (!videoElement || !src) {
 			return;
@@ -18,22 +28,15 @@
 		if (!Hls.isSupported()) {
 			throw new Error('HLS not supported!');
 		}
-			const hls_config = id_token
-				? {
-						xhrSetup: (xhr: XMLHttpRequest) => {
-							xhr.setRequestHeader('Authorization', `Bearer ${id_token}`);
-						}
-					}
-				: undefined;
-			hls = new Hls(hls_config);
-			hls.loadSource(src);
-			hls.attachMedia(videoElement);
-			return () => {
-				if (hls) {
-					hls.destroy();
-					hls = null;
-				}
-			};
+		hls = new Hls(get_hls_config());
+		hls.loadSource(src);
+		hls.attachMedia(videoElement);
+		return () => {
+			if (hls) {
+				hls.destroy();
+				hls = null;
+			}
+		};
 	};
 
 	$effect(() => {
