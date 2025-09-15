@@ -15,7 +15,9 @@
 			videoElement.src = src;
 			return;
 		}
-		if (Hls.isSupported()) {
+		if (!Hls.isSupported()) {
+			throw new Error('HLS not supported!');
+		}
 			const hls_config = id_token
 				? {
 						xhrSetup: (xhr: XMLHttpRequest) => {
@@ -32,8 +34,6 @@
 					hls = null;
 				}
 			};
-		}
-		throw new Error('Video not supported!');
 	};
 
 	$effect(() => {
