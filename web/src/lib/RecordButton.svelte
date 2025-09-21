@@ -1,6 +1,8 @@
 <script lang="ts">
 	import { fade } from 'svelte/transition';
 	import { Recorder } from './recorder';
+	import recordingSvg from '$lib/assets/recording.svg';
+	import recordSvg from '$lib/assets/record.svg';
 
 	interface Props {
 		video: HTMLVideoElement | null;
@@ -40,11 +42,11 @@
 				}
 			}}
 			aria-pressed={recording}
-		>
+			>
 			{#if recording}
-				<img in:fade src="/recording.svg" alt="Stop Recording" />
+				<img in:fade src={recordingSvg} alt="Stop Recording" />
 			{:else}
-				<img in:fade src="/record.svg" alt="Record" />
+				<img in:fade src={recordSvg} alt="Record" />
 			{/if}
 		</button>
 	</recording-button>
