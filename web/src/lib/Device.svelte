@@ -2,6 +2,7 @@
 	import { PUBLIC_RECORDER_URL, PUBLIC_RELAY_URL } from '$env/static/public';
 	import VideoWithLoader from '$lib/VideoWithLoader.svelte';
 	import { user } from './firebase';
+	import RecordButton from './RecordButton.svelte';
 	import { authorizedRequest } from './request';
 
 	interface Device {
@@ -52,6 +53,7 @@
 	};
 
 	let device_playlist = $state<{ device: Device; playlist: Playlist } | null>(null);
+	let video_stream: HTMLVideoElement | null = $state(null);
 
 	$effect(() => {
 		fetch_device_playlists(props.device).then((playlist) => {
@@ -70,18 +72,25 @@
 <column>
 	{#if $user}
 		{#await $user.getIdToken() then id_token}
-			<stream>
-				<VideoWithLoader
-					{id_token}
-					src={device_playlist
-						? `${PUBLIC_RELAY_URL}${device_playlist.device.name}${device_playlist.playlist.path}`
-						: null}
-					controls
-					autoplay
-					muted
-					playsinline
-				/>
-			</stream>
+			<row>
+				<fill></fill>
+				<stream>
+					<VideoWithLoader
+						{id_token}
+						src={device_playlist
+							? `${PUBLIC_RELAY_URL}${device_playlist.device.name}${device_playlist.playlist.path}`
+							: null}
+						onplaying={(event) => {
+							video_stream = event.currentTarget;
+						}}
+						controls
+						autoplay
+						muted
+						playsinline
+					/>
+				</stream>
+				<RecordButton video={video_stream} />
+			</row>
 		{/await}
 	{/if}
 	{#await sorted_recordings_promise then recordings}
@@ -107,6 +116,15 @@
 		min-width: 300px;
 		max-width: 1500px;
 	}
+
+	row {
+		display: flex;
+		flex-direction: row;
+		justify-content: center;
+		width: 100%;
+		height: 100%;
+	}
+
 	stream {
 		width: 75%;
 		min-width: 335px;
@@ -127,5 +145,9 @@
 		align-items: center;
 		width: 100%;
 		max-width: 500px;
+	}
+
+	fill {
+		width: 50px;
 	}
 </style>

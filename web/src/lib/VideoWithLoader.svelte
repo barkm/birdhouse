@@ -5,7 +5,7 @@
 	import Video from '$lib/Video.svelte';
 	import Loader from './Loader.svelte';
 
-	const { src, ...rest }: ComponentProps<typeof Video> = $props();
+	const { src, onplaying, ...rest }: ComponentProps<typeof Video> = $props();
 
 	let isLoading = $state(true);
 </script>
@@ -21,7 +21,8 @@
 			<Video
 				{src}
 				{...rest}
-				onplaying={() => {
+				onplaying={(event) => {
+					onplaying?.(event);
 					isLoading = false;
 				}}
 			/>
