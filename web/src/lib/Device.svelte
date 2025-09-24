@@ -89,7 +89,9 @@
 						playsinline
 					/>
 				</stream>
-				<RecordButton video={video_stream} />
+				<fill>
+					<RecordButton video={video_stream} />
+				</fill>
 			</row>
 		{/await}
 	{/if}
