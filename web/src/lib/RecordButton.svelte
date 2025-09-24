@@ -9,9 +9,12 @@
 	}
 
 	let { video }: Props = $props();
+	const can_capture_video = (): boolean => {
+		return typeof (HTMLVideoElement.prototype as any).captureStream === 'function';
+	};
 
 	let recorder: Recorder | null = $derived.by(() => {
-		if (!video) {
+		if (!video || !can_capture_video()) {
 			return null;
 		}
 		const stream = (
