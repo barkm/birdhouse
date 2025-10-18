@@ -15,6 +15,7 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 from pydantic import BaseModel
 from google.cloud import storage
 from moviepy import VideoFileClip, concatenate_videoclips
+from moviepy.video.fx import CrossFadeIn
 
 from common.auth import firebase
 from common.auth import google
@@ -222,9 +223,10 @@ def _make_timelapse(start: datetime, end: datetime, device: str, dest: Path) -> 
         r for r in recordings if start <= datetime.fromisoformat(r.time) <= end
     ]
     downloaded_files = [_download_recording(r.url) for r in recordings_in_range]
-    clips = [VideoFileClip(str(f)) for f in downloaded_files]
-    final_clip = concatenate_videoclips(clips)
-    final_clip.write_videofile(dest)
+    clips = [VideoFileClip(str(f)).with_speed_scaled(2) for f in downloaded_files]
+    clips_cf = [clips[0]] + [c.with_effects([CrossFadeIn(1)]) for c in clips[1:]]
+    timelapse = concatenate_videoclips(clips_cf, method="compose", padding=-1)
+    timelapse.write_videofile(dest)
 
 
 def _download_recording(url: str) -> Path:
