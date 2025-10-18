@@ -1,32 +1,11 @@
 # birdhouse
 
-```mermaid
----
-config:
-    theme: base
----
-graph RL
-    subgraph birdhouse[Birdhouse]
-        subgraph pi[Raspberry Pi]
-            pi-server[Camera server]
-        end
-        camera[Camera]
-    end
+## Development
 
-    subgraph cloud[Google Cloud Platform]
-        subgraph vm[Compute Engine]
-            relay[Relay server]
-        end
-    end
+Run containers with
 
-    subgraph browser[Browser]
-        stream[Camera feed]
-    end
-
-    pi-server -- libcamera --> camera
-    pi -- reverse ssh --> vm
-
-    relay -. http .-> pi-server
-    
-    browser -- https --> relay
 ```
+docker compose up
+```
+
+then go to `http://localhost:8004`
