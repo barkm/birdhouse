@@ -180,7 +180,9 @@ def list_recordings(request: Request, device: str) -> list[Recording]:
 @app.get("/timelapse/{device}")
 def create_timelapse(device: str, start: datetime, end: datetime) -> None:
     with NamedTemporaryFile(suffix=".mp4") as temp_file:
-        _make_timelapse(start, end, device, Path(temp_file.name))
+        _make_timelapse(
+            start, end, device, Path(temp_file.name), total_time=60, fade_duration=1
+        )
         _upload_to_gcs(
             temp_file.name,
             f"{settings.recording_dir}/timelapses/{device}/{start.isoformat()}_{end.isoformat()}.mp4",
@@ -217,26 +219,61 @@ def _get_bucket_and_blob_name(gcs_path: str) -> tuple[str, str]:
     return bucket_name, blob_name
 
 
-def _make_timelapse(start: datetime, end: datetime, device: str, dest: Path) -> None:
+def _make_timelapse(
+    start: datetime,
+    end: datetime,
+    device: str,
+    dest: Path,
+    total_time: int | None = None,
+    fade_duration: int | None = None,
+) -> None:
     recordings = _list_gcs_recordings(f"{settings.recording_dir}/{device}")
     recordings_in_range = [
         r for r in recordings if start <= datetime.fromisoformat(r.time) <= end
     ]
     downloaded_files = [_download_recording(r.url) for r in recordings_in_range]
-    clips = [VideoFileClip(str(f)).with_speed_scaled(2) for f in downloaded_files]
+    times = [datetime.fromisoformat(r.time) for r in recordings_in_range]
+    clips = [VideoFileClip(str(f)) for f in downloaded_files]
     optional_durations = [clip.duration for clip in clips]
     if any(d is None for d in optional_durations):
-        raise ValueError("Could not get duration for all clips")
+        raise ValueError("Could not get duration of all clips")
     durations = [d for d in optional_durations if d is not None]
-    CROSS_FADE_DURATION = 1
-    starts = [0] + [
-        sum(durations[:i]) - i * CROSS_FADE_DURATION for i in range(1, len(durations))
-    ]
-    clips_cf = [clips[0]] + [c.with_effects([CrossFadeIn(1)]) for c in clips[1:]]
+
+    minimal_compression = min(
+        _minimal_compression(
+            times[i],
+            durations[i],
+            times[i + 1],
+            fade_duration or 0,
+        )
+        for i in range(len(durations) - 1)
+    )
+
+    if total_time is not None:
+        desired_compression = (total_time - durations[-1]) / (
+            times[-1] - times[0]
+        ).total_seconds()
+        if desired_compression > minimal_compression:
+            raise ValueError("Cannot create timelapse with desired duration")
+        compression = desired_compression
+    else:
+        compression = minimal_compression
+
+    starts = [compression * (t - times[0]).total_seconds() for t in times]
+
+    if fade_duration is not None:
+        clips = [clips[0]] + [
+            c.with_effects([CrossFadeIn(fade_duration)]) for c in clips[1:]
+        ]
+
     timelapse = CompositeVideoClip(
-        [clip.with_start(start) for clip, start in zip(clips_cf, starts)]
+        [clip.with_start(start) for clip, start in zip(clips, starts)]
     )
     timelapse.write_videofile(dest)
+
+
+def _minimal_compression(s1: datetime, d1: float, s2: datetime, fade: float) -> float:
+    return (d1 - fade) / (s2 - s1).total_seconds()
 
 
 def _download_recording(url: str) -> Path:
