@@ -14,6 +14,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from pydantic_settings import BaseSettings, SettingsConfigDict
 from pydantic import BaseModel
 from google.cloud import storage
+from moviepy import VideoFileClip, concatenate_videoclips
 
 from common.auth import firebase
 from common.auth import google
@@ -23,6 +24,8 @@ logging.basicConfig(
     format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
     datefmt="%Y-%m-%d %H:%M:%S",
 )
+
+DOWNLOAD_DIR = "./.downloads"
 
 
 class Settings(BaseSettings):
@@ -173,6 +176,16 @@ def list_recordings(request: Request, device: str) -> list[Recording]:
     return _list_local_recordings(str(request.base_url), settings.recording_dir, device)
 
 
+@app.get("/timelapse/{device}")
+def create_timelapse(device: str, start: datetime, end: datetime) -> None:
+    with NamedTemporaryFile(suffix=".mp4") as temp_file:
+        _make_timelapse(start, end, device, Path(temp_file.name))
+        _upload_to_gcs(
+            temp_file.name,
+            f"{settings.recording_dir}/timelapses/{device}/{start.isoformat()}_{end.isoformat()}.mp4",
+        )
+
+
 def _list_local_recordings(
     url: str, recording_dir: str, device: str
 ) -> list[Recording]:
@@ -201,3 +214,27 @@ def _list_gcs_recordings(gcs_dirpath: str) -> list[Recording]:
 def _get_bucket_and_blob_name(gcs_path: str) -> tuple[str, str]:
     *_, bucket_name, blob_name = gcs_path.split("/", maxsplit=3)
     return bucket_name, blob_name
+
+
+def _make_timelapse(start: datetime, end: datetime, device: str, dest: Path) -> None:
+    recordings = _list_gcs_recordings(f"{settings.recording_dir}/{device}")
+    recordings_in_range = [
+        r for r in recordings if start <= datetime.fromisoformat(r.time) <= end
+    ]
+    downloaded_files = [_download_recording(r.url) for r in recordings_in_range]
+    clips = [VideoFileClip(str(f)) for f in downloaded_files]
+    final_clip = concatenate_videoclips(clips)
+    final_clip.write_videofile(dest)
+
+
+def _download_recording(url: str) -> Path:
+    name = url.split("/")[-1]
+    dest = Path(DOWNLOAD_DIR) / name
+    if dest.exists():
+        return dest
+    response = httpx.get(url)
+    response.raise_for_status()
+    dest.parent.mkdir(parents=True, exist_ok=True)
+    with open(dest, "wb") as f:
+        f.write(response.content)
+    return dest

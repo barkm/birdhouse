@@ -8,6 +8,7 @@ dependencies = [
     "common[auth]",
     "fastapi[standard]>=0.116.1",
     "google-cloud-storage>=3.3.0",
+    "moviepy>=2.2.1",
     "pydantic-settings>=2.10.1",
 ]
 
