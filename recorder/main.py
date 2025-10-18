@@ -14,7 +14,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from pydantic_settings import BaseSettings, SettingsConfigDict
 from pydantic import BaseModel
 from google.cloud import storage
-from moviepy import VideoFileClip, concatenate_videoclips
+from moviepy import VideoFileClip, CompositeVideoClip
 from moviepy.video.fx import CrossFadeIn
 
 from common.auth import firebase
@@ -224,8 +224,18 @@ def _make_timelapse(start: datetime, end: datetime, device: str, dest: Path) -> 
     ]
     downloaded_files = [_download_recording(r.url) for r in recordings_in_range]
     clips = [VideoFileClip(str(f)).with_speed_scaled(2) for f in downloaded_files]
+    optional_durations = [clip.duration for clip in clips]
+    if any(d is None for d in optional_durations):
+        raise ValueError("Could not get duration for all clips")
+    durations = [d for d in optional_durations if d is not None]
+    CROSS_FADE_DURATION = 1
+    starts = [0] + [
+        sum(durations[:i]) - i * CROSS_FADE_DURATION for i in range(1, len(durations))
+    ]
     clips_cf = [clips[0]] + [c.with_effects([CrossFadeIn(1)]) for c in clips[1:]]
-    timelapse = concatenate_videoclips(clips_cf, method="compose", padding=-1)
+    timelapse = CompositeVideoClip(
+        [clip.with_start(start) for clip, start in zip(clips_cf, starts)]
+    )
     timelapse.write_videofile(dest)
 
 
