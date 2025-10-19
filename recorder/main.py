@@ -178,16 +178,11 @@ def list_recordings(request: Request, device: str) -> list[Recording]:
     return _list_local_recordings(str(request.base_url), settings.recording_dir, device)
 
 
-@app.get("/timelapse/{device}")
-def create_timelapse(device: str, start: datetime, end: datetime) -> None:
-    with NamedTemporaryFile(suffix=".mp4") as temp_file:
-        _make_timelapse(
-            start, end, device, Path(temp_file.name), total_time=60, fade_duration=1
-        )
-        _upload_to_gcs(
-            temp_file.name,
-            f"{settings.recording_dir}/timelapses/{device}/{start.isoformat()}_{end.isoformat()}.mp4",
-        )
+@app.get("/timelapse")
+def create_timelapse(start: datetime, end: datetime, duration: int) -> None:
+    devices = _get_devices(settings.relay_url or "")
+    for device in devices:
+        _create_and_upload_timelapse(start, end, device, duration)
 
 
 def _list_local_recordings(
@@ -218,6 +213,27 @@ def _list_gcs_recordings(gcs_dirpath: str) -> list[Recording]:
 def _get_bucket_and_blob_name(gcs_path: str) -> tuple[str, str]:
     *_, bucket_name, blob_name = gcs_path.split("/", maxsplit=3)
     return bucket_name, blob_name
+
+
+def _create_and_upload_timelapse(
+    start: datetime,
+    end: datetime,
+    device: str,
+    duration: int,
+) -> None:
+    with NamedTemporaryFile(suffix=".mp4") as temp_file:
+        _make_timelapse(
+            start,
+            end,
+            device,
+            Path(temp_file.name),
+            total_time=duration,
+            fade_duration=1,
+        )
+        _upload_to_gcs(
+            temp_file.name,
+            f"{settings.recording_dir}/timelapses/{device}/{start.isoformat()}_{end.isoformat()}.mp4",
+        )
 
 
 def _make_timelapse(
