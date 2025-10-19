@@ -254,7 +254,6 @@ def _make_timelapse(
     clips = [VideoFileClip(str(f)).with_speed_scaled(2) for f in downloaded_files]
     text_clips = [
         TextClip(
-            font="Arial",
             text=t.strftime("%Y-%m-%d %H:%M:%S"),
             size=(200, 100),
             color="white",
