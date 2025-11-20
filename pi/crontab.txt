@@ -1,3 +1,3 @@
 0 0 * * * /sbin/reboot
-* * * * * curl -X POST -H "Content-Type: application/json" -d '{"name": "birdhouse", "url": "http://localhost:$SERVER_PORT"}' http://localhost:5000/register
+* * * * * curl -X POST -H "Content-Type: application/json" -d '{"name": "$NAME", "url": "http://localhost:$SERVER_PORT"}' http://localhost:5000/register
 
