@@ -99,7 +99,11 @@ def _get_devices(relay_url: str) -> list[str]:
     try:
         response = httpx.get(list_url)
         response.raise_for_status()
-        return [device["name"] for device in response.json()]
+        return [
+            device["name"]
+            for device in response.json()
+            if device["name"] == "birdhouse"
+        ]
     except httpx.HTTPError as e:
         logging.warning(f"Failed to get devices from {list_url}: {e}")
         return []
