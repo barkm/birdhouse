@@ -7,6 +7,7 @@ from fastapi.responses import FileResponse
 from pydantic_settings import BaseSettings
 
 from stream import Stream
+from sensor import read_sensor_data
 
 
 PLAYLIST_FILENAME = "playlist.m3u8"
@@ -63,3 +64,8 @@ def _is_filename(filename: str) -> bool:
     return (
         len(path.parts) == 1 and not path.is_absolute() and filename not in {"..", "."}
     )
+
+
+@app.get("/sensor")
+async def get_sensor_data():
+    return read_sensor_data(settings.test_stream)
