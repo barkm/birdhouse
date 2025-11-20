@@ -23,7 +23,9 @@
 		{#await devices_promise then devices}
 			<devices>
 				{#each devices as device (device.name)}
-					<Device {device} />
+					{#if device.name == "birdhouse"}
+						<Device {device} />
+					{/if}
 				{/each}
 			</devices>
 		{/await}
