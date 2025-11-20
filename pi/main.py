@@ -15,6 +15,7 @@ PLAYLIST_FILENAME = "playlist.m3u8"
 
 class Settings(BaseSettings):
     test_stream: bool = False
+    test_sensor: bool = False
 
 
 settings = Settings()
@@ -68,4 +69,4 @@ def _is_filename(filename: str) -> bool:
 
 @app.get("/sensor")
 async def get_sensor_data():
-    return read_sensor_data(settings.test_stream)
+    return read_sensor_data(settings.test_sensor)
