@@ -15,6 +15,12 @@
 		return await device_response.json();
 	};
 
+	const getTemperature = async (device_name: string): Promise<number | null> => {
+		if (!$user) return null;
+		const sensor_response = await authorizedRequest($user, PUBLIC_RELAY_URL, `${device_name}/sensor`);
+		return (await sensor_response.json())['temperature'];
+	};
+
 	const devices_promise = $derived(fetch_devices());
 </script>
 
@@ -23,7 +29,16 @@
 		{#await devices_promise then devices}
 			<devices>
 				{#each devices as device (device.name)}
-					<Device {device} />
+					{#if device.name.endsWith("house") && !device.name.endsWith("birdhouse")}
+						{#await getTemperature(device.name) then temperature}
+							Inomhustemperatur: {temperature !== null ? temperature.toFixed(1) : 'N/A'}°C
+						{/await}
+					{/if}
+				{/each}
+				{#each devices as device (device.name)}
+					{#if device.name.endsWith("birdhouse")}
+						<Device {device} />
+					{/if}
 				{/each}
 			</devices>
 		{/await}
