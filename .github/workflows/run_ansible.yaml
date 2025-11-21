@@ -43,6 +43,13 @@ jobs:
             ProxyJump relay
             User ${{ secrets.RELAY_USER }}
             ForwardAgent yes
+
+          Host house-remote
+            HostName localhost
+            Port 2223
+            ProxyJump relay
+            User ${{ secrets.RELAY_USER }}
+            ForwardAgent yes
           EOF
           chmod 600 ~/.ssh/config
 
@@ -51,6 +58,7 @@ jobs:
           ssh-keyscan -H "${{ secrets.RELAY_HOST }}" >> ~/.ssh/known_hosts
           ssh-keyscan -H github.com >> ~/.ssh/known_hosts
           ssh relay "ssh-keyscan -p 2222 localhost" >> ~/.ssh/known_hosts
+          ssh relay "ssh-keyscan -p 2223 localhost" >> ~/.ssh/known_hosts
           chmod 600 ~/.ssh/known_hosts
 
       - name: Run
