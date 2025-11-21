@@ -25,7 +25,27 @@ services:
       - PORT=8000
       - URL=http://pi:8000
       - REGISTER_URL=http://relay:8001/register
+      - NAME=docker-birdhouse
       - TEST_STREAM=True
+      - TEST_SENSOR=True
+    depends_on:
+      - relay
+    networks:
+      - relay_net
+
+  house:
+    build:
+      context: .
+      dockerfile: ./docker/Dockerfile.pi
+    ports:
+      - "8010"
+    environment:
+      - PORT=8010
+      - URL=http://house:8010
+      - REGISTER_URL=http://relay:8001/register
+      - NAME=docker-house
+      - TEST_STREAM=True
+      - TEST_SENSOR=True
     depends_on:
       - relay
     networks:

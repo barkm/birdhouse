@@ -5,6 +5,7 @@ relays:
 pis:
   hosts:
     birdhouse:
+    house:
 
 all:
   children:

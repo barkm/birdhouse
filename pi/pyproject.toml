@@ -12,6 +12,10 @@ dependencies = [
 dev = [
     "pre-commit>=4.2.0",
 ]
+sensor = [
+    "adafruit-circuitpython-hdc302x>=1.0.7",
+    "rpi-gpio>=0.7.1",
+]
 
 [tool.uv.sources]
 common = { path = "../common", editable = true }
