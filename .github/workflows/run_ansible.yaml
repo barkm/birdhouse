@@ -44,7 +44,7 @@ jobs:
             User ${{ secrets.RELAY_USER }}
             ForwardAgent yes
 
-          Host house-remote
+          Host house
             HostName localhost
             Port 2223
             ProxyJump relay
