@@ -35,8 +35,12 @@
 						{/await}
 					{/if}
 				{/each}
+				<br />
 				{#each devices as device (device.name)}
 					{#if device.name.endsWith("birdhouse")}
+						{#await getTemperature(device.name) then temperature}
+							Utomhustemperatur: {temperature !== null ? temperature.toFixed(1) : 'N/A'}°C
+						{/await}
 						<Device {device} />
 					{/if}
 				{/each}
