@@ -40,8 +40,8 @@
 					{#if device.name.endsWith("birdhouse")}
 						{#await getTemperature(device.name) then temperature}
 							Utomhustemperatur: {temperature !== null ? temperature.toFixed(1) : 'N/A'}°C
+							<Device {device} />
 						{/await}
-						<Device {device} />
 					{/if}
 				{/each}
 			</devices>
