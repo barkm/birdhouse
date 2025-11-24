@@ -20,8 +20,7 @@ Use e.g. [Caddy](https://caddyserver.com/) to manage certificates and forward HT
     - `DOMAIN`: domain name for the host machine
     - `PORT`: local port of the relay server 
 
-    to the file `/etc/caddy/.env` and run `sudo systemctl edit caddy
-` and add the line
+    to the file `/etc/caddy/.env` and run `sudo systemctl edit caddy` and add the line
     ```
     [Service]
     EnvironmentFile=/etc/caddy/.env
