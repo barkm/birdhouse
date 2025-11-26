@@ -73,6 +73,19 @@ services:
     networks:
       - relay_net
     
+  db:
+    image: postgres:17
+    container_name: db
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: moja
+      POSTGRES_USER: moja
+      POSTGRES_PASSWORD: moja
+    ports:
+      - "5432:5432"
+    volumes:
+      - db-data:/var/lib/postgresql/data
+    
   caddy:
     image: caddy:2
     volumes:
@@ -106,3 +119,6 @@ networks:
 secrets:
   gcp_key:
     file: ~/.config/gcloud/application_default_credentials.json
+  
+volumes:
+  db-data:
