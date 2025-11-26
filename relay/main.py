@@ -18,7 +18,7 @@ import common.db.models as models
 
 
 class Settings(BaseSettings):
-    DATABASE_URL: str = ""
+    DATABASE_URL: str = "postgresql+psycopg://moja:moja@localhost/moja"
 
     model_config = SettingsConfigDict(env_file=".env", extra="ignore")
 
