@@ -5,7 +5,7 @@ description = "Add your description here"
 readme = "README.md"
 requires-python = "==3.13.*"
 dependencies = [
-    "common[auth]",
+    "common[auth,db]",
     "fastapi[standard]>=0.116.1",
     "google-cloud-storage>=3.3.0",
     "moviepy>=2.2.1",

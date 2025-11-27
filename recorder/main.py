@@ -10,7 +10,7 @@ from typing import Callable
 from common.auth.exception import AuthException
 from fastapi.responses import FileResponse, JSONResponse
 import httpx
-from fastapi import FastAPI, Request
+from fastapi import Depends, FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic_settings import BaseSettings, SettingsConfigDict
 from pydantic import BaseModel
@@ -20,6 +20,9 @@ from moviepy.video.fx import CrossFadeIn, CrossFadeOut
 
 from common.auth import firebase
 from common.auth import google
+from common.db import models
+from sqlalchemy import create_engine
+from sqlmodel import Session, select
 
 logging.basicConfig(
     level=logging.INFO,
@@ -34,6 +37,7 @@ class Settings(BaseSettings):
     relay_url: str | None = None
     recording_dir: str = "/recordings"
     allowed_emails: list[str] | None = None
+    database_url: str = "postgresql+psycopg://moja:moja@localhost/moja"
 
     model_config = SettingsConfigDict(env_file=".env", extra="ignore")
 
@@ -46,6 +50,13 @@ async def lifespan(_: FastAPI):
 
 settings = Settings()
 app = FastAPI(lifespan=lifespan)
+
+engine = create_engine(settings.database_url)
+
+
+def get_session():
+    with Session(engine) as session:
+        yield session
 
 
 @app.middleware("http")
@@ -83,6 +94,36 @@ app.add_middleware(
 )
 
 
+@app.get("/record_sensors")
+async def record_sensors(session: Session = Depends(get_session)) -> dict:
+    if settings.relay_url is None:
+        logging.error("Relay url not set")
+        return {"error": "Relay url not set"}
+    devices = _get_devices(settings.relay_url)
+    for device_name in devices:
+        try:
+            sensor_data = httpx.get(f"{settings.relay_url}/{device_name}/sensor").json()
+        except httpx.HTTPError as e:
+            logging.error(f"Failed to get sensor data for {device_name}: {e}")
+            continue
+
+        statement = select(models.Device).where(models.Device.name == device_name)
+        device = session.exec(statement).first()
+        if not device:
+            logging.error(f"Device {device_name} not found in database")
+            continue
+        sensor = models.Sensor(
+            device_id=device.id,
+            temperature=sensor_data["temperature"],
+            humidity=sensor_data["humidity"],
+            cpu_temperature=sensor_data["cpu_temperature"],
+        )
+        session.add(sensor)
+        session.commit()
+        session.refresh(sensor)
+    return {}
+
+
 @app.get("/record")
 async def record(duration: int = 10) -> dict:
     if settings.relay_url is None:
@@ -90,7 +131,10 @@ async def record(duration: int = 10) -> dict:
         return {"error": "Relay url not set"}
     devices = _get_devices(settings.relay_url)
     for device in devices:
-        _record_and_save(settings.relay_url, device, settings.recording_dir, duration)
+        if device == "birdhouse":
+            _record_and_save(
+                settings.relay_url, device, settings.recording_dir, duration
+            )
     return {}
 
 
@@ -99,11 +143,7 @@ def _get_devices(relay_url: str) -> list[str]:
     try:
         response = httpx.get(list_url)
         response.raise_for_status()
-        return [
-            device["name"]
-            for device in response.json()
-            if device["name"] == "birdhouse"
-        ]
+        return [device["name"] for device in response.json()]
     except httpx.HTTPError as e:
         logging.warning(f"Failed to get devices from {list_url}: {e}")
         return []
