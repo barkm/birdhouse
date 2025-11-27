@@ -1,0 +1,22 @@
+- name: Deploy database migrations
+  hosts: relays
+  gather_facts: true
+  become: false
+
+  vars:
+    uv_binary_path: "{{ ansible_user_dir }}/.local/bin/uv"
+    repo_url: "git@github.com:barkm/birdhouse.git"
+    repo_dest: "{{ ansible_user_dir }}/birdhouse"
+    repo_version: "main"
+
+  pre_tasks:
+    - include_tasks: tasks/uv.yaml
+    - include_tasks: tasks/git.yaml
+
+  tasks:
+    - name: Run database migrations
+      ansible.builtin.command: uv run alembic upgrade head
+      args:
+        chdir: "{{ repo_dest }}/common"
+      environment:
+        PATH: "{{ uv_binary_path | dirname }}:{{ ansible_env.PATH }}"

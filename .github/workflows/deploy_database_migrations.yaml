@@ -1,14 +1,14 @@
-name: Deploy relay
+name: Deploy database migrations
 
 on:
   workflow_dispatch:
   push:
     branches: main
     paths:
-      - relay/**
-      - ansible/playbooks/relay.yaml
-      - ./github/workflows/deploy_relay.yaml
-
+      - common/migrations/**
+      - ansible/playbooks/db.yaml
+      - ./github/workflows/deploy_database_migrations.yaml
+    
 concurrency:
   group: relay
 
