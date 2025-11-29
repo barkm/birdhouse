@@ -4,7 +4,7 @@ services:
       context: .
       dockerfile: ./docker/Dockerfile.relay
     ports:
-      - "8001"
+      - "8001:8001"
     secrets:
       - gcp_key
     environment:
@@ -68,6 +68,7 @@ services:
       - RELAY_URL=http://relay:8001
       - RECORDING_DIR=gs://birdhouse-recordings
       - GOOGLE_APPLICATION_CREDENTIALS=/run/secrets/gcp_key
+      - DATABASE_URL=postgresql+psycopg://moja:moja@db:5432/moja
     env_file:
       - ./recorder/.env
     depends_on:
