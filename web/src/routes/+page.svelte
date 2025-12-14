@@ -4,6 +4,7 @@
 	import { loginWithGoogle, logout, user } from '$lib/firebase';
 	import Loader from '$lib/Loader.svelte';
 	import { authorizedRequest } from '$lib/request';
+	import TemperatureChart from '$lib/TemperatureChart.svelte';
 
 	interface Device {
 		name: string;
@@ -29,19 +30,17 @@
 		{#await devices_promise then devices}
 			<devices>
 				{#each devices as device (device.name)}
-					{#if device.name.endsWith("house") && !device.name.endsWith("birdhouse")}
-						{#await getTemperature(device.name) then temperature}
-							Inomhustemperatur: {temperature !== null ? temperature.toFixed(1) : 'N/A'}°C
-						{/await}
-					{/if}
+					{#await getTemperature(device.name) then temperature}
+					<div>
+						{ device.name === "house" ? "Inomhus" : "Utomhus" }temperatur: {temperature !== null ? temperature.toFixed(1) : 'N/A'}°C
+					</div>
+					{/await}
 				{/each}
 				<br />
+				<TemperatureChart {devices} />
 				{#each devices as device (device.name)}
-					{#if device.name.endsWith("birdhouse")}
-						{#await getTemperature(device.name) then temperature}
-							Utomhustemperatur: {temperature !== null ? temperature.toFixed(1) : 'N/A'}°C
-							<Device {device} />
-						{/await}
+					{#if device.name === "birdhouse"}
+						<Device {device} />
 					{/if}
 				{/each}
 			</devices>
