@@ -4,7 +4,7 @@ from datetime import datetime
 from subprocess import CalledProcessError, run
 from tempfile import NamedTemporaryFile
 import logging
-from typing import Callable
+from typing import Callable, Sequence
 
 from common.auth.exception import AuthException
 from fastapi.responses import FileResponse, JSONResponse
@@ -118,6 +118,19 @@ async def record_sensors(session: Session = Depends(get_session)) -> dict:
         session.commit()
         session.refresh(sensor)
     return {}
+
+
+@app.get("/sensors/{device_name}")
+async def get_sensors(
+    device_name: str, session: Session = Depends(get_session)
+) -> Sequence[models.Sensor]:
+    statement = (
+        select(models.Sensor)
+        .join(models.Device)
+        .where(models.Device.name == device_name)
+    )
+    sensors = session.exec(statement).all()
+    return sensors
 
 
 @app.get("/record")
