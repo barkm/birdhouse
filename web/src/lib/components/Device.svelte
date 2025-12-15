@@ -97,7 +97,7 @@
 	{/if}
 	{#await sorted_recordings_promise then recordings}
 		<recordings>
-			{#each recordings as recording (recording.url)}
+			{#each recordings.filter((_, i) => i % 7 === 0).slice(0, 12) as recording (recording.url)}
 				<recording>
 					<strong>{recording.time}</strong>
 					<VideoWithLoader src={recording.url} autoplay muted playsinline loop />
