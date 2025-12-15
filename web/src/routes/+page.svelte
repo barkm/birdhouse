@@ -2,7 +2,7 @@
 	import { PUBLIC_RELAY_URL } from '$env/static/public';
 	import Device from '$lib/components/Device.svelte';
 	import { loginWithGoogle, logout, user } from '$lib/firebase';
-	import Loader from '$lib/components/Loader.svelte';
+	import Loader from '$lib/components/loader/Loader.svelte';
 	import { authorizedRequest } from '$lib/request';
 	import TemperatureChart from '$lib/components/TemperatureChart.svelte';
 

@@ -3,7 +3,7 @@
 	import { fade } from 'svelte/transition';
 
 	import Video from '$lib/components/Video.svelte';
-	import Loader from '$lib/components/Loader.svelte';
+	import Loader from '$lib/components/loader/Loader.svelte';
 
 	const { src, onplaying, ...rest }: ComponentProps<typeof Video> = $props();
 

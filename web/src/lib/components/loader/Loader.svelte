@@ -1,5 +1,5 @@
 <script lang="ts">
-	import Kobbar from '$lib/components/kobbar.svelte';
+	import Kobbar from './kobbar.svelte';
 </script>
 
 <Kobbar />
