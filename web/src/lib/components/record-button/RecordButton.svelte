@@ -1,8 +1,8 @@
 <script lang="ts">
 	import { fade } from 'svelte/transition';
-	import { Recorder } from '$lib/recorder';
-	import recordingSvg from '$lib/assets/recording.svg';
-	import recordSvg from '$lib/assets/record.svg';
+	import { Recorder } from './recorder';
+	import recordingSvg from './recording.svg';
+	import recordSvg from './record.svg';
 
 	interface Props {
 		video: HTMLVideoElement | null;
