@@ -1,6 +1,6 @@
 <script lang="ts">
 	import { fade } from 'svelte/transition';
-	import { Recorder } from './recorder';
+	import { Recorder } from '$lib/recorder';
 	import recordingSvg from '$lib/assets/recording.svg';
 	import recordSvg from '$lib/assets/record.svg';
 

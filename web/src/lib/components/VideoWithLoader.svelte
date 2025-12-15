@@ -2,8 +2,8 @@
 	import type { ComponentProps } from 'svelte';
 	import { fade } from 'svelte/transition';
 
-	import Video from '$lib/Video.svelte';
-	import Loader from './Loader.svelte';
+	import Video from '$lib/components/Video.svelte';
+	import Loader from '$lib/components/Loader.svelte';
 
 	const { src, onplaying, ...rest }: ComponentProps<typeof Video> = $props();
 
@@ -21,7 +21,7 @@
 			<Video
 				{src}
 				{...rest}
-				onplaying={(event) => {
+				onplaying={(event: any) => {
 					onplaying?.(event);
 					isLoading = false;
 				}}

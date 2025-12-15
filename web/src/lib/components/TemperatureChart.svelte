@@ -1,8 +1,8 @@
 <script lang="ts">
 	import { PUBLIC_RECORDER_URL } from "$env/static/public";
 	import { LineChart } from "layerchart";
-	import { user } from "./firebase";
-	import { authorizedRequest } from "./request";
+	import { user } from "$lib/firebase";
+	import { authorizedRequest } from "$lib/request";
 
 
 	interface Device {

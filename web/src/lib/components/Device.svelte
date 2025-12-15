@@ -1,9 +1,9 @@
 <script lang="ts">
 	import { PUBLIC_RECORDER_URL, PUBLIC_RELAY_URL } from '$env/static/public';
-	import VideoWithLoader from '$lib/VideoWithLoader.svelte';
-	import { user } from './firebase';
-	import RecordButton from './RecordButton.svelte';
-	import { authorizedRequest } from './request';
+	import VideoWithLoader from '$lib/components/VideoWithLoader.svelte';
+	import { user } from '$lib/firebase';
+	import RecordButton from '$lib/components/RecordButton.svelte';
+	import { authorizedRequest } from '$lib/request';
 
 	interface Device {
 		name: string;
@@ -80,7 +80,7 @@
 						src={device_playlist
 							? `${PUBLIC_RELAY_URL}${device_playlist.device.name}${device_playlist.playlist.path}`
 							: null}
-						onplaying={(event) => {
+						onplaying={(event: any) => {
 							video_stream = event.currentTarget;
 						}}
 						controls

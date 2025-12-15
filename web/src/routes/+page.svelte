@@ -1,10 +1,10 @@
 <script lang="ts">
 	import { PUBLIC_RELAY_URL } from '$env/static/public';
-	import Device from '$lib/Device.svelte';
+	import Device from '$lib/components/Device.svelte';
 	import { loginWithGoogle, logout, user } from '$lib/firebase';
-	import Loader from '$lib/Loader.svelte';
+	import Loader from '$lib/components/Loader.svelte';
 	import { authorizedRequest } from '$lib/request';
-	import TemperatureChart from '$lib/TemperatureChart.svelte';
+	import TemperatureChart from '$lib/components/TemperatureChart.svelte';
 
 	interface Device {
 		name: string;
