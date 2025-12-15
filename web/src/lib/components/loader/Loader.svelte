@@ -24,16 +24,16 @@
 	}
 
 	:global(.bird) {
-		animation: jitter 1s infinite steps(1, end);
+		animation: jitter 3s infinite linear;
 	}
 	:global(.bird:nth-of-type(1)) {
-		animation-delay: -0.1s;
+		animation-delay: -0.25s;
 	}
 	:global(.bird:nth-of-type(2)) {
-		animation-delay: -0.2s;
+		animation-delay: -0.5s;
 	}
 	:global(.bird:nth-of-type(3)) {
-		animation-delay: -0.3s;
+		animation-delay: -0.75s;
 	}
 
 	@keyframes wave {
@@ -49,12 +49,12 @@
 	}
 
 	:global(.reflection) {
-		animation: wave 1.5s infinite steps(1, end);
+		animation: wave 3s infinite ease;
 	}
 	:global(.reflection:nth-of-type(1)) {
-		animation-delay: 0.25s;
+		animation-delay: 0.5s;
 	}
 	:global(.reflection:nth-of-type(2)) {
-		animation-delay: 0.5s;
+		animation-delay: 1s;
 	}
 </style>
