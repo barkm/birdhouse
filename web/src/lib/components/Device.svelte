@@ -99,7 +99,7 @@
 		<recordings>
 			{#each recordings.filter((_, i) => i % 7 === 0).slice(0, 12) as recording (recording.url)}
 				<recording>
-					<strong>{recording.time}</strong>
+					<strong>{new Date(recording.time).toLocaleDateString()}</strong>
 					<VideoWithLoader src={recording.url} autoplay muted playsinline loop />
 				</recording>
 			{/each}
