@@ -1,6 +1,6 @@
 <script lang="ts">
 	import { PUBLIC_RECORDER_URL, PUBLIC_RELAY_URL } from '$env/static/public';
-	import VideoWithLoader from '$lib/components/VideoWithLoader.svelte';
+	import VideoWithLoader from '$lib/components/video/VideoWithLoader.svelte';
 	import { user } from '$lib/firebase';
 	import RecordButton from '$lib/components/record-button/RecordButton.svelte';
 	import { authorizedRequest } from '$lib/request';
