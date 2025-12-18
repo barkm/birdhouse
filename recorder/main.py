@@ -248,7 +248,11 @@ def _create_and_upload_timelapse(
 ) -> None:
     with NamedTemporaryFile(suffix=".mp4") as temp_file:
         recordings = list_gcs_recordings(f"{recording_dir}/{device}")
-        logging.info(f"Found {len(recordings)} recordings for device {device}")
+        if not recordings:
+            logging.info(f"No recordings found for device {device}, skipping timelapse")
+            return
+        else:
+            logging.info(f"Found {len(recordings)} recordings for device {device}")
         recordings_in_range = [
             r for r in recordings if start <= datetime.fromisoformat(r.time) <= end
         ]
