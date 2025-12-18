@@ -224,7 +224,7 @@ def create_timelapse(start: datetime, end: datetime, duration: int) -> None:
     for device in devices:
         logging.info(f"Creating timelapse for device {device}")
         _create_and_upload_timelapse(
-            start, end, device, duration, Path(settings.recording_dir)
+            start, end, device, duration, settings.recording_dir
         )
 
 
@@ -244,7 +244,7 @@ def _create_and_upload_timelapse(
     end: datetime,
     device: str,
     duration: int,
-    recording_dir: Path,
+    recording_dir: str,
 ) -> None:
     with NamedTemporaryFile(suffix=".mp4") as temp_file:
         recordings = list_gcs_recordings(f"{recording_dir}/{device}")
