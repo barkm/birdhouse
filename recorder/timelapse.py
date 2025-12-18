@@ -18,12 +18,16 @@ def create_and_upload_timelapse(
     recording_dir: Path,
 ) -> None:
     with NamedTemporaryFile(suffix=".mp4") as temp_file:
+        recordings = list_gcs_recordings(f"{recording_dir}/{device}")
+        recordings_in_range = [
+            r for r in recordings if start <= datetime.fromisoformat(r.time) <= end
+        ]
+        downloaded_files = [_download_recording(r.url) for r in recordings_in_range]
+        times = [datetime.fromisoformat(r.time) for r in recordings_in_range]
         _make_timelapse(
-            start,
-            end,
-            device,
+            downloaded_files,
+            times,
             Path(temp_file.name),
-            recording_dir,
             total_time=duration,
             fade_duration=1,
         )
@@ -34,24 +38,16 @@ def create_and_upload_timelapse(
 
 
 def _make_timelapse(
-    start: datetime,
-    end: datetime,
-    device: str,
+    files: list[Path],
+    times: list[datetime],
     dest: Path,
-    recording_dir: Path,
     total_time: float | None = None,
     fade_duration: float | None = None,
 ) -> None:
     if fade_duration is not None and fade_duration < 0.1:
         raise ValueError("fade_duration must be at least 0.1 seconds")
     fade_duration = fade_duration if fade_duration is not None else 0.1
-    recordings = list_gcs_recordings(f"{recording_dir}/{device}")
-    recordings_in_range = [
-        r for r in recordings if start <= datetime.fromisoformat(r.time) <= end
-    ]
-    downloaded_files = [_download_recording(r.url) for r in recordings_in_range]
-    times = [datetime.fromisoformat(r.time) for r in recordings_in_range]
-    durations = [_get_video_duration(d) for d in downloaded_files]
+    durations = [_get_video_duration(d) for d in files]
     minimal_compression = min(
         _minimal_compression(
             times[i],
@@ -77,7 +73,7 @@ def _make_timelapse(
         compression = minimal_compression
     starts = [compression * (t - times[0]).total_seconds() for t in times]
     last_clip_duration = compression * average_clip_spacing
-    _crossfade_videos(downloaded_files, starts, last_clip_duration, dest)
+    _crossfade_videos(files, starts, last_clip_duration, dest)
 
 
 def _get_video_duration(path: Path) -> float:
@@ -136,19 +132,3 @@ def _download_recording(url: str) -> Path:
     with open(dest, "wb") as f:
         f.write(response.content)
     return dest
-
-
-if __name__ == "__main__":
-    import os
-
-    os.makedirs(DOWNLOAD_DIR, exist_ok=True)
-    RECORDING_DIR = "gs://birdhouse-recordings"
-    _make_timelapse(
-        datetime.fromisoformat("2025-12-01T12:00:00"),
-        datetime.fromisoformat("2025-12-10T12:10:00"),
-        "birdhouse",
-        Path("./timelapse.mp4"),
-        Path(RECORDING_DIR),
-        fade_duration=1,
-        total_time=10,
-    )
