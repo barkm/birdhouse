@@ -13,7 +13,13 @@ def make_timelapse(
     if fade_duration is not None and fade_duration < 0.1:
         raise ValueError("fade_duration must be at least 0.1 seconds")
     fade_duration = fade_duration if fade_duration is not None else 0.1
-    durations = [_get_video_duration(d) for d in files]
+    durations = [_get_video_duration(f) for f in files]
+    durations_files = [
+        (d, f, t) for d, f, t in zip(durations, files, times) if d > fade_duration
+    ]
+    durations = [d for d, _, _ in durations_files]
+    files = [f for _, f, _ in durations_files]
+    times = [t for _, _, t in durations_files]
     minimal_compression = min(
         _minimal_compression(
             times[i],
@@ -84,4 +90,6 @@ def _crossfade_videos(
 
 
 def _minimal_compression(s1: datetime, d1: float, s2: datetime, fade: float) -> float:
+    assert s2 > s1
+    assert d1 > fade
     return (d1 - fade) / (s2 - s1).total_seconds()
