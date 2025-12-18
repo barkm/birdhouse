@@ -222,6 +222,7 @@ def list_recordings(request: Request, device: str) -> list[Recording]:
 def create_timelapse(start: datetime, end: datetime, duration: int) -> None:
     devices = _get_devices(settings.relay_url or "")
     for device in devices:
+        logging.info(f"Creating timelapse for device {device}")
         _create_and_upload_timelapse(
             start, end, device, duration, Path(settings.recording_dir)
         )
@@ -247,9 +248,13 @@ def _create_and_upload_timelapse(
 ) -> None:
     with NamedTemporaryFile(suffix=".mp4") as temp_file:
         recordings = list_gcs_recordings(f"{recording_dir}/{device}")
+        logging.info(f"Found {len(recordings)} recordings for device {device}")
         recordings_in_range = [
             r for r in recordings if start <= datetime.fromisoformat(r.time) <= end
         ]
+        logging.info(
+            f"Found {len(recordings_in_range)} recordings for device {device} in range {start} - {end}"
+        )
         downloaded_files = [_download_recording(r.url) for r in recordings_in_range]
         times = [datetime.fromisoformat(r.time) for r in recordings_in_range]
         make_timelapse(
