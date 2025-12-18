@@ -1,43 +1,9 @@
 from pathlib import Path
 from datetime import datetime
 from subprocess import check_output
-from tempfile import NamedTemporaryFile
-
-import httpx
-
-from gcs import list_gcs_recordings, upload_to_gcs
-
-DOWNLOAD_DIR = "./.downloads"
 
 
-def create_and_upload_timelapse(
-    start: datetime,
-    end: datetime,
-    device: str,
-    duration: int,
-    recording_dir: Path,
-) -> None:
-    with NamedTemporaryFile(suffix=".mp4") as temp_file:
-        recordings = list_gcs_recordings(f"{recording_dir}/{device}")
-        recordings_in_range = [
-            r for r in recordings if start <= datetime.fromisoformat(r.time) <= end
-        ]
-        downloaded_files = [_download_recording(r.url) for r in recordings_in_range]
-        times = [datetime.fromisoformat(r.time) for r in recordings_in_range]
-        _make_timelapse(
-            downloaded_files,
-            times,
-            Path(temp_file.name),
-            total_time=duration,
-            fade_duration=1,
-        )
-        upload_to_gcs(
-            temp_file.name,
-            f"{recording_dir}/timelapses/{device}/{start.isoformat()}_{end.isoformat()}.mp4",
-        )
-
-
-def _make_timelapse(
+def make_timelapse(
     files: list[Path],
     times: list[datetime],
     dest: Path,
@@ -119,16 +85,3 @@ def _crossfade_videos(
 
 def _minimal_compression(s1: datetime, d1: float, s2: datetime, fade: float) -> float:
     return (d1 - fade) / (s2 - s1).total_seconds()
-
-
-def _download_recording(url: str) -> Path:
-    name = url.split("/")[-1]
-    dest = Path(DOWNLOAD_DIR) / name
-    if dest.exists():
-        return dest
-    response = httpx.get(url)
-    response.raise_for_status()
-    dest.parent.mkdir(parents=True, exist_ok=True)
-    with open(dest, "wb") as f:
-        f.write(response.content)
-    return dest

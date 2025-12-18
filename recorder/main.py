@@ -20,13 +20,15 @@ from sqlalchemy import create_engine
 from sqlmodel import Session, select
 
 from gcs import Recording, list_gcs_recordings, upload_to_gcs
-from timelapse import create_and_upload_timelapse
+from timelapse import make_timelapse
 
 logging.basicConfig(
     level=logging.INFO,
     format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
     datefmt="%Y-%m-%d %H:%M:%S",
 )
+
+DOWNLOAD_DIR = "./.downloads"
 
 
 class Settings(BaseSettings):
@@ -220,7 +222,7 @@ def list_recordings(request: Request, device: str) -> list[Recording]:
 def create_timelapse(start: datetime, end: datetime, duration: int) -> None:
     devices = _get_devices(settings.relay_url or "")
     for device in devices:
-        create_and_upload_timelapse(
+        _create_and_upload_timelapse(
             start, end, device, duration, Path(settings.recording_dir)
         )
 
@@ -234,3 +236,43 @@ def _list_local_recordings(
         )
         for path in Path(recording_dir, device).iterdir()
     ]
+
+
+def _create_and_upload_timelapse(
+    start: datetime,
+    end: datetime,
+    device: str,
+    duration: int,
+    recording_dir: Path,
+) -> None:
+    with NamedTemporaryFile(suffix=".mp4") as temp_file:
+        recordings = list_gcs_recordings(f"{recording_dir}/{device}")
+        recordings_in_range = [
+            r for r in recordings if start <= datetime.fromisoformat(r.time) <= end
+        ]
+        downloaded_files = [_download_recording(r.url) for r in recordings_in_range]
+        times = [datetime.fromisoformat(r.time) for r in recordings_in_range]
+        make_timelapse(
+            downloaded_files,
+            times,
+            Path(temp_file.name),
+            total_time=duration,
+            fade_duration=1,
+        )
+        upload_to_gcs(
+            temp_file.name,
+            f"{recording_dir}/timelapses/{device}/{start.isoformat()}_{end.isoformat()}.mp4",
+        )
+
+
+def _download_recording(url: str) -> Path:
+    name = url.split("/")[-1]
+    dest = Path(DOWNLOAD_DIR) / name
+    if dest.exists():
+        return dest
+    response = httpx.get(url)
+    response.raise_for_status()
+    dest.parent.mkdir(parents=True, exist_ok=True)
+    with open(dest, "wb") as f:
+        f.write(response.content)
+    return dest
