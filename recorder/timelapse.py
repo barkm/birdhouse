@@ -1,11 +1,9 @@
-from itertools import zip_longest
 from pathlib import Path
 from datetime import datetime
+from subprocess import check_output
 from tempfile import NamedTemporaryFile
 
 import httpx
-from moviepy import VideoFileClip, CompositeVideoClip, TextClip
-from moviepy.video.fx import CrossFadeIn, CrossFadeOut
 
 from gcs import list_gcs_recordings, upload_to_gcs
 
@@ -41,34 +39,19 @@ def _make_timelapse(
     device: str,
     dest: Path,
     recording_dir: Path,
-    total_time: int | None = None,
-    fade_duration: int | None = None,
+    total_time: float | None = None,
+    fade_duration: float | None = None,
 ) -> None:
-    fade_duration = fade_duration or 0
+    if fade_duration is not None and fade_duration < 0.1:
+        raise ValueError("fade_duration must be at least 0.1 seconds")
+    fade_duration = fade_duration if fade_duration is not None else 0.1
     recordings = list_gcs_recordings(f"{recording_dir}/{device}")
     recordings_in_range = [
         r for r in recordings if start <= datetime.fromisoformat(r.time) <= end
     ]
     downloaded_files = [_download_recording(r.url) for r in recordings_in_range]
     times = [datetime.fromisoformat(r.time) for r in recordings_in_range]
-    clips = [VideoFileClip(str(f)).with_speed_scaled(2) for f in downloaded_files]
-    text_clips = [
-        TextClip(
-            text=t.strftime("%Y-%m-%d %H:%M:%S"),
-            size=(200, 100),
-            color="white",
-            text_align="center",
-            horizontal_align="center",
-        )
-        .with_position((0.75, 0.9), relative=True)
-        .with_duration(c.duration)
-        for t, c in zip(times, clips)
-    ]
-    optional_durations = [clip.duration for clip in clips]
-    if any(d is None for d in optional_durations):
-        raise ValueError("Could not get duration of all clips")
-    durations = [d for d in optional_durations if d is not None]
-
+    durations = [_get_video_duration(d) for d in downloaded_files]
     minimal_compression = min(
         _minimal_compression(
             times[i],
@@ -78,47 +61,64 @@ def _make_timelapse(
         )
         for i in range(len(durations) - 1)
     )
-
+    average_clip_spacing = sum(
+        (times[i + 1] - times[i]).total_seconds() for i in range(len(times) - 1)
+    ) / (len(times) - 1)
     if total_time is not None:
-        desired_compression = (total_time - durations[-1]) / (
-            times[-1] - times[0]
-        ).total_seconds()
+        desired_compression = total_time / (
+            average_clip_spacing + (times[-1] - times[0]).total_seconds()
+        )
         if desired_compression > minimal_compression:
-            raise ValueError("Cannot create timelapse with desired duration")
+            raise ValueError(
+                f"Cannot create timelapse with desired duration: {desired_compression} > {minimal_compression}"
+            )
         compression = desired_compression
     else:
         compression = minimal_compression
-
     starts = [compression * (t - times[0]).total_seconds() for t in times]
+    last_clip_duration = compression * average_clip_spacing
+    _crossfade_videos(downloaded_files, starts, last_clip_duration, dest)
 
-    clips = [
-        clip.with_start(start).subclipped(0, (end + fade_duration) if end else None)
-        for clip, start, end in zip_longest(clips, starts, starts[1:])
-    ]
-    text_clips = [
-        tc.with_start(start).subclipped(0, (end + fade_duration) if end else None)
-        for tc, start, end in zip_longest(text_clips, starts, starts[1:])
-    ]
 
-    if fade_duration is not None:
-        clips = (
-            [clips[0].with_effects([CrossFadeOut(fade_duration)])]
-            + [c.with_effects([CrossFadeIn(fade_duration)]) for c in clips[1:-1]]
-            + [clips[-1].with_effects([CrossFadeIn(fade_duration)])]
-        )
-        text_clips = (
-            [text_clips[0].with_effects([CrossFadeOut(fade_duration)])]
-            + [
-                tc.with_effects(
-                    [CrossFadeIn(fade_duration), CrossFadeOut(fade_duration)]
-                )
-                for tc in text_clips[1:-1]
+def _get_video_duration(path: Path) -> float:
+    return float(
+        check_output(
+            [
+                "ffprobe",
+                "-v",
+                "error",
+                "-show_entries",
+                "format=duration",
+                "-of",
+                "default=noprint_wrappers=1:nokey=1",
+                str(path),
             ]
-            + [text_clips[-1].with_effects([CrossFadeIn(fade_duration)])]
         )
+    )
 
-    timelapse = CompositeVideoClip(clips + text_clips)
-    timelapse.write_videofile(dest)
+
+def _crossfade_videos(
+    video_paths: list[Path], starts: list[float], last_clip_duration: float, dest: Path
+) -> None:
+    filter_parts = [
+        f"{'[0:v]' if i == 0 else f'[v_fade_{i}]'}[{i + 1}:v]xfade=transition=fade:duration=1:offset={starts[i + 1]}[v_fade_{i + 1}]"
+        for i in range(len(video_paths) - 1)
+    ]
+    command = [
+        "ffmpeg",
+        "-y",
+        *[arg for path in video_paths for arg in ["-i", str(path)]],
+        "-filter_complex",
+        ";".join(filter_parts),
+        "-map",
+        f"[v_fade_{len(video_paths) - 1}]",
+        "-t",
+        str(starts[-1] + last_clip_duration),
+        "-pix_fmt",
+        "yuv420p",
+        str(dest),
+    ]
+    check_output(command)
 
 
 def _minimal_compression(s1: datetime, d1: float, s2: datetime, fade: float) -> float:
@@ -136,3 +136,19 @@ def _download_recording(url: str) -> Path:
     with open(dest, "wb") as f:
         f.write(response.content)
     return dest
+
+
+if __name__ == "__main__":
+    import os
+
+    os.makedirs(DOWNLOAD_DIR, exist_ok=True)
+    RECORDING_DIR = "gs://birdhouse-recordings"
+    _make_timelapse(
+        datetime.fromisoformat("2025-12-01T12:00:00"),
+        datetime.fromisoformat("2025-12-10T12:10:00"),
+        "birdhouse",
+        Path("./timelapse.mp4"),
+        Path(RECORDING_DIR),
+        fade_duration=1,
+        total_time=10,
+    )
