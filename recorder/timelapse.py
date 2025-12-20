@@ -11,7 +11,7 @@ import ffmpeg
 
 
 def make_timelapse(
-    files: list[Path],
+    files: list[str],
     times: list[datetime],
     dest: Path,
     total_time: float | None = None,
@@ -64,8 +64,8 @@ def make_timelapse(
     logging.info(f"Timelapse created at {dest}")
 
 
-def _get_video_duration(path: Path) -> float:
-    return float(ffmpeg.probe(str(path))["format"]["duration"])
+def _get_video_duration(path: str) -> float:
+    return float(ffmpeg.probe(str(path), probesize="1M")["format"]["duration"])
 
 
 def _minimal_compression(s1: datetime, d1: float, s2: datetime, fade: float) -> float:
@@ -75,7 +75,7 @@ def _minimal_compression(s1: datetime, d1: float, s2: datetime, fade: float) -> 
 
 
 def _crossfade_videos_constant_memory(
-    video_paths: list[Path],
+    video_paths: list[str],
     starts: list[float],
     last_clip_duration: float,
     dest: Path,
@@ -143,7 +143,7 @@ PRORES = Codec(name="prores_ks", profile="3", pix_fmt="yuv422p10le")
 
 
 def _crossfade_videos(
-    video_paths: list[Path],
+    video_paths: list[str],
     starts: list[float],
     codec: Codec,
     dest: Path,
@@ -184,7 +184,7 @@ def _crossfade_videos(
 
 
 def _reencode_video(
-    input_path: Path, output_path: Path, codec: Codec, duration: float | None = None
+    input_path: str, output_path: Path, codec: Codec, duration: float | None = None
 ) -> None:
     input_ = ffmpeg.input(str(input_path))
     output = ffmpeg.output(

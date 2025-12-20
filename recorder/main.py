@@ -1,4 +1,5 @@
 from contextlib import asynccontextmanager
+import os
 from pathlib import Path
 from datetime import datetime
 import shutil
@@ -269,36 +270,23 @@ def _create_and_upload_timelapse(
         logging.info(
             f"Found {len(recordings_in_range)} recordings for device {device} in range {start} - {end}"
         )
-        downloaded_files = [_download_recording(r.url) for r in recordings_in_range]
+        urls = [r.url for r in recordings_in_range]
         times = [datetime.fromisoformat(r.time) for r in recordings_in_range]
         make_timelapse(
-            downloaded_files,
+            urls,
             times,
             Path(temp_file.name),
             total_time=duration,
             fade_duration=1,
             batch_size=batch_size,
         )
-        save_path = (
-            Path(recording_dir)
-            / "timelapses"
-            / device
-            / f"{start.isoformat()}_{end.isoformat()}.mp4"
+        save_path = os.path.join(
+            recording_dir,
+            "timelapses",
+            device,
+            f"{start.isoformat()}_{end.isoformat()}.mp4",
         )
         if recording_dir.startswith("gs://"):
             upload_to_gcs(temp_file.name, str(save_path))
         else:
-            shutil.move(temp_file.name, "timelapse.mp4")
-
-
-def _download_recording(url: str) -> Path:
-    name = url.split("/")[-1]
-    dest = Path(DOWNLOAD_DIR) / name
-    if dest.exists():
-        return dest
-    response = httpx.get(url)
-    response.raise_for_status()
-    dest.parent.mkdir(parents=True, exist_ok=True)
-    with open(dest, "wb") as f:
-        f.write(response.content)
-    return dest
+            shutil.move(temp_file.name, save_path)
