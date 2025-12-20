@@ -5,9 +5,9 @@ import math
 from pathlib import Path
 from datetime import datetime
 import shutil
-from subprocess import check_output
 import tempfile
 from uuid import uuid4
+import ffmpeg
 
 
 def make_timelapse(
@@ -65,20 +65,7 @@ def make_timelapse(
 
 
 def _get_video_duration(path: Path) -> float:
-    return float(
-        check_output(
-            [
-                "ffprobe",
-                "-v",
-                "error",
-                "-show_entries",
-                "format=duration",
-                "-of",
-                "default=noprint_wrappers=1:nokey=1",
-                str(path),
-            ]
-        )
-    )
+    return float(ffmpeg.probe(str(path))["format"]["duration"])
 
 
 def _minimal_compression(s1: datetime, d1: float, s2: datetime, fade: float) -> float:
@@ -135,7 +122,13 @@ def _crossfade_videos_constant_memory(
                 final_video_path, dest, LIBX264, starts[-1] + last_clip_duration
             )
         else:
-            shutil.move(final_video_path, dest)
+            if last_clip_duration is None:
+                shutil.copy(final_video_path, dest)
+            else:
+                logging.info("Trimming final video to target duration")
+                ffmpeg.input(str(final_video_path)).trim(
+                    duration=starts[-1] + last_clip_duration
+                ).output(str(dest)).run(overwrite_output=True, quiet=True)
 
 
 @dataclass
@@ -161,53 +154,45 @@ def _crossfade_videos(
     if len(video_paths) == 1:
         shutil.copy(video_paths[0], dest)
         return
-    filter_parts = [
-        f"{'[0:v]' if i == 0 else f'[v_fade_{i}]'}[{i + 1}:v]xfade=transition=fade:duration=1:offset={starts[i + 1]}[v_fade_{i + 1}]"
-        for i in range(len(video_paths) - 1)
-    ]
-    command = [
-        "ffmpeg",
-        "-y",
-        "-v",
-        "error",
-        *[arg for path in video_paths for arg in ["-i", str(path)]],
-        "-filter_complex",
-        ";".join(filter_parts),
-        "-map",
-        f"[v_fade_{len(video_paths) - 1}]",
-        "-c:v",
-        codec.name,
-        "-profile:v",
-        codec.profile,
-        "-pix_fmt",
-        codec.pix_fmt,
-        *(
-            ["-t", str(starts[-1] + last_clip_duration)]
-            if last_clip_duration is not None
-            else []
-        ),
+    inputs = [ffmpeg.input(str(path)) for path in video_paths]
+
+    xfade = None
+    for i in range(len(inputs) - 1):
+        input1 = inputs[i] if i == 0 else xfade
+        input2 = inputs[i + 1]
+        xfade = ffmpeg.filter(
+            [input1, input2],
+            "xfade",
+            transition="fade",
+            duration=1,
+            offset=starts[i + 1],
+        )
+
+    output = ffmpeg.output(
+        xfade,
         str(dest),
-    ]
-    check_output(command)
+        vcodec=codec.name,
+        profile=codec.profile,
+        pix_fmt=codec.pix_fmt,
+        **(
+            {"t": starts[-1] + last_clip_duration}
+            if last_clip_duration is not None
+            else {}
+        ),
+    )
+    ffmpeg.run(output, overwrite_output=True, quiet=True)
 
 
 def _reencode_video(
     input_path: Path, output_path: Path, codec: Codec, duration: float | None = None
 ) -> None:
-    command = [
-        "ffmpeg",
-        "-y",
-        "-v",
-        "error",
-        "-i",
-        str(input_path),
-        "-c:v",
-        codec.name,
-        "-profile:v",
-        codec.profile,
-        "-pix_fmt",
-        codec.pix_fmt,
-        *(["-t", str(duration)] if duration is not None else []),
+    input_ = ffmpeg.input(str(input_path))
+    output = ffmpeg.output(
+        input_,
         str(output_path),
-    ]
-    check_output(command)
+        vcodec=codec.name,
+        profile=codec.profile,
+        pix_fmt=codec.pix_fmt,
+        **({"t": duration} if duration is not None else {}),
+    )
+    ffmpeg.run(output, overwrite_output=True)

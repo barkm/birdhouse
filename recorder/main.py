@@ -1,7 +1,8 @@
 from contextlib import asynccontextmanager
 from pathlib import Path
 from datetime import datetime
-from subprocess import CalledProcessError, run
+import shutil
+from subprocess import CalledProcessError
 from tempfile import NamedTemporaryFile
 import logging
 from typing import Callable, Sequence
@@ -12,6 +13,7 @@ import httpx
 from fastapi import Depends, FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic_settings import BaseSettings, SettingsConfigDict
+import ffmpeg
 
 from common.auth import firebase
 from common.auth import google
@@ -182,21 +184,18 @@ def _record(relay_url: str, device: str, output_path: str, duration: int) -> Non
     playlist_path = start_response.json()["playlist"]
     playlist_url = f"{relay_url}/{device}{playlist_path}"
     Path(output_path).parent.mkdir(parents=True, exist_ok=True)
-    # fmt: off
-    command = [
-        "ffmpeg", "-y",
-        "-i", playlist_url,
-        "-t", str(duration),
-        "-c:v", "libx264",
-        "-c:a", "aac",
-        "-movflags", "+faststart",
-        "-profile:v", "main",
-        "-pix_fmt", "yuv420p",
-        output_path
-    ]
-    # fmt: on
+    input_ = ffmpeg.input(playlist_url, t=duration)
+    output = ffmpeg.output(
+        input_,
+        output_path,
+        vcodec="libx264",
+        acodec="aac",
+        movflags="+faststart",
+        profile="main",
+        pix_fmt="yuv420p",
+    )
     try:
-        run(command, check=True, capture_output=True, text=True)
+        ffmpeg.run(output, overwrite_output=True, quiet=True)
         logging.info(f"Finished recording video for {device} to {output_path}")
     except CalledProcessError as e:
         logging.error(
@@ -280,10 +279,16 @@ def _create_and_upload_timelapse(
             fade_duration=1,
             batch_size=batch_size,
         )
-        upload_to_gcs(
-            temp_file.name,
-            f"{recording_dir}/timelapses/{device}/{start.isoformat()}_{end.isoformat()}.mp4",
+        save_path = (
+            Path(recording_dir)
+            / "timelapses"
+            / device
+            / f"{start.isoformat()}_{end.isoformat()}.mp4"
         )
+        if recording_dir.startswith("gs://"):
+            upload_to_gcs(temp_file.name, str(save_path))
+        else:
+            shutil.move(temp_file.name, "timelapse.mp4")
 
 
 def _download_recording(url: str) -> Path:
