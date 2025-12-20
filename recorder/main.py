@@ -219,12 +219,22 @@ def list_recordings(request: Request, device: str) -> list[Recording]:
 
 
 @app.get("/timelapse")
-def create_timelapse(start: datetime, end: datetime, duration: int) -> None:
+def create_timelapse(
+    start: datetime,
+    end: datetime,
+    duration: int | None = None,
+    batch_size: int | None = None,
+) -> None:
     devices = _get_devices(settings.relay_url or "")
     for device in devices:
         logging.info(f"Creating timelapse for device {device}")
         _create_and_upload_timelapse(
-            start, end, device, duration, settings.recording_dir
+            start,
+            end,
+            device,
+            duration,
+            batch_size,
+            settings.recording_dir,
         )
 
 
@@ -243,7 +253,8 @@ def _create_and_upload_timelapse(
     start: datetime,
     end: datetime,
     device: str,
-    duration: int,
+    duration: int | None,
+    batch_size: int | None,
     recording_dir: str,
 ) -> None:
     with NamedTemporaryFile(suffix=".mp4") as temp_file:
@@ -267,6 +278,7 @@ def _create_and_upload_timelapse(
             Path(temp_file.name),
             total_time=duration,
             fade_duration=1,
+            batch_size=batch_size,
         )
         upload_to_gcs(
             temp_file.name,
