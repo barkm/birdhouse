@@ -18,9 +18,7 @@ def make_timelapse(
     fade_duration: float | None = None,
     batch_size: int | None = None,
 ) -> None:
-    if fade_duration is not None and fade_duration < 0.1:
-        raise ValueError("fade_duration must be at least 0.1 seconds")
-    fade_duration = fade_duration if fade_duration is not None else 0.1
+    fade_duration = fade_duration if fade_duration is not None else 0
     durations = [_get_video_duration(f) for f in files]
     durations_files = [
         (d, f, t) for d, f, t in zip(durations, files, times) if d > fade_duration
@@ -53,6 +51,17 @@ def make_timelapse(
         compression = minimal_compression
     starts = [compression * (t - times[0]).total_seconds() for t in times]
     last_clip_duration = compression * average_clip_spacing
+    if fade_duration == 0:
+        logging.info("No crossfade duration specified, concatenating videos directly")
+        inputs = [ffmpeg.input(str(path)) for path in files]
+        inputs = [
+            input_.trim(end=end - start)
+            for input_, start, end in zip(
+                inputs, starts, starts[1:] + [starts[-1] + last_clip_duration]
+            )
+        ]
+        ffmpeg.concat(*inputs).output(str(dest)).run(overwrite_output=True, quiet=True)
+        return
     if batch_size is None:
         logging.info("Crossfading all videos in a single pass")
         _crossfade_videos(
