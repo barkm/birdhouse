@@ -55,11 +55,13 @@ def make_timelapse(
     last_clip_duration = compression * average_clip_spacing
     if batch_size is None:
         logging.info("Crossfading all videos in a single pass")
-        _crossfade_videos(files, starts, LIBX264, dest, last_clip_duration)
+        _crossfade_videos(
+            files, starts, fade_duration, LIBX264, dest, last_clip_duration
+        )
     else:
         logging.info(f"Crossfading videos in batches of {batch_size}")
         _crossfade_videos_constant_memory(
-            files, starts, last_clip_duration, dest, batch_size
+            files, starts, last_clip_duration, fade_duration, dest, batch_size
         )
     logging.info(f"Timelapse created at {dest}")
 
@@ -78,6 +80,7 @@ def _crossfade_videos_constant_memory(
     video_paths: list[str],
     starts: list[float],
     last_clip_duration: float,
+    fade_duration: float,
     dest: Path,
     batch_size: int,
     lossless: bool = False,
@@ -107,6 +110,7 @@ def _crossfade_videos_constant_memory(
                 _crossfade_videos(
                     video_paths_batch,
                     batch_starts,
+                    fade_duration,
                     PRORES if lossless else LIBX264,
                     temp_output,
                     None,
@@ -145,6 +149,7 @@ PRORES = Codec(name="prores_ks", profile="3", pix_fmt="yuv422p10le")
 def _crossfade_videos(
     video_paths: list[str],
     starts: list[float],
+    duration: float,
     codec: Codec,
     dest: Path,
     last_clip_duration: float | None = None,
@@ -164,7 +169,7 @@ def _crossfade_videos(
             [input1, input2],
             "xfade",
             transition="fade",
-            duration=1,
+            duration=duration,
             offset=starts[i + 1],
         )
 
