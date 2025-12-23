@@ -223,6 +223,7 @@ def create_timelapse(
     start: datetime,
     end: datetime,
     duration: int | None = None,
+    fade_duration: float | None = None,
     batch_size: int | None = None,
 ) -> None:
     devices = _get_devices(settings.relay_url or "")
@@ -233,6 +234,7 @@ def create_timelapse(
             end,
             device,
             duration,
+            fade_duration,
             batch_size,
             settings.recording_dir,
         )
@@ -254,6 +256,7 @@ def _create_and_upload_timelapse(
     end: datetime,
     device: str,
     duration: int | None,
+    fade_duration: float | None,
     batch_size: int | None,
     recording_dir: str,
 ) -> None:
@@ -277,7 +280,7 @@ def _create_and_upload_timelapse(
             times,
             Path(temp_file.name),
             total_time=duration,
-            fade_duration=1,
+            fade_duration=fade_duration,
             batch_size=batch_size,
         )
         save_path = os.path.join(
