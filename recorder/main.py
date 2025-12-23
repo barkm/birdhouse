@@ -31,8 +31,6 @@ logging.basicConfig(
     datefmt="%Y-%m-%d %H:%M:%S",
 )
 
-DOWNLOAD_DIR = "./.downloads"
-
 
 class Settings(BaseSettings):
     relay_url: str | None = None
