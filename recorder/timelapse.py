@@ -96,7 +96,8 @@ def _crossfade_videos_constant_memory(
 ) -> None:
     if not video_paths:
         raise ValueError("No video paths provided")
-    videos_with_starts = list(zip(video_paths, starts))
+    ends = [s + fade_duration for s in starts[1:]] + [starts[-1] + last_clip_duration]
+    videos_with_starts = list(zip(video_paths, starts, ends))
     total_passes = math.ceil(math.log(len(videos_with_starts), batch_size))
     with tempfile.TemporaryDirectory() as temp_dir:
         temp_dir_path = Path(temp_dir)
@@ -112,9 +113,11 @@ def _crossfade_videos_constant_memory(
                 if len(batch) == 1:
                     next_videos_with_starts.append(batch[0])
                     continue
-                video_paths_batch = [vp for vp, _ in batch]
+                video_paths_batch = [vp for vp, _, _ in batch]
                 first_start = batch[0][1]
-                batch_starts = [s - first_start for _, s in batch]
+                batch_starts = [s - first_start for _, s, _ in batch]
+                batch_end = batch[-1][2]
+                batch_last_clip_duration = batch_end - batch_starts[-1]
                 temp_output = temp_dir_path / f"{uuid4().hex}.mov"
                 _crossfade_videos(
                     video_paths_batch,
@@ -122,12 +125,12 @@ def _crossfade_videos_constant_memory(
                     fade_duration,
                     PRORES if lossless else LIBX264,
                     temp_output,
-                    None,
+                    batch_last_clip_duration,
                 )
-                next_videos_with_starts.append((temp_output, first_start))
+                next_videos_with_starts.append((temp_output, first_start, batch_end))
             current_videos_with_starts = next_videos_with_starts
 
-        final_video_path, final_start = current_videos_with_starts[0]
+        final_video_path, final_start, _ = current_videos_with_starts[0]
         assert final_start == starts[0]
         if lossless:
             logging.info("Re-encoding final video to target format")
@@ -135,13 +138,7 @@ def _crossfade_videos_constant_memory(
                 final_video_path, dest, LIBX264, starts[-1] + last_clip_duration
             )
         else:
-            if last_clip_duration is None:
-                shutil.copy(final_video_path, dest)
-            else:
-                logging.info("Trimming final video to target duration")
-                ffmpeg.input(str(final_video_path)).trim(
-                    duration=starts[-1] + last_clip_duration
-                ).output(str(dest)).run(overwrite_output=True, quiet=True)
+            shutil.copy(final_video_path, dest)
 
 
 @dataclass
