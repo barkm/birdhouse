@@ -22,7 +22,7 @@ from common.db import models
 from sqlalchemy import create_engine
 from sqlmodel import Session, select
 
-from gcs import Recording, upload_to_gcs
+from gcs import upload_to_gcs
 from timelapse import make_timelapse
 
 logging.basicConfig(
@@ -227,17 +227,16 @@ def get_recording(path: str) -> FileResponse:
 @app.get("/recordings/{device}")
 def list_recordings(
     device: str, session: Session = Depends(get_session)
-) -> Sequence[Recording]:
+) -> Sequence[models.Recording]:
     device_obj = session.exec(
         select(models.Device).where(models.Device.name == device)
     ).first()
     if not device_obj:
         logging.error(f"Device {device} not found in database")
         return []
-    recordings = session.exec(
+    return session.exec(
         select(models.Recording).where(models.Recording.device_id == device_obj.id)
     ).all()
-    return [Recording(time=r.created_at.isoformat(), url=r.url) for r in recordings]
 
 
 @app.get("/timelapse")

@@ -1,12 +1,6 @@
 import logging
 
-from pydantic import BaseModel
 from google.cloud import storage
-
-
-class Recording(BaseModel):
-    time: str
-    url: str
 
 
 def upload_to_gcs(source: str, gcs_path: str) -> str:

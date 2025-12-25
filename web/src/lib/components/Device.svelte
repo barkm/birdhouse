@@ -15,7 +15,7 @@
 
 	interface Recording {
 		url: string;
-		time: string;
+		created_at: string;
 	}
 
 	const props: { device: Device } = $props();
@@ -64,7 +64,7 @@
 	const recordings_promise = $derived(fetch_recordings(props.device));
 	const sorted_recordings_promise = $derived(
 		recordings_promise.then((recordings) =>
-			recordings.sort((a, b) => a.time.localeCompare(b.time)).reverse()
+			recordings.sort((a, b) => a.created_at.localeCompare(b.created_at)).reverse()
 		)
 	);
 </script>
@@ -99,7 +99,7 @@
 		<recordings>
 			{#each recordings.filter((_, i) => i % 7 === 0).slice(0, 12) as recording (recording.url)}
 				<recording>
-					<strong>{new Date(recording.time).toLocaleDateString()}</strong>
+					<strong>{new Date(recording.created_at).toLocaleDateString()}</strong>
 					<VideoWithLoader src={recording.url} autoplay muted playsinline loop />
 				</recording>
 			{/each}
