@@ -98,7 +98,7 @@ async def record_sensors(session: Session = Depends(get_session)) -> dict:
     if settings.relay_url is None:
         logging.error("Relay url not set")
         return {"error": "Relay url not set"}
-    devices = _get_devices(settings.relay_url)
+    devices = _get_devices(session)
     for device_name in devices:
         try:
             sensor_data = httpx.get(f"{settings.relay_url}/{device_name}/sensor").json()
@@ -137,11 +137,11 @@ async def get_sensors(
 
 
 @app.get("/record")
-async def record(duration: int = 10) -> dict:
+async def record(duration: int = 10, session: Session = Depends(get_session)) -> dict:
     if settings.relay_url is None:
         logging.error("Relay url not set")
         return {"error": "Relay url not set"}
-    devices = _get_devices(settings.relay_url)
+    devices = _get_devices(session)
     for device in devices:
         if "birdhouse" in device:
             _record_and_save(
@@ -150,15 +150,10 @@ async def record(duration: int = 10) -> dict:
     return {}
 
 
-def _get_devices(relay_url: str) -> list[str]:
-    list_url = f"{relay_url}/list"
-    try:
-        response = httpx.get(list_url)
-        response.raise_for_status()
-        return [device["name"] for device in response.json()]
-    except httpx.HTTPError as e:
-        logging.warning(f"Failed to get devices from {list_url}: {e}")
-        return []
+def _get_devices(session: Session) -> list[str]:
+    statement = select(models.Device)
+    devices = session.exec(statement).all()
+    return [device.name for device in devices]
 
 
 def _record_and_save(
@@ -223,8 +218,9 @@ def create_timelapse(
     duration: int | None = None,
     fade_duration: float | None = None,
     batch_size: int | None = None,
+    session: Session = Depends(get_session),
 ) -> None:
-    devices = _get_devices(settings.relay_url or "")
+    devices = _get_devices(session)
     for device in devices:
         logging.info(f"Creating timelapse for device {device}")
         _create_and_upload_timelapse(
