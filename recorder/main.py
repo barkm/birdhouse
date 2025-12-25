@@ -137,7 +137,9 @@ async def get_sensors(
 
 
 @app.get("/record")
-async def record(duration: int = 10, session: Session = Depends(get_session)) -> dict:
+async def record(
+    request: Request, duration: int = 10, session: Session = Depends(get_session)
+) -> dict:
     if settings.relay_url is None:
         logging.error("Relay url not set")
         return {"error": "Relay url not set"}
@@ -145,7 +147,12 @@ async def record(duration: int = 10, session: Session = Depends(get_session)) ->
     for device in devices:
         if "birdhouse" in device:
             _record_and_save(
-                settings.relay_url, device, settings.recording_dir, duration
+                str(request.base_url),
+                settings.relay_url,
+                device,
+                settings.recording_dir,
+                duration,
+                session,
             )
     return {}
 
@@ -157,15 +164,35 @@ def _get_devices(session: Session) -> list[str]:
 
 
 def _record_and_save(
-    relay_url: str, device: str, recording_dir: str, duration: int
+    base_url: str,
+    relay_url: str,
+    device_name: str,
+    recording_dir: str,
+    duration: int,
+    session: Session,
 ) -> None:
-    output_path = f"{recording_dir}/{device}/{datetime.now().isoformat()}.mp4"
+    output_path = f"{recording_dir}/{device_name}/{datetime.now().isoformat()}.mp4"
     if recording_dir.startswith("gs://"):
         with NamedTemporaryFile(suffix=".mp4") as temp_file:
-            _record(relay_url, device, temp_file.name, duration)
-            upload_to_gcs(temp_file.name, output_path)
+            _record(relay_url, device_name, temp_file.name, duration)
+            url = upload_to_gcs(temp_file.name, output_path)
     else:
-        _record(relay_url, device, output_path, duration)
+        _record(relay_url, device_name, output_path, duration)
+        url = _get_local_recording_url(base_url, recording_dir, Path(output_path))
+    logging.info(f"Saved recording for {device_name} to {url}")
+    device = session.exec(
+        select(models.Device).where(models.Device.name == device_name)
+    ).first()
+    if not device:
+        logging.error(f"Device {device_name} not found in database")
+        return
+    recording = models.Recording(
+        device_id=device.id,
+        url=url,
+    )
+    session.add(recording)
+    session.commit()
+    session.refresh(recording)
 
 
 def _record(relay_url: str, device: str, output_path: str, duration: int) -> None:
@@ -239,10 +266,14 @@ def _list_local_recordings(
 ) -> list[Recording]:
     return [
         Recording(
-            time=path.stem, url=f"{url}recording/{path.relative_to(recording_dir)}"
+            time=path.stem, url=_get_local_recording_url(url, recording_dir, path)
         )
         for path in Path(recording_dir, device).iterdir()
     ]
+
+
+def _get_local_recording_url(url: str, recording_dir: str, path: Path) -> str:
+    return f"{url}recording/{path.relative_to(recording_dir)}"
 
 
 def _create_and_upload_timelapse(
