@@ -38,8 +38,8 @@
 	"dependencies": {
 		"d3-array": "^3.2.4",
 		"d3-scale": "^4.0.2",
-		"firebase": "^12.2.1",
-		"hls.js": "^1.6.7",
+		"firebase": "^12.7.0",
+		"hls.js": "^1.6.15",
 		"layerchart": "^2.0.0-next.43"
 	}
 }
