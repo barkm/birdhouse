@@ -22,7 +22,7 @@ from common.db import models
 from sqlalchemy import create_engine
 from sqlmodel import Session, select
 
-from gcs import Recording, list_gcs_recordings, upload_to_gcs
+from gcs import Recording, upload_to_gcs
 from timelapse import make_timelapse
 
 logging.basicConfig(
@@ -145,7 +145,7 @@ async def record(
         return {"error": "Relay url not set"}
     devices = _get_devices(session)
     for device in devices:
-        if "birdhouse" in device:
+        if "birdhouse" in device.name:
             _record_and_save(
                 str(request.base_url),
                 settings.relay_url,
@@ -157,35 +157,28 @@ async def record(
     return {}
 
 
-def _get_devices(session: Session) -> list[str]:
+def _get_devices(session: Session) -> list[models.Device]:
     statement = select(models.Device)
-    devices = session.exec(statement).all()
-    return [device.name for device in devices]
+    return list(session.exec(statement).all())
 
 
 def _record_and_save(
     base_url: str,
     relay_url: str,
-    device_name: str,
+    device: models.Device,
     recording_dir: str,
     duration: int,
     session: Session,
 ) -> None:
-    output_path = f"{recording_dir}/{device_name}/{datetime.now().isoformat()}.mp4"
+    output_path = f"{recording_dir}/{device.name}/{datetime.now().isoformat()}.mp4"
     if recording_dir.startswith("gs://"):
         with NamedTemporaryFile(suffix=".mp4") as temp_file:
-            _record(relay_url, device_name, temp_file.name, duration)
+            _record(relay_url, device.name, temp_file.name, duration)
             url = upload_to_gcs(temp_file.name, output_path)
     else:
-        _record(relay_url, device_name, output_path, duration)
+        _record(relay_url, device.name, output_path, duration)
         url = _get_local_recording_url(base_url, recording_dir, Path(output_path))
-    logging.info(f"Saved recording for {device_name} to {url}")
-    device = session.exec(
-        select(models.Device).where(models.Device.name == device_name)
-    ).first()
-    if not device:
-        logging.error(f"Device {device_name} not found in database")
-        return
+    logging.info(f"Saved recording for {device.name} to {url}")
     recording = models.Recording(
         device_id=device.id,
         url=url,
@@ -232,10 +225,19 @@ def get_recording(path: str) -> FileResponse:
 
 
 @app.get("/recordings/{device}")
-def list_recordings(request: Request, device: str) -> list[Recording]:
-    if settings.recording_dir.startswith("gs://"):
-        return list_gcs_recordings(f"{settings.recording_dir}/{device}")
-    return _list_local_recordings(str(request.base_url), settings.recording_dir, device)
+def list_recordings(
+    device: str, session: Session = Depends(get_session)
+) -> Sequence[Recording]:
+    device_obj = session.exec(
+        select(models.Device).where(models.Device.name == device)
+    ).first()
+    if not device_obj:
+        logging.error(f"Device {device} not found in database")
+        return []
+    recordings = session.exec(
+        select(models.Recording).where(models.Recording.device_id == device_obj.id)
+    ).all()
+    return [Recording(time=r.created_at.isoformat(), url=r.url) for r in recordings]
 
 
 @app.get("/timelapse")
@@ -258,18 +260,8 @@ def create_timelapse(
             fade_duration,
             batch_size,
             settings.recording_dir,
+            session,
         )
-
-
-def _list_local_recordings(
-    url: str, recording_dir: str, device: str
-) -> list[Recording]:
-    return [
-        Recording(
-            time=path.stem, url=_get_local_recording_url(url, recording_dir, path)
-        )
-        for path in Path(recording_dir, device).iterdir()
-    ]
 
 
 def _get_local_recording_url(url: str, recording_dir: str, path: Path) -> str:
@@ -279,27 +271,30 @@ def _get_local_recording_url(url: str, recording_dir: str, path: Path) -> str:
 def _create_and_upload_timelapse(
     start: datetime,
     end: datetime,
-    device: str,
+    device: models.Device,
     duration: int | None,
     fade_duration: float | None,
     batch_size: int | None,
     recording_dir: str,
+    session: Session,
 ) -> None:
     with NamedTemporaryFile(suffix=".mp4") as temp_file:
-        recordings = list_gcs_recordings(f"{recording_dir}/{device}")
+        recordings = session.exec(
+            select(models.Recording)
+            .join(models.Device)
+            .where(models.Device.name == device)
+        ).all()
         if not recordings:
             logging.info(f"No recordings found for device {device}, skipping timelapse")
             return
         else:
             logging.info(f"Found {len(recordings)} recordings for device {device}")
-        recordings_in_range = [
-            r for r in recordings if start <= datetime.fromisoformat(r.time) <= end
-        ]
+        recordings_in_range = [r for r in recordings if start <= r.created_at <= end]
         logging.info(
             f"Found {len(recordings_in_range)} recordings for device {device} in range {start} - {end}"
         )
         urls = [r.url for r in recordings_in_range]
-        times = [datetime.fromisoformat(r.time) for r in recordings_in_range]
+        times = [r.created_at for r in recordings_in_range]
         make_timelapse(
             urls,
             times,
@@ -311,7 +306,7 @@ def _create_and_upload_timelapse(
         save_path = os.path.join(
             recording_dir,
             "timelapses",
-            device,
+            device.name,
             f"{start.isoformat()}_{end.isoformat()}.mp4",
         )
         if recording_dir.startswith("gs://"):
