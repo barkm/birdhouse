@@ -9,5 +9,6 @@ RUN uv --project recorder sync
 COPY recorder/main.py recorder/main.py
 COPY recorder/gcs.py recorder/gcs.py
 COPY recorder/timelapse.py recorder/timelapse.py
+COPY recorder/models.py recorder/models.py
 ENV PYTHONUNBUFFERED=1
 CMD uv --project recorder run fastapi run recorder/main.py --port $PORT
