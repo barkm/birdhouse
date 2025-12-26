@@ -18,12 +18,12 @@ import ffmpeg
 
 from common.auth import firebase
 from common.auth import google
-from common.db import models
 from sqlalchemy import create_engine
 from sqlmodel import Session, select
 
 from gcs import upload_to_gcs
 from timelapse import make_timelapse
+import models
 
 logging.basicConfig(
     level=logging.INFO,
