@@ -27,7 +27,7 @@ services:
       - PORT=8000
       - URL=http://pi:8000
       - REGISTER_URL=http://relay:8001/register
-      - NAME=docker-birdhouse
+      - NAME=birdhouse
       - TEST_STREAM=True
       - TEST_SENSOR=True
     depends_on:
@@ -45,7 +45,7 @@ services:
       - PORT=8010
       - URL=http://house:8010
       - REGISTER_URL=http://relay:8001/register
-      - NAME=docker-house
+      - NAME=house
       - TEST_STREAM=True
       - TEST_SENSOR=True
     depends_on:
@@ -65,7 +65,7 @@ services:
     environment:
       - PORT=8003
       - RELAY_URL=http://relay:8001
-      - RECORDING_DIR=gs://birdhouse-recordings
+      - RECORDING_DIR=gs://birdhouse-recordings/dev
       - GOOGLE_APPLICATION_CREDENTIALS=/run/secrets/gcp_key
       - DATABASE_URL=postgresql+psycopg://moja:moja@db:5432/moja
     env_file:
