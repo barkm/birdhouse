@@ -135,14 +135,11 @@ auth = [
 
 [package.metadata]
 requires-dist = [
-    { name = "alembic", marker = "extra == 'db'", specifier = ">=1.17.2" },
     { name = "click", specifier = ">=8.2.1" },
     { name = "firebase-admin", marker = "extra == 'auth'", specifier = ">=7.1.0" },
     { name = "google-auth", marker = "extra == 'auth'", specifier = ">=2.40.3" },
-    { name = "psycopg", extras = ["binary"], marker = "extra == 'db'", specifier = ">=3.2.13" },
-    { name = "sqlmodel", marker = "extra == 'db'", specifier = ">=0.0.27" },
 ]
-provides-extras = ["auth", "db"]
+provides-extras = ["auth"]
 
 [[package]]
 name = "cryptography"
