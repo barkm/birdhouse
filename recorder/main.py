@@ -98,7 +98,7 @@ async def record_sensors(session: Session = Depends(get_session)) -> dict:
     if settings.relay_url is None:
         logging.error("Relay url not set")
         return {"error": "Relay url not set"}
-    devices = _get_devices(session)
+    devices = _get_active_devices(settings.relay_url, session)
     for device_name in devices:
         try:
             sensor_data = httpx.get(f"{settings.relay_url}/{device_name}/sensor").json()
@@ -143,7 +143,7 @@ async def record(
     if settings.relay_url is None:
         logging.error("Relay url not set")
         return {"error": "Relay url not set"}
-    devices = _get_devices(session)
+    devices = _get_active_devices(settings.relay_url, session)
     for device in devices:
         if "birdhouse" in device.name:
             _record_and_save(
@@ -155,6 +155,29 @@ async def record(
                 session,
             )
     return {}
+
+
+def _get_active_devices(relay_url: str, session: Session) -> list[models.Device]:
+    list_url = f"{relay_url}/list"
+    try:
+        response = httpx.get(list_url)
+        response.raise_for_status()
+        device_names = [device["name"] for device in response.json()]
+    except httpx.HTTPError as e:
+        logging.warning(f"Failed to get devices from {list_url}: {e}")
+        return []
+
+    devices = []
+    for device_name in device_names:
+        statement = select(models.Device).where(models.Device.name == device_name)
+        device = session.exec(statement).first()
+        if not device:
+            device = models.Device(name=device_name)
+            session.add(device)
+            session.commit()
+            session.refresh(device)
+        devices.append(device)
+    return devices
 
 
 def _get_devices(session: Session) -> list[models.Device]:
