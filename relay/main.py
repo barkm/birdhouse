@@ -7,14 +7,13 @@ from common.auth.exception import AuthException
 from fastapi.datastructures import QueryParams
 from fastapi.responses import JSONResponse
 import httpx
-from fastapi import Depends, FastAPI, HTTPException, Request, Response
+from fastapi import FastAPI, HTTPException, Request, Response
 from fastapi.middleware.cors import CORSMiddleware
 from memoization import cached
+from pydantic import BaseModel
 from pydantic_settings import BaseSettings, SettingsConfigDict
-from sqlmodel import SQLModel, Session, create_engine, select
 
 from common.auth import firebase
-import common.db.models as models
 
 
 class Settings(BaseSettings):
@@ -24,14 +23,6 @@ class Settings(BaseSettings):
 
 
 settings = Settings()
-
-
-engine = create_engine(settings.DATABASE_URL)
-
-
-def get_session():
-    with Session(engine) as session:
-        yield session
 
 
 logging.basicConfig(
@@ -79,28 +70,14 @@ class Device:
 URL_FROM_NAME: dict[str, Device] = {}
 
 
-class RegisterRequest(SQLModel):
+class RegisterRequest(BaseModel):
     name: str
     url: str
 
 
 @app.post("/register")
-async def register_device(
-    request: RegisterRequest, session: Session = Depends(get_session)
-) -> str:
+async def register_device(request: RegisterRequest) -> str:
     logging.info(f"Registering device {request.name} with url {request.url}")
-
-    statement = select(models.Device).where(models.Device.name == request.name)
-    device = session.exec(statement).first()
-    if not device:
-        device = models.Device(name=request.name)
-        session.add(device)
-        session.commit()
-        session.refresh(device)
-    new_register = models.Register(device_id=device.id, url=request.url)
-    session.add(new_register)
-    session.commit()
-    session.refresh(new_register)
 
     def remove_device():
         logging.info(f"Removing device {request.name}")
