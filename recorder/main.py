@@ -99,17 +99,15 @@ async def record_sensors(session: Session = Depends(get_session)) -> dict:
         logging.error("Relay url not set")
         return {"error": "Relay url not set"}
     devices = _get_active_devices(settings.relay_url, session)
-    for device_name in devices:
+    for device in devices:
         try:
-            sensor_data = httpx.get(f"{settings.relay_url}/{device_name}/sensor").json()
+            sensor_data = httpx.get(f"{settings.relay_url}/{device.name}/sensor").json()
         except httpx.HTTPError as e:
-            logging.error(f"Failed to get sensor data for {device_name}: {e}")
+            logging.error(f"Failed to get sensor data for {device.name}: {e}")
             continue
 
-        statement = select(models.Device).where(models.Device.name == device_name)
-        device = session.exec(statement).first()
         if not device:
-            logging.error(f"Device {device_name} not found in database")
+            logging.error(f"Device {device} not found in database")
             continue
         sensor = models.Sensor(
             device_id=device.id,
