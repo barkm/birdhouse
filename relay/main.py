@@ -11,18 +11,8 @@ from fastapi import FastAPI, HTTPException, Request, Response
 from fastapi.middleware.cors import CORSMiddleware
 from memoization import cached
 from pydantic import BaseModel
-from pydantic_settings import BaseSettings, SettingsConfigDict
 
 from common.auth import firebase
-
-
-class Settings(BaseSettings):
-    DATABASE_URL: str = "postgresql+psycopg://moja:moja@localhost/moja"
-
-    model_config = SettingsConfigDict(env_file=".env", extra="ignore")
-
-
-settings = Settings()
 
 
 logging.basicConfig(
