@@ -5,7 +5,7 @@ on:
   push:
     branches: main
     paths:
-      - common/migrations/**
+      - recorder/migrations/**
       - ansible/playbooks/db.yaml
       - ./github/workflows/deploy_database_migrations.yaml
     
