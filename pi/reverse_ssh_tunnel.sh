@@ -13,8 +13,8 @@ if [[ "$1" == "install" ]]; then
   fi
   AUTO_SSH_PATH=$(which autossh)
   if [[ -z "$AUTO_SSH_PATH" ]]; then
-    echo "autossh not found. Please install it first."
-    exit 1
+    sudo apt-get install -y autossh
+    AUTO_SSH_PATH=$(which autossh)
   fi
   $UV sync
   sudo $UV run service install \
