@@ -6,6 +6,7 @@ pis:
   hosts:
     birdhouse:
     house:
+    zero:
 
 all:
   children:
