@@ -69,4 +69,7 @@ def _is_filename(filename: str) -> bool:
 
 @app.get("/sensor")
 async def get_sensor_data():
-    return read_sensor_data(settings.test_sensor)
+    try:
+        return read_sensor_data(settings.test_sensor)
+    except RuntimeError as e:
+        raise HTTPException(status_code=501, detail="Sensor not available") from e
