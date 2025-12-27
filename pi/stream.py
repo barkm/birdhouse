@@ -171,6 +171,8 @@ def _start_hls_video_stream_mac(
 def _start_hls_video_stream_raspberry_pi(
     segment_filename: Path, stream_file_path: Path, bitrate: int, framerate: int
 ) -> list[subprocess.Popen]:
+    if not _raspberry_pi_camera_available():
+        raise RuntimeError("Raspberry Pi camera not available")
     # fmt: off
     rpicam = subprocess.Popen(
         [
@@ -214,6 +216,12 @@ def _start_hls_video_stream_raspberry_pi(
         stderr=subprocess.PIPE,
     )
     return [rpicam, ffmpeg]
+
+
+def _raspberry_pi_camera_available() -> bool:
+    return "No cameras available!" not in subprocess.check_output(
+        ["rpicam-vid", "--list-cameras"]
+    ).decode("utf-8")
 
 
 def is_mac():

@@ -42,7 +42,10 @@ async def serve_hls_files(request: Request, filename: str):
     if not _is_filename(filename):
         raise HTTPException(status_code=400, detail="Invalid filename")
     stream: Stream = request.app.state.stream
-    stream_path = stream.get_file(filename)
+    try:
+        stream_path = stream.get_file(filename)
+    except RuntimeError as e:
+        raise HTTPException(status_code=501, detail="Stream not available") from e
     if not stream_path:
         raise HTTPException(status_code=404, detail="File not found")
     headers = (
