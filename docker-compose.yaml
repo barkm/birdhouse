@@ -10,12 +10,21 @@ services:
     environment:
       - PORT=8001
       - GOOGLE_APPLICATION_CREDENTIALS=/run/secrets/gcp_key
+      - FASTAPI_MODE=dev
     env_file:
       - ./relay/.env
     networks:
       - relay_net
     depends_on:
       - db
+    develop:
+      watch:
+        - action: sync
+          path: ./relay/
+          target: /app/relay
+        - action: sync
+          path: ./common/
+          target: /app/common
 
   pi:
     build:
@@ -30,10 +39,16 @@ services:
       - NAME=birdhouse
       - TEST_STREAM=True
       - TEST_SENSOR=True
+      - FASTAPI_MODE=dev
     depends_on:
       - relay
     networks:
       - relay_net
+    develop:
+      watch:
+        - action: sync
+          path: ./pi/
+          target: /app/pi
 
   house:
     build:
@@ -48,10 +63,16 @@ services:
       - NAME=house
       - TEST_STREAM=True
       - TEST_SENSOR=True
+      - FASTAPI_MODE=dev
     depends_on:
       - relay
     networks:
       - relay_net
+    develop:
+      watch:
+        - action: sync
+          path: ./pi/
+          target: /app/pi
 
 
   recorder:
@@ -68,6 +89,7 @@ services:
       - RECORDING_DIR=gs://birdhouse-recordings/dev
       - GOOGLE_APPLICATION_CREDENTIALS=/run/secrets/gcp_key
       - DATABASE_URL=postgresql+psycopg://moja:moja@db:5432/moja
+      - FASTAPI_MODE=dev
     env_file:
       - ./recorder/.env
     depends_on:
@@ -75,6 +97,14 @@ services:
       - pi
     networks:
       - relay_net
+    develop:
+      watch:
+        - action: sync
+          path: ./recorder/
+          target: /app/recorder
+        - action: sync
+          path: ./common/
+          target: /app/common
     
   db:
     image: postgres:17
@@ -115,6 +145,11 @@ services:
       - PORT=8004
     depends_on:
       - relay
+    develop:
+      watch:
+        - action: sync
+          path: ./web/
+          target: /app
 
 
 networks:

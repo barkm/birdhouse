@@ -1,5 +1,6 @@
 FROM ghcr.io/astral-sh/uv:debian-slim
 RUN apt-get update && apt-get install -y ffmpeg
+WORKDIR /app
 COPY common/pyproject.toml common/pyproject.toml
 COPY common/uv.lock common/uv.lock
 COPY common/src common/src 
@@ -11,4 +12,5 @@ COPY recorder/gcs.py recorder/gcs.py
 COPY recorder/timelapse.py recorder/timelapse.py
 COPY recorder/models.py recorder/models.py
 ENV PYTHONUNBUFFERED=1
-CMD uv --project recorder run fastapi run recorder/main.py --port $PORT
+ENV FASTAPI_MODE=run
+CMD uv --project recorder run fastapi ${FASTAPI_MODE} recorder/main.py --port $PORT --host 0.0.0.0

@@ -1,4 +1,4 @@
-FROM node:24-slim as builder
+FROM node:24-slim
 
 WORKDIR /app
 COPY web/package.json ./
@@ -12,5 +12,4 @@ COPY web/vite.config.ts ./vite.config.ts
 COPY web/tsconfig.json ./tsconfig.json
 COPY web/.svelte-kit/tsconfig.json ./.svelte-kit/tsconfig.json
 COPY web/.env.local ./.env.local
-RUN npm run build
-CMD npm run preview -- --host 0.0.0.0 --port $PORT
+CMD npm run dev -- --host 0.0.0.0 --port $PORT
