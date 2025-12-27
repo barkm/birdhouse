@@ -4,7 +4,7 @@
 
 ## Installation
 
-The setup assumes that you have the hosts `relay` and `birdhouse` configured in your `~/.ssh/config`. Like
+The setup assumes that you have the hosts configured in your `~/.ssh/config`. Like
 
 ```
 Host relay
@@ -15,6 +15,18 @@ Host relay
 Host birdhouse
   HostName localhost
   Port 2222
+  User <user>
+  ProxyJump <relay-ip>
+
+Host house
+  HostName localhost
+  Port 2223
+  User <user>
+  ProxyJump <relay-ip>
+
+Host zero
+  HostName localhost
+  Port 2224
   User <user>
   ProxyJump <relay-ip>
 ```
