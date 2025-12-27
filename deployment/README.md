@@ -42,5 +42,10 @@ uv run ansible-playbook -i ansible/inventory.yaml ansible/playbooks/camera_serve
 
 #### Reverse ssh tunnel
 ```bash
-RELAY_HOST=<relay-host> uv run ansible-playbook -i ansible/inventory.yaml ansible/playbooks/reverse_ssh_tunnel.yaml
+RELAY_HOST=<relay-host> SSH_PORT=<ssh-port> SERVER_PORT=<server-port> uv run ansible-playbook -i ansible/inventory.yaml ansible/playbooks/reverse_ssh_tunnel.yaml
+```
+
+#### Crontab
+```bash
+NAME=<name> SERVER_PORT=<server-port> uv run ansible-playbook -i ansible/inventory.yaml ansible/playbooks/crontab.yaml
 ```
