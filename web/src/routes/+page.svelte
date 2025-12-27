@@ -30,11 +30,13 @@
 		{#await devices_promise then devices}
 			<devices>
 				{#each devices as device (device.name)}
-					{#await getTemperature(device.name) then temperature}
-					<div>
-						{ device.name === "house" ? "Inomhus" : "Utomhus" }temperatur: {temperature !== null ? temperature.toFixed(1) : 'N/A'}°C
-					</div>
-					{/await}
+					{#if device.name.includes("house")}
+						{#await getTemperature(device.name) then temperature}
+						<div>
+							{ device.name === "house" ? "Inomhus" : "Utomhus" }temperatur: {temperature !== null ? temperature.toFixed(1) : 'N/A'}°C
+						</div>
+						{/await}
+					{/if}
 				{/each}
 				<br />
 				<TemperatureChart {devices} />
