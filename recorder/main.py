@@ -151,7 +151,7 @@ async def record(
         return {"error": "Relay url not set"}
     devices = _get_active_devices(settings.relay_url, session)
     for device in devices:
-        if "birdhouse" in device.name:
+        try:
             _record_and_save(
                 str(request.base_url),
                 settings.relay_url,
@@ -160,6 +160,8 @@ async def record(
                 duration,
                 session,
             )
+        except RuntimeError as e:
+            logging.error(f"Failed to record for device {device.name}: {e}")
     return {}
 
 
@@ -223,7 +225,11 @@ def _record(relay_url: str, device: str, output_path: str, duration: int) -> Non
     start_response = httpx.get(
         start_url, params={"bitrate": 10000000, "framerate": 30}, timeout=20.0
     )
-    start_response.raise_for_status()
+    try:
+        start_response.raise_for_status()
+    except httpx.HTTPStatusError as e:
+        logging.error(f"Failed to start recording for {device}: {e}")
+        raise RuntimeError(f"Failed to start recording for {device}: {e}") from e
     playlist_path = start_response.json()["playlist"]
     playlist_url = f"{relay_url}/{device}{playlist_path}"
     Path(output_path).parent.mkdir(parents=True, exist_ok=True)
