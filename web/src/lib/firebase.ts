@@ -19,7 +19,11 @@ const app = initializeApp(firebaseConfig);
 
 export const auth = getAuth(app);
 export const user = writable<User | null>(null);
-onAuthStateChanged(auth, (u) => user.set(u));
+export const isLoading = writable(true);
+onAuthStateChanged(auth, (u) => {
+	user.set(u)
+	isLoading.set(false);
+});
 
 export const loginWithGoogle = () => signInWithPopup(auth, new GoogleAuthProvider());
 export const logout = () => signOut(auth);
