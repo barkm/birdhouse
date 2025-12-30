@@ -9,14 +9,14 @@
 	import { curveCatmullRom } from 'd3-shape';
 	import VideoWithLoader from '$lib/components/video/VideoWithLoader.svelte';
 
-    const get_previous_day_from_midnight = () => {
-        const date = new Date();
-        date.setDate(date.getDate() - 1);
-        date.setHours(0, 0, 0, 0);
-        return date;
-    };
+	const get_previous_day_from_midnight = () => {
+		const date = new Date();
+		date.setDate(date.getDate() - 1);
+		date.setHours(0, 0, 0, 0);
+		return date;
+	};
 
-    let start_date = $state(get_previous_day_from_midnight());
+	let start_date = $state(get_previous_day_from_midnight());
 	let end_date = $state(new Date());
 
 	const average = (arr: number[]) => {
@@ -93,7 +93,7 @@
 		/>
 	{/await}
 </div>
-{#await Promise.all([outside_sensor_data_promise, inside_sensor_data_promise, outside_temperature_limits_promise, inside_temperature_limits_promise])}
+{#await Promise.all( [outside_sensor_data_promise, inside_sensor_data_promise, outside_temperature_limits_promise, inside_temperature_limits_promise] )}
 	<div class="h-[300px] animate-pulse rounded-sm border border-gray-300 p-4">
 		<div class="mb-3 h-4 w-24 rounded bg-gray-300"></div>
 		<div class="mb-2 h-8 w-full rounded bg-gray-300"></div>
@@ -121,7 +121,10 @@
 				}
 			]}
 			renderContext="svg"
-			yDomain={[Math.min(outside_limits.min, inside_limits.min) - 5, Math.max(outside_limits.max, inside_limits.max) + 5]}
+			yDomain={[
+				Math.min(outside_limits.min, inside_limits.min) - 5,
+				Math.max(outside_limits.max, inside_limits.max) + 5
+			]}
 			legend
 			props={{
 				spline: { curve: curveCatmullRom }

@@ -37,10 +37,10 @@
 		<input
 			type="datetime-local"
 			class="
-                w-[9.5rem] 
+                w-[9.5rem]
                 cursor-pointer border-none bg-transparent p-2 text-right text-xs text-gray-900 focus:ring-0
-				md:text-sm
 				md:w-[11rem]
+				md:text-sm
             "
 			bind:value={start_date_input}
 		/>
@@ -50,10 +50,10 @@
 		<input
 			type="datetime-local"
 			class="
-                w-[9.5rem] 
+                w-[9.5rem]
                 cursor-pointer border-none bg-transparent p-2 text-right text-xs text-gray-900 focus:ring-0
-				md:text-sm
 				md:w-[11rem]
+				md:text-sm
             "
 			min={start_date_input}
 			bind:value={end_date_input}
