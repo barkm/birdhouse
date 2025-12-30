@@ -131,13 +131,20 @@ async def record_sensors(session: Session = Depends(get_session)) -> dict:
 
 @app.get("/sensors/{device_name}")
 async def get_sensors(
-    device_name: str, session: Session = Depends(get_session)
+    device_name: str,
+    from_: Annotated[datetime | None, Query(alias="from")],
+    to: datetime | None,
+    session: Session = Depends(get_session),
 ) -> Sequence[models.Sensor]:
     statement = (
         select(models.Sensor)
         .join(models.Device)
         .where(models.Device.name == device_name)
     )
+    if from_:
+        statement = statement.where(models.Sensor.created_at >= from_)
+    if to:
+        statement = statement.where(models.Sensor.created_at <= to)
     sensors = session.exec(statement).all()
     return sensors
 
