@@ -9,7 +9,14 @@
 	import { curveCatmullRom } from 'd3-shape';
 	import VideoWithLoader from '$lib/components/video/VideoWithLoader.svelte';
 
-	let start_date = $state(new Date(new Date().setDate(new Date().getDate() - 7)));
+    const get_previous_day_from_midnight = () => {
+        const date = new Date();
+        date.setDate(date.getDate() - 1);
+        date.setHours(0, 0, 0, 0);
+        return date;
+    };
+
+    let start_date = $state(get_previous_day_from_midnight());
 	let end_date = $state(new Date());
 
 	const average = (arr: number[]) => {

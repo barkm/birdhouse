@@ -21,12 +21,12 @@
 		if (!date) return '';
 		const offset = date.getTimezoneOffset();
 		const localDate = new Date(date.getTime() - offset * 60 * 1000);
-		return localDate.toISOString().split('T')[0];
+		return localDate.toISOString().slice(0, 16);
 	}
 
 	function fromInputString(dateStr: string): Date | undefined {
 		if (!dateStr) return undefined;
-		return new Date(dateStr + 'T00:00:00');
+		return new Date(dateStr);
 	}
 </script>
 
@@ -35,16 +35,26 @@
 		class="flex items-center justify-between rounded-md border border-gray-300 bg-white focus-within:border-blue-500 focus-within:ring-1 focus-within:ring-blue-500"
 	>
 		<input
-			type="date"
-			class="border-none bg-transparent p-2 text-sm text-gray-900 focus:ring-0"
+			type="datetime-local"
+			class="
+                w-[9.5rem] 
+                cursor-pointer border-none bg-transparent p-2 text-right text-xs text-gray-900 focus:ring-0
+				md:text-sm
+				md:w-[11rem]
+            "
 			bind:value={start_date_input}
 		/>
 
-		<span class="px-2 text-gray-400">→</span>
+		<span class="px-0 text-gray-400">→</span>
 
 		<input
-			type="date"
-			class="border-none bg-transparent p-2 text-sm text-gray-900 focus:ring-0"
+			type="datetime-local"
+			class="
+                w-[9.5rem] 
+                cursor-pointer border-none bg-transparent p-2 text-right text-xs text-gray-900 focus:ring-0
+				md:text-sm
+				md:w-[11rem]
+            "
 			min={start_date_input}
 			bind:value={end_date_input}
 		/>
