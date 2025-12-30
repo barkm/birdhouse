@@ -83,13 +83,14 @@ def _start_hls_video_stream(
     stream_file_path = stream_dir / playlist_filename
     segment_filename = stream_dir / (uuid.uuid4().hex + "_%04d.ts")
     process = _start_stream_process(
-        stream_file_path, segment_filename, test_stream, bitrate, framerate
+        stream_dir, stream_file_path, segment_filename, test_stream, bitrate, framerate
     )
     _wait_until_exists(stream_file_path)
     return process
 
 
 def _start_stream_process(
+    stream_dir: Path,
     stream_filepath: Path,
     segment_filepath: Path,
     test_stream: bool,
@@ -97,7 +98,7 @@ def _start_stream_process(
     framerate: int,
 ) -> list[subprocess.Popen]:
     if test_stream:
-        return [_start_test_stream(segment_filepath, stream_filepath)]
+        return [_start_test_stream(stream_dir, segment_filepath, stream_filepath)]
     if is_raspberry_pi():
         return _start_hls_video_stream_raspberry_pi(
             segment_filepath, stream_filepath, bitrate, framerate
@@ -113,15 +114,19 @@ def _wait_until_exists(path: Path) -> None:
 
 
 def _start_test_stream(
-    segment_filename: Path, stream_file_path: Path
+    stream_dir: Path, segment_filename: Path, stream_file_path: Path
 ) -> subprocess.Popen:
+    test_file = _create_test_video_file(stream_dir)
     return subprocess.Popen(
         [
             "ffmpeg",
-            "-f",
-            "lavfi",
+            "-re",
+            "-stream_loop",
+            "-1",
             "-i",
-            "testsrc=size=1280x720:rate=30",
+            str(test_file),
+            "-c",
+            "copy",
             "-f",
             "hls",
             "-hls_time",
@@ -137,6 +142,13 @@ def _start_test_stream(
         stdout=subprocess.PIPE,
         stderr=subprocess.PIPE,
     )
+
+
+def _create_test_video_file(stream_dir: Path) -> Path:
+    video_file_path = stream_dir / "test.mp4"
+    command = f"ffmpeg -f lavfi -i testsrc=size=1280x720:rate=30 -t 20 -c:v libx264 -g 60 -preset ultrafast {video_file_path}".split()
+    subprocess.check_call(command, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+    return video_file_path
 
 
 def _start_hls_video_stream_mac(
