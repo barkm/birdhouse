@@ -8,24 +8,37 @@ export interface SensorData {
 }
 
 export const getSensorData = async (user: User, device_name: string): Promise<SensorData> => {
-	const sensor_response = await authorizedRequest(user, PUBLIC_RELAY_URL, `${device_name}/sensor`);
-	return await sensor_response.json();
+	const { response } = await localRequestWithRelayFallback(
+		user,
+		device_name,
+		`/sensor`
+	);
+	return await response.json();
 };
 
 export const startAndGetStreamUrl = async (user: User, device_name: string): Promise<string> => {
-	const base_url = (await checkDeviceAvailability(device_name))
-		? `http://${device_name}.local:8000`
-		: `${PUBLIC_RELAY_URL}${device_name}`;
-	const playlist_response = await authorizedRequest(
+	const { response, base_url } = await localRequestWithRelayFallback(
 		user,
-		base_url,
+		device_name,
 		`/start?bitrate=500000&framerate=24`
-	);
-	const playlist_endpoint = (await playlist_response.json()).playlist;
+	)
+	const playlist_endpoint = (await response.json()).playlist;
 	return `${base_url}${playlist_endpoint}`;
 };
 
-async function checkDeviceAvailability(device_name: string): Promise<boolean> {
+const localRequestWithRelayFallback = async (
+	user: User,
+	device_name: string,
+	endpoint: string
+) : Promise<{response: Response, base_url: string}> => {
+	const base_url = (await checkDeviceAvailability(device_name))
+		? `http://${device_name}.local:8000`
+		: `${PUBLIC_RELAY_URL}${device_name}`;
+	const response = await authorizedRequest(user, base_url, endpoint);
+	return {response, base_url};
+}
+
+const checkDeviceAvailability = async (device_name: string): Promise<boolean> => {
 	const url = `http://${device_name}.local:8000/status`;
 	const controller = new AbortController();
 	const timeoutId = setTimeout(() => controller.abort(), 2000);
