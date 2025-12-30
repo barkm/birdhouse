@@ -3,7 +3,7 @@
 	import SensorCard from '$lib/components/SensorCard.svelte';
 	import SensorLoader from '$lib/components/SensorLoader.svelte';
 	import { user } from '$lib/firebase';
-	import { getRecordings, getSensorData, type SensorData } from '$lib/recorder';
+	import { getRecordings, getSensorData, type Recording, type SensorData } from '$lib/recorder';
 	import { LineChart, Tooltip } from 'layerchart';
 	import { format, PeriodType } from '@layerstack/utils';
 	import { curveCatmullRom } from 'd3-shape';
@@ -35,6 +35,10 @@
 		};
 	};
 
+	const compare_recordings = (a: Recording, b: Recording) => {
+		return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
+	};
+
 	const outside_sensor_data_promise = $derived(
 		getSensorData($user!, 'birdhouse', start_date, end_date)
 	);
@@ -52,7 +56,11 @@
 		inside_sensor_data_promise.then(average_sensor_data)
 	);
 
-	const recordings_promise = $derived(getRecordings($user!, 'birdhouse', start_date, end_date));
+	const recordings_promise = $derived(
+		getRecordings($user!, 'birdhouse', start_date, end_date).then((recordings) =>
+			recordings.sort(compare_recordings)
+		)
+	);
 </script>
 
 <div class="mx-auto max-w-4xl space-y-4 p-6">
@@ -136,14 +144,19 @@
 	{#await recordings_promise then recordings}
 		<div class="grid grid-cols-1 gap-4 md:grid-cols-2">
 			{#each recordings as recording}
-				<VideoWithLoader
-					class="w-full rounded-sm"
-					src={recording.url}
-					controls
-					autoplay
-					muted
-					loop
-				/>
+				<div>
+					<span class="mb-2 block text-center text-sm text-gray-600">
+						{new Date(recording.created_at).toLocaleString()}
+					</span>
+					<VideoWithLoader
+						class="w-full rounded-sm"
+						src={recording.url}
+						controls
+						autoplay
+						muted
+						loop
+					/>
+				</div>
 			{/each}
 		</div>
 	{/await}
