@@ -6,12 +6,12 @@ import shutil
 from subprocess import CalledProcessError
 from tempfile import NamedTemporaryFile
 import logging
-from typing import Callable, Sequence
+from typing import Annotated, Callable, Sequence
 
 from common.auth.exception import AuthException
 from fastapi.responses import FileResponse, JSONResponse
 import httpx
-from fastapi import Depends, FastAPI, Request
+from fastapi import Depends, FastAPI, Query, Request
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic_settings import BaseSettings, SettingsConfigDict
 import ffmpeg
@@ -261,7 +261,10 @@ def get_recording(path: str) -> FileResponse:
 
 @app.get("/recordings/{device}")
 def list_recordings(
-    device: str, session: Session = Depends(get_session)
+    device: str,
+    from_: Annotated[datetime | None, Query(alias="from")],
+    to: datetime | None,
+    session: Session = Depends(get_session),
 ) -> Sequence[models.Recording]:
     device_obj = session.exec(
         select(models.Device).where(models.Device.name == device)
@@ -269,9 +272,14 @@ def list_recordings(
     if not device_obj:
         logging.error(f"Device {device} not found in database")
         return []
-    return session.exec(
-        select(models.Recording).where(models.Recording.device_id == device_obj.id)
-    ).all()
+    statement = select(models.Recording).where(
+        models.Recording.device_id == device_obj.id
+    )
+    if from_:
+        statement = statement.where(models.Recording.created_at >= from_)
+    if to:
+        statement = statement.where(models.Recording.created_at <= to)
+    return session.exec(statement).all()
 
 
 @app.get("/timelapse")
