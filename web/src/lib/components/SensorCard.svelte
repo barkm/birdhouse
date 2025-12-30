@@ -35,9 +35,9 @@
 	<h2 class="mb-2 text-xl font-semibold">{title}</h2>
 	<p class="text-3xl">{temperature.toFixed(1)}°C</p>
 	{#if temperature_limits}
-		<div class="flex flex-row space-x-2 text-xs text-gray-700">
-			<span>max {temperature_limits.max.toFixed(1)}°C</span>
+		<div class="flex flex-row space-x-1 text-xs text-gray-700">
 			<span>min {temperature_limits.min.toFixed(1)}°C</span>
+			<span>max {temperature_limits.max.toFixed(1)}°C</span>
 		</div>
 	{/if}
 	<p class="text-lg">Humidity: {humidity.toFixed(0)}%</p>
