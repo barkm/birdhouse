@@ -87,7 +87,7 @@
 			/>
 		{/await}
 	</div>
-	{#await Promise.all([outside_sensor_data_promise, inside_sensor_data_promise])}
+	{#await Promise.all([outside_sensor_data_promise, inside_sensor_data_promise, outside_temperature_limits_promise, inside_temperature_limits_promise])}
 		<div class="h-[300px] animate-pulse rounded-sm border border-gray-300 p-4">
 			<div class="mb-3 h-4 w-24 rounded bg-gray-300"></div>
 			<div class="mb-2 h-8 w-full rounded bg-gray-300"></div>
@@ -97,7 +97,7 @@
 			<div class="mt-2 h-10 w-full rounded bg-gray-300"></div>
 			<div class="mt-2 h-3 w-3/4 rounded bg-gray-300"></div>
 		</div>
-	{:then [outside_data, inside_data]}
+	{:then [outside_data, inside_data, outside_limits, inside_limits]}
 		<div class="h-[300px] rounded-sm border border-gray-300 p-4">
 			<LineChart
 				x="created_at"
@@ -115,7 +115,7 @@
 					}
 				]}
 				renderContext="svg"
-				yDomain={[-5, 20]}
+				yDomain={[Math.min(outside_limits.min, inside_limits.min) - 5, Math.max(outside_limits.max, inside_limits.max) + 5]}
 				legend
 				props={{
 					spline: { curve: curveCatmullRom }
