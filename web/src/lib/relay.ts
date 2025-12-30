@@ -41,7 +41,7 @@ const localRequestWithRelayFallback = async (
 const checkDeviceAvailability = async (device_name: string): Promise<boolean> => {
 	const url = `http://${device_name}.local:8000/status`;
 	const controller = new AbortController();
-	const timeoutId = setTimeout(() => controller.abort(), 2000);
+	const timeoutId = setTimeout(() => controller.abort(), 500);
 	try {
 		await fetch(url, {
 			method: 'GET',
