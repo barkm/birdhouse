@@ -13,11 +13,34 @@ export const getSensorData = async (user: User, device_name: string): Promise<Se
 };
 
 export const startAndGetStreamUrl = async (user: User, device_name: string): Promise<string> => {
+	const base_url = (await checkDeviceAvailability(device_name))
+		? `http://${device_name}.local:8000`
+		: `${PUBLIC_RELAY_URL}${device_name}`;
 	const playlist_response = await authorizedRequest(
 		user,
-		PUBLIC_RELAY_URL,
-		`${device_name}/start?bitrate=500000&framerate=24`
+		base_url,
+		`/start?bitrate=500000&framerate=24`
 	);
 	const playlist_endpoint = (await playlist_response.json()).playlist;
-	return `${PUBLIC_RELAY_URL}${device_name}${playlist_endpoint}`;
+	return `${base_url}${playlist_endpoint}`;
 };
+
+async function checkDeviceAvailability(device_name: string): Promise<boolean> {
+	const url = `http://${device_name}.local:8000/status`;
+	const controller = new AbortController();
+	const timeoutId = setTimeout(() => controller.abort(), 2000);
+	try {
+		await fetch(url, {
+			method: 'GET',
+			signal: controller.signal
+		});
+		return true;
+	} catch (error: any) {
+		if (error.name !== 'AbortError') {
+			console.log(`⚠️ ${url} is unreachable, but DNS might have resolved.`);
+		}
+		return false;
+	} finally {
+		clearTimeout(timeoutId);
+	}
+}
