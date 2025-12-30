@@ -15,6 +15,7 @@ PLAYLIST_FILENAME = "playlist.m3u8"
 
 
 class Settings(BaseSettings):
+    name: str = "birdhouse"
     test_stream: bool = False
     test_sensor: bool = False
 
@@ -43,6 +44,11 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+
+@app.get("/status")
+async def root():
+    return {"status": "ok", "name": settings.name}
 
 
 @app.get("/hls/{filename:path}")
