@@ -1,14 +1,15 @@
 <script lang="ts">
 	import { page } from '$app/state';
+	import { resolve } from '$app/paths';
 	let path = $derived(page.url.pathname);
 </script>
 
-{#snippet navLink(href, text)}
+{#snippet navLink(href: '/now' | '/then', text: string)}
 	<a
-		{href}
+		href={resolve(href)}
 		class="-mb-px border-b px-4 py-2 text-xl font-semibold transition-colors"
-		class:border-black={path === href}
-		class:border-transparent={path !== href}
+		class:border-black={path === resolve(href)}
+		class:border-transparent={path !== resolve(href)}
 	>
 		{text}
 	</a>
