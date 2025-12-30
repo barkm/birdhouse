@@ -132,8 +132,8 @@ async def record_sensors(session: Session = Depends(get_session)) -> dict:
 @app.get("/sensors/{device_name}")
 async def get_sensors(
     device_name: str,
-    from_: Annotated[datetime | None, Query(alias="from")],
-    to: datetime | None,
+    from_: Annotated[datetime | None, Query(alias="from")] = None,
+    to: datetime | None = None,
     session: Session = Depends(get_session),
 ) -> Sequence[models.Sensor]:
     statement = (
@@ -269,8 +269,8 @@ def get_recording(path: str) -> FileResponse:
 @app.get("/recordings/{device}")
 def list_recordings(
     device: str,
-    from_: Annotated[datetime | None, Query(alias="from")],
-    to: datetime | None,
+    from_: Annotated[datetime | None, Query(alias="from")] = None,
+    to: datetime | None = None,
     session: Session = Depends(get_session),
 ) -> Sequence[models.Recording]:
     device_obj = session.exec(
