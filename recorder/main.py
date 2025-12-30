@@ -36,7 +36,7 @@ class Settings(BaseSettings):
     relay_url: str | None = None
     recording_dir: str = "/recordings"
     allowed_emails: list[str] | None = None
-    database_url: str = "postgresql+psycopg://moja:moja@localhost/moja"
+    database_url: str = "postgresql+psycopg://moja:moja@localhost:5433/moja"
 
     model_config = SettingsConfigDict(env_file=".env", extra="ignore")
 
@@ -140,6 +140,7 @@ async def get_sensors(
         select(models.Sensor)
         .join(models.Device)
         .where(models.Device.name == device_name)
+        .where(models.Sensor.temperature > -30)
     )
     if from_:
         statement = statement.where(models.Sensor.created_at >= from_)

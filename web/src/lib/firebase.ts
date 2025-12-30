@@ -21,7 +21,7 @@ export const auth = getAuth(app);
 export const user = writable<User | null>(null);
 export const isLoading = writable(true);
 onAuthStateChanged(auth, (u) => {
-	user.set(u)
+	user.set(u);
 	isLoading.set(false);
 });
 

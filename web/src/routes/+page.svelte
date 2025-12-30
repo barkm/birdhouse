@@ -15,7 +15,11 @@
 	};
 
 	const getTemperature = async (device_name: string): Promise<number | null> => {
-		const sensor_response = await authorizedRequest($user!, PUBLIC_RELAY_URL, `${device_name}/sensor`);
+		const sensor_response = await authorizedRequest(
+			$user!,
+			PUBLIC_RELAY_URL,
+			`${device_name}/sensor`
+		);
 		return (await sensor_response.json())['temperature'];
 	};
 
@@ -26,18 +30,20 @@
 	{#await devices_promise then devices}
 		<devices>
 			{#each devices as device (device.name)}
-				{#if device.name.includes("house")}
+				{#if device.name.includes('house')}
 					{#await getTemperature(device.name) then temperature}
-					<div>
-						{ device.name === "house" ? "Inomhus" : "Utomhus" }temperatur: {temperature !== null ? temperature.toFixed(1) : 'N/A'}°C
-					</div>
+						<div>
+							{device.name === 'house' ? 'Inomhus' : 'Utomhus'}temperatur: {temperature !== null
+								? temperature.toFixed(1)
+								: 'N/A'}°C
+						</div>
 					{/await}
 				{/if}
 			{/each}
 			<br />
 			<TemperatureChart {devices} />
 			{#each devices as device (device.name)}
-				{#if device.name === "birdhouse"}
+				{#if device.name === 'birdhouse'}
 					<Device {device} />
 				{/if}
 			{/each}

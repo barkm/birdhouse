@@ -6,7 +6,7 @@
 
 {#if $user}
 	<column style="width: 100%">
-		<Device device={{name: "zero"}} />
+		<Device device={{ name: 'zero' }} />
 		<button onclick={logout}>Logga ut</button>
 	</column>
 {:else}

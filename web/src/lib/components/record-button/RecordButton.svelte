@@ -45,7 +45,7 @@
 				}
 			}}
 			aria-pressed={recording}
-			>
+		>
 			{#if recording}
 				<img in:fade src={recordingSvg} alt="Stop Recording" />
 			{:else}
