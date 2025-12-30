@@ -27,30 +27,26 @@
 	});
 </script>
 
-<div class="mx-auto max-w-4xl p-6">
-	<div class="space-y-4">
-		<div class="grid grid-cols-2 gap-4">
-			{#await outside_sensor_data_promise}
-				<SensorLoader />
-			{:then outsideSensorData}
-				<SensorCard
-					title={'Utomhus'}
-					temperature={outsideSensorData.temperature}
-					humidity={outsideSensorData.humidity}
-				/>
-			{/await}
-			{#await inside_sensor_data_promise}
-				<SensorLoader />
-			{:then insideSensorData}
-				<SensorCard
-					title={'Inomhus'}
-					temperature={insideSensorData.temperature}
-					humidity={insideSensorData.humidity}
-				/>
-			{/await}
-		</div>
-		<div class="overflow-hidden rounded-lg">
-			<VideoWithLoader {id_token} src={stream_url} autoplay muted playsinline controls />
-		</div>
-	</div>
+<div class="grid grid-cols-2 gap-4">
+	{#await outside_sensor_data_promise}
+		<SensorLoader />
+	{:then outsideSensorData}
+		<SensorCard
+			title={'Utomhus'}
+			temperature={outsideSensorData.temperature}
+			humidity={outsideSensorData.humidity}
+		/>
+	{/await}
+	{#await inside_sensor_data_promise}
+		<SensorLoader />
+	{:then insideSensorData}
+		<SensorCard
+			title={'Inomhus'}
+			temperature={insideSensorData.temperature}
+			humidity={insideSensorData.humidity}
+		/>
+	{/await}
+</div>
+<div class="overflow-hidden rounded-lg">
+	<VideoWithLoader {id_token} src={stream_url} autoplay muted playsinline controls />
 </div>
