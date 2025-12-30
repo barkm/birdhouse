@@ -27,8 +27,22 @@
         };
     };
 
+    const get_temperature_limits = (data: SensorData[]) => {
+        const temperatures = data.map(d => d.temperature);
+        return {
+            max: Math.max(...temperatures),
+            min: Math.min(...temperatures)
+        };
+    };
+
     const outside_sensor_data_promise = $derived(getSensorData($user!, "birdhouse", start_date, end_date));
     const inside_sensor_data_promise = $derived(getSensorData($user!, "house", start_date, end_date));
+    const outside_temperature_limits_promise = $derived(
+        outside_sensor_data_promise.then(get_temperature_limits)
+    );
+    const inside_temperature_limits_promise = $derived(
+        inside_sensor_data_promise.then(get_temperature_limits)
+    );
     const average_outside_sensor_promise = $derived(
         outside_sensor_data_promise.then(average_sensor_data)
     )
@@ -43,15 +57,15 @@
 <div class="p-6 max-w-4xl mx-auto space-y-4">
     <DateRangePicker bind:start_date={start_date} bind:end_date={end_date} />
     <div class="grid grid-cols-2 gap-4">
-        {#await average_outside_sensor_promise}
+        {#await Promise.all([average_outside_sensor_promise, outside_temperature_limits_promise])}
             <SensorLoader /> 
-        {:then average_outside_sensor} 
-            <SensorCard title={"Utomhus"} temperature={average_outside_sensor.temperature} humidity={average_outside_sensor.humidity} />
+        {:then [average_outside_sensor, outside_temperature_limits]} 
+            <SensorCard title={"Utomhus"} temperature={average_outside_sensor.temperature} temperature_limits={outside_temperature_limits} humidity={average_outside_sensor.humidity} />
         {/await}
-        {#await average_inside_sensor_promise}
+        {#await Promise.all([average_inside_sensor_promise, inside_temperature_limits_promise])}
             <SensorLoader /> 
-        {:then average_inside_sensor} 
-            <SensorCard title={"Inomhus"} temperature={average_inside_sensor.temperature} humidity={average_inside_sensor.humidity} />
+        {:then [average_inside_sensor, inside_temperature_limits]} 
+            <SensorCard title={"Inomhus"} temperature={average_inside_sensor.temperature} temperature_limits={inside_temperature_limits} humidity={average_inside_sensor.humidity} />
         {/await}
     </div>
     {#await Promise.all([outside_sensor_data_promise, inside_sensor_data_promise])}

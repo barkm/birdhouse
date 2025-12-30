@@ -3,10 +3,14 @@
     interface Props {
         title: string;
         temperature: number;
+        temperature_limits?: {
+            max: number;
+            min: number;
+        };
         humidity: number;
     }
 
-    const { temperature, title, humidity } : Props = $props()
+    const { temperature, temperature_limits, title, humidity } : Props = $props()
 
     const getBackgroundStyle = (temp: number) => {
         if (temp <= -10) {
@@ -33,5 +37,11 @@
 <div class="p-4 {getBackgroundStyle(temperature)} rounded-lg">
     <h2 class="text-xl font-semibold mb-2">{title}</h2>
     <p class="text-3xl">{temperature.toFixed(1)}°C</p>
+    {#if temperature_limits }
+        <div class="flex flex-row space-x-2 text-xs text-gray-700">
+            <span>max {temperature_limits.max.toFixed(1)}°C</span>
+            <span>min {temperature_limits.min.toFixed(1)}°C</span>
+        </div>
+    {/if}
     <p class="text-lg">Humidity: {humidity.toFixed(0)}%</p>
 </div>
