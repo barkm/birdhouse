@@ -5,7 +5,8 @@ UV=$(which uv)
 
 if [[ "$1" == "install" ]]; then
   $UV sync
-  sudo $UV run service install --name $SERVICE_NAME --command "$(which uv) run --group sensor fastapi run main.py"
+  NAME="${2-camera-server}"
+  sudo $UV run service install --name $SERVICE_NAME --command "$(which uv) run --group sensor fastapi run main.py" --environment "NAME=$NAME"
 elif [[ "$1" == "uninstall" ]]; then
   $UV sync
   sudo $UV run service uninstall --name $SERVICE_NAME 

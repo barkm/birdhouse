@@ -15,8 +15,9 @@
 
   tasks:
     - name: Install camera server
-      ansible.builtin.command: ./camera_server.sh install
+      ansible.builtin.command: ./camera_server.sh install $NAME
       args:
         chdir: "{{ repo_dest }}/pi"
       environment:
         PATH: "{{ uv_binary_path | dirname }}:{{ ansible_env.PATH }}"
+        NAME: "{{ inventory_hostname }}"
