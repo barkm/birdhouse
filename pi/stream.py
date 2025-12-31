@@ -10,6 +10,9 @@ import logging
 
 logger = logging.getLogger(__name__)
 
+HLS_SEGMENT_LENGTH = 2
+HLS_LIST_SIZE = 60
+
 
 @dataclass
 class Video:
@@ -130,9 +133,9 @@ def _start_test_stream(
             "-f",
             "hls",
             "-hls_time",
-            "2",
+            str(HLS_SEGMENT_LENGTH),
             "-hls_list_size",
-            "5",
+            str(HLS_LIST_SIZE),
             "-hls_flags",
             "delete_segments",
             "-hls_segment_filename",
@@ -166,9 +169,9 @@ def _start_hls_video_stream_mac(
             "-f",
             "hls",
             "-hls_time",
-            "2",
+            str(HLS_SEGMENT_LENGTH),
             "-hls_list_size",
-            "5",
+            str(HLS_LIST_SIZE),
             "-hls_flags",
             "delete_segments",
             "-hls_segment_filename",
@@ -214,9 +217,9 @@ def _start_hls_video_stream_raspberry_pi(
             "-f",
             "hls",
             "-hls_time",
-            "2",
+            str(HLS_SEGMENT_LENGTH),
             "-hls_list_size",
-            "5",
+            str(HLS_LIST_SIZE),
             "-hls_flags",
             "delete_segments",
             "-hls_segment_filename",
