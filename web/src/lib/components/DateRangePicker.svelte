@@ -9,14 +9,6 @@
 	let start_date_input = $state(toInputString(start_date));
 	let end_date_input = $state(toInputString(end_date));
 
-	$effect(() => {
-		start_date = fromInputString(start_date_input);
-	});
-
-	$effect(() => {
-		end_date = fromInputString(end_date_input);
-	});
-
 	function toInputString(date?: Date): string {
 		if (!date) return '';
 		const offset = date.getTimezoneOffset();
@@ -43,6 +35,9 @@
 				md:text-sm
             "
 			bind:value={start_date_input}
+			oninputcapture={() => {
+				start_date = fromInputString(start_date_input);
+			}}
 		/>
 
 		<span class="px-0 text-gray-400">→</span>
@@ -57,6 +52,9 @@
             "
 			min={start_date_input}
 			bind:value={end_date_input}
+			oninputcapture={() => {
+				end_date = fromInputString(end_date_input);
+			}}
 		/>
 	</div>
 </div>
