@@ -10,7 +10,7 @@ import logging
 
 logger = logging.getLogger(__name__)
 
-HLS_SEGMENT_LENGTH = 2
+HLS_SEGMENT_LENGTH = 10
 HLS_LIST_SIZE = 60
 
 
