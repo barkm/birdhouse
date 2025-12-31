@@ -47,6 +47,4 @@
 		/>
 	{/await}
 </div>
-<div class="overflow-hidden rounded-lg">
-	<VideoWithLoader {id_token} src={stream_url} autoplay muted playsinline controls />
-</div>
+<VideoWithLoader {id_token} src={stream_url} autoplay muted playsinline controls />

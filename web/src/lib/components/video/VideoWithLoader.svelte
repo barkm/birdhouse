@@ -10,14 +10,16 @@
 	let isLoading = $state(true);
 </script>
 
-<stream-with-loader>
+<stream-with-loader class="bg-gray-100 rounded-lg overflow-hidden">
 	{#if isLoading || !src}
-		<loader transition:fade|global={{ duration: 500 }}>
-			<Loader />
-		</loader>
+		<div class="h-full bg-gray-100 flex rounded-lg">
+			<loader transition:fade|global={{ duration: 500 }}>
+				<Loader />
+			</loader>
+		</div>
 	{/if}
 	{#if src}
-		<stream class:loading={isLoading}>
+		<stream class:loading={isLoading} class="overflow-hidden rounded-lg">
 			<Video
 				{src}
 				{...rest}
