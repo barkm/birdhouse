@@ -29,7 +29,7 @@
 
 <div class="grid grid-cols-2 gap-4">
 	{#await outside_sensor_data_promise}
-		<SensorLoader />
+		<SensorLoader limits={false}/>
 	{:then outsideSensorData}
 		<SensorCard
 			title={'Utomhus'}
@@ -38,7 +38,7 @@
 		/>
 	{/await}
 	{#await inside_sensor_data_promise}
-		<SensorLoader />
+		<SensorLoader limits={false}/>
 	{:then insideSensorData}
 		<SensorCard
 			title={'Inomhus'}

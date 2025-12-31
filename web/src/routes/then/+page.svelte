@@ -74,7 +74,7 @@
 <DateRangePicker bind:start_date bind:end_date />
 <div class="grid grid-cols-2 gap-4">
 	{#await Promise.all([average_outside_sensor_promise, outside_temperature_limits_promise])}
-		<SensorLoader />
+		<SensorLoader limits/>
 	{:then [average_outside_sensor, outside_temperature_limits]}
 		<SensorCard
 			title={'Utomhus'}
@@ -84,7 +84,7 @@
 		/>
 	{/await}
 	{#await Promise.all([average_inside_sensor_promise, inside_temperature_limits_promise])}
-		<SensorLoader />
+		<SensorLoader limits/>
 	{:then [average_inside_sensor, inside_temperature_limits]}
 		<SensorCard
 			title={'Inomhus'}
