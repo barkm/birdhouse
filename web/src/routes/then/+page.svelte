@@ -152,8 +152,15 @@
 		</LineChart>
 	</div>
 {/await}
-{#await recordings_promise then recordings}
-	<div class="grid grid-cols-1 gap-4 md:grid-cols-2">
+<div class="grid grid-cols-1 gap-4 md:grid-cols-2">
+{#await recordings_promise}
+	{#each Array(4) as _}
+		<div class="aspect-video flex flex-col items-center justify-center">
+			<div class="mb-3 h-4 w-30 rounded bg-gray-100"></div>
+			<Loader />
+		</div>
+	{/each}
+{:then recordings}
 		{#each recordings as recording}
 			<div>
 				<span class="mb-2 block text-center text-sm text-gray-600">
@@ -169,5 +176,5 @@
 				/>
 			</div>
 		{/each}
-	</div>
 {/await}
+</div>
