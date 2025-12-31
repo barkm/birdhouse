@@ -3,6 +3,7 @@
 	import { loginWithGoogle, logout, user, isLoading } from '$lib/firebase';
 	import Loader from '$lib/components/loader/Loader.svelte';
 	import Navbar from '$lib/components/Navbar.svelte';
+	import AnimatedKobbar from '$lib/components/loader/AnimatedKobbar.svelte';
 
 	const { children } = $props();
 </script>
@@ -19,9 +20,9 @@
 			</div>
 		</div>
 	{:else}
-		<div class="flex h-screen flex-col items-center justify-center gap-4">
+		<div class="flex h-screen flex-col items-center justify-center gap-10">
 			<div class="w-3/4 max-w-sm">
-				<Loader />
+				<AnimatedKobbar />
 			</div>
 
 			<button
