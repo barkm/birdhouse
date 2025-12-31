@@ -107,12 +107,18 @@
 				{
 					key: 'Utomhus',
 					data: outside_data.map((d) => ({ ...d, sensor: 'Utomhus' })), // Calibration offset
-					color: '#1f77b4'
+					color: '#1f77b4',
+					props: {
+						strokeWidth: 2
+					}
 				},
 				{
 					key: 'Inomhus',
 					data: inside_data.map((d) => ({ ...d, sensor: 'Inomhus' })),
-					color: '#ff7f0e'
+					color: '#ff7f0e',
+					props: {
+						strokeWidth: 2
+					}
 				}
 			]}
 			renderContext="svg"
