@@ -8,6 +8,7 @@
 	import { format, PeriodType } from '@layerstack/utils';
 	import { curveCatmullRom } from 'd3-shape';
 	import VideoWithLoader from '$lib/components/video/VideoWithLoader.svelte';
+	import Loader from '$lib/components/loader/Loader.svelte';
 
 	const get_previous_day_from_midnight = () => {
 		const date = new Date();
@@ -94,14 +95,8 @@
 	{/await}
 </div>
 {#await Promise.all( [outside_sensor_data_promise, inside_sensor_data_promise, outside_temperature_limits_promise, inside_temperature_limits_promise] )}
-	<div class="h-[300px] animate-pulse rounded-sm border border-gray-300 p-4">
-		<div class="mb-3 h-4 w-24 rounded bg-gray-300"></div>
-		<div class="mb-2 h-8 w-full rounded bg-gray-300"></div>
-		<div class="h-3 w-16 rounded bg-gray-300"></div>
-		<div class="mt-2 h-20 w-full rounded bg-gray-300"></div>
-		<div class="mt-2 h-3 w-3/4 rounded bg-gray-300"></div>
-		<div class="mt-2 h-10 w-full rounded bg-gray-300"></div>
-		<div class="mt-2 h-3 w-3/4 rounded bg-gray-300"></div>
+	<div class="h-[300px]">
+		<Loader />
 	</div>
 {:then [outside_data, inside_data, outside_limits, inside_limits]}
 	<div class="h-[300px] rounded-sm border border-gray-300 p-4">

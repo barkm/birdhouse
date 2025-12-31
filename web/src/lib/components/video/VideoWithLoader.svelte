@@ -12,10 +12,8 @@
 
 <stream-with-loader class="bg-gray-100 rounded-lg overflow-hidden">
 	{#if isLoading || !src}
-		<div class="h-full bg-gray-100 flex rounded-lg">
-			<loader transition:fade|global={{ duration: 500 }}>
-				<Loader />
-			</loader>
+		<div class="h-full" transition:fade|global={{ duration: 500 }}>
+			<Loader />
 		</div>
 	{/if}
 	{#if src}
@@ -42,12 +40,6 @@
 		aspect-ratio: 16 / 9;
 		display: block;
 		position: relative;
-	}
-
-	loader {
-		position: absolute;
-		width: 50%;
-		transform: translate(50%, 50%);
 	}
 
 	stream {
