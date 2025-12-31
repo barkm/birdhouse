@@ -17,7 +17,7 @@
 
 <div class="sticky top-0 z-50 border-b border-gray-300 bg-white">
 	<div class="flex items-center justify-center gap-6">
-		{@render navLink('/now', 'Now')}
-		{@render navLink('/then', 'Then')}
+		{@render navLink('/now', 'Nu')}
+		{@render navLink('/then', 'Då')}
 	</div>
 </div>
