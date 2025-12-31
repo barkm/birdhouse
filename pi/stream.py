@@ -22,9 +22,15 @@ class Video:
 
 
 class Stream:
-    def __init__(self, playlist_filename: str, test_stream: bool):
+    def __init__(
+        self,
+        playlist_filename: str,
+        test_stream: bool,
+        idle_timeout: float | None = None,
+    ):
         self.playlist_filename = playlist_filename
         self.test_stream = test_stream
+        self.idle_timeout = idle_timeout
         self.video = None
         self.video_lock = Lock()
 
@@ -57,7 +63,11 @@ class Stream:
         return self.video.directory
 
     def _get_video_timer(self) -> Timer:
-        return Timer(20.0, self.stop)
+        return (
+            Timer(self.idle_timeout, self.stop)
+            if self.idle_timeout is not None
+            else Timer(1e6, self.stop)
+        )
 
     def stop(self) -> None:
         with self.video_lock:
