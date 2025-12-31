@@ -9,6 +9,7 @@
 	import { curveCatmullRom } from 'd3-shape';
 	import VideoWithLoader from '$lib/components/video/VideoWithLoader.svelte';
 	import Loader from '$lib/components/loader/Loader.svelte';
+	import colors from 'tailwindcss/colors';
 
 	const get_previous_day_from_midnight = () => {
 		const date = new Date();
@@ -107,7 +108,7 @@
 				{
 					key: 'Utomhus',
 					data: outside_data.map((d) => ({ ...d, sensor: 'Utomhus' })), // Calibration offset
-					color: '#1f77b4',
+					color: colors.blue[400],
 					props: {
 						strokeWidth: 2
 					}
@@ -115,7 +116,7 @@
 				{
 					key: 'Inomhus',
 					data: inside_data.map((d) => ({ ...d, sensor: 'Inomhus' })),
-					color: '#ff7f0e',
+					color: colors.amber[400],
 					props: {
 						strokeWidth: 2
 					}
