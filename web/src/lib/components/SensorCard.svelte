@@ -19,7 +19,7 @@
 			return 'bg-blue-200';
 		}
 		if (temp <= 15) {
-			return 'bg-green-200';
+			return 'bg-lime-200';
 		}
 		if (temp <= 25) {
 			return 'bg-yellow-200';
