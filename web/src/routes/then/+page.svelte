@@ -170,7 +170,7 @@
 					class="w-full rounded-sm"
 					src={recording.url}
 					controls
-					autoplay
+					playsinline
 					muted
 					loop
 				/>
