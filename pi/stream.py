@@ -89,28 +89,28 @@ def _remove_directory(dirpath: Path) -> None:
 
 
 def _start_hls_video_stream(
-    stream_dir: Path, test_stream: bool, bitrate: int, framerate: int
+    work_dir: Path, test_stream: bool, bitrate: int, framerate: int
 ) -> tuple[Path, list[subprocess.Popen]]:
-    stream_dir.mkdir(parents=True, exist_ok=True)
+    work_dir.mkdir(parents=True, exist_ok=True)
     playlist_path, processes = _start_stream_processes(
-        stream_dir, test_stream, bitrate, framerate
+        work_dir, test_stream, bitrate, framerate
     )
     _wait_until_exists(playlist_path)
-    return playlist_path.relative_to(stream_dir), processes
+    return playlist_path.relative_to(work_dir), processes
 
 
 def _start_stream_processes(
-    stream_dir: Path,
+    work_dir: Path,
     test_stream: bool,
     bitrate: int,
     framerate: int,
 ) -> tuple[Path, list[subprocess.Popen]]:
     if test_stream:
-        return _start_test_stream(stream_dir)
+        return _start_test_stream(work_dir)
     if is_raspberry_pi():
-        return _start_hls_video_stream_raspberry_pi(stream_dir, bitrate, framerate)
+        return _start_hls_video_stream_raspberry_pi(work_dir, bitrate, framerate)
     if is_mac():
-        return _start_hls_video_stream_mac(stream_dir)
+        return _start_hls_video_stream_mac(work_dir)
     raise RuntimeError("Unsupported platform for HLS streaming")
 
 
@@ -119,9 +119,9 @@ def _wait_until_exists(path: Path) -> None:
         time.sleep(0.1)
 
 
-def _start_test_stream(stream_dir: Path) -> tuple[Path, list[subprocess.Popen]]:
-    test_file = _create_test_video_file(stream_dir)
-    playlist_path, hls_args = _ffmpeg_hls_arguments(stream_dir)
+def _start_test_stream(work_dir: Path) -> tuple[Path, list[subprocess.Popen]]:
+    test_file = _create_test_video_file(work_dir)
+    playlist_path, hls_args = _ffmpeg_hls_arguments(work_dir)
     process = subprocess.Popen(
         [
             "ffmpeg",
@@ -138,8 +138,8 @@ def _start_test_stream(stream_dir: Path) -> tuple[Path, list[subprocess.Popen]]:
     return playlist_path, [process]
 
 
-def _create_test_video_file(stream_dir: Path) -> Path:
-    video_file_path = stream_dir / "test.mp4"
+def _create_test_video_file(work_dir: Path) -> Path:
+    video_file_path = work_dir / "test.mp4"
     command = f"ffmpeg -f lavfi -i testsrc=size=1280x720:rate=30 -t 20 -c:v libx264 -g 60 -preset ultrafast {video_file_path}".split()
     subprocess.check_call(command, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
     return video_file_path
@@ -167,7 +167,7 @@ def _start_hls_video_stream_mac(
 
 
 def _start_hls_video_stream_raspberry_pi(
-    stream_dir: Path, bitrate: int, framerate: int
+    work_dir: Path, bitrate: int, framerate: int
 ) -> tuple[Path, list[subprocess.Popen]]:
     if not _raspberry_pi_camera_available():
         raise RuntimeError("Raspberry Pi camera not available")
@@ -190,7 +190,7 @@ def _start_hls_video_stream_raspberry_pi(
         stderr=subprocess.PIPE,
     )
     # fmt: on
-    playlist_path, hls_args = _ffmpeg_hls_arguments(stream_dir)
+    playlist_path, hls_args = _ffmpeg_hls_arguments(work_dir)
     ffmpeg = subprocess.Popen(
         [
             "ffmpeg",
@@ -205,9 +205,9 @@ def _start_hls_video_stream_raspberry_pi(
     return playlist_path, [rpicam, ffmpeg]
 
 
-def _ffmpeg_hls_arguments(stream_dir: Path) -> tuple[Path, list[str]]:
-    playlist_path = stream_dir / "playlist.m3u8"
-    segment_path = stream_dir / (uuid.uuid4().hex + "_%04d.ts")
+def _ffmpeg_hls_arguments(work_dir: Path) -> tuple[Path, list[str]]:
+    playlist_path = work_dir / "playlist.m3u8"
+    segment_path = work_dir / (uuid.uuid4().hex + "_%04d.ts")
     args = [
         "-c:v",
         "copy",
