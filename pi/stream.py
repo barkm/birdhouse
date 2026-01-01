@@ -10,9 +10,6 @@ import logging
 
 logger = logging.getLogger(__name__)
 
-HLS_SEGMENT_LENGTH = 10
-HLS_LIST_SIZE = 60
-
 
 @dataclass
 class Video:
@@ -218,9 +215,9 @@ def _ffmpeg_hls_arguments(segment_filename: Path, stream_file_path: Path) -> lis
         "-f",
         "hls",
         "-hls_time",
-        str(HLS_SEGMENT_LENGTH),
+        "10",
         "-hls_list_size",
-        str(HLS_LIST_SIZE),
+        "60",
         "-hls_flags",
         "delete_segments",
         "-hls_segment_filename",
