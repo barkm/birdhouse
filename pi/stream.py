@@ -194,36 +194,103 @@ def _start_hls_video_stream_mac(
 
 
 def _start_hls_video_stream_raspberry_pi(
-    segment_filename: Path, stream_file_path: Path, bitrate: int, framerate: int
+    segment_filename: Path,
+    stream_file_path: Path,
+    bitrate: int,  # Not used for raw source, but kept for interface consistency
+    framerate: int,
 ) -> list[subprocess.Popen]:
     if not _raspberry_pi_camera_available():
         raise RuntimeError("Raspberry Pi camera not available")
+
+    # 1. SETUP: Define resolutions and bitrates
+    # (Using slightly lower bitrates to save the Pi's CPU)
+    width = 1920
+    height = 1080
+
+    # 2. RPICAM: Output RAW video (yuv420p) to stdout
+    # We do not encode to h264 here anymore.
     # fmt: off
     rpicam = subprocess.Popen(
         [
             "rpicam-vid",
             "-t", "0",
-            "--width", "1920",
-            "--height", "1080",
-            "--framerate", f"{framerate}",
-            "--intra", f"{framerate * 2}",
-            "--codec", "h264",
-            "--profile", "high",
-            "--bitrate", f"{bitrate}",
-            "-o",
-            "-",
+            "--width", str(width),
+            "--height", str(height),
+            "--framerate", str(framerate),
+            "--codec", "yuv420p", # Output raw data
+            "-o", "-",
         ],
         stdout=subprocess.PIPE,
         stderr=subprocess.PIPE,
     )
     # fmt: on
+
+    # 3. FFMPEG: Ingest raw, Split, Scale, Encode x2 (High/Low)
+    # We are doing 2 streams (1080p and 480p) to be realistic about Pi CPU.
+    # If on Pi 5, you can add a 3rd stream.
+    master_playlist = stream_file_path.with_name("master.m3u8")
+    base_stream_name = stream_file_path.stem  # e.g. "stream"
+
     ffmpeg = subprocess.Popen(
         [
             "ffmpeg",
+            # --- INPUT SETTINGS (Crucial for Raw Video) ---
+            "-f",
+            "rawvideo",
+            "-vcodec",
+            "rawvideo",
+            "-s",
+            f"{width}x{height}",  # Must match rpicam output
+            "-r",
+            str(framerate),
+            "-pix_fmt",
+            "yuv420p",
             "-i",
-            "-",
-            "-c:v",
-            "copy",
+            "-",  # Read from stdin
+            # --- FILTER GRAPH ---
+            # Split input into 2 streams ([v1], [v2])
+            # Scale [v2] down to 854x480
+            "-filter_complex",
+            "[0:v]split=2[v1][v2];[v2]scale=w=854:h=480[v2out]",
+            # --- ENCODING STREAM 1 (High - 1080p) ---
+            "-map",
+            "[v1]",
+            "-c:v:0",
+            "libx264",
+            "-b:v:0",
+            "2500k",
+            "-maxrate:v:0",
+            "2675k",
+            "-bufsize:v:0",
+            "3000k",
+            "-g",
+            str(framerate * 2),
+            "-keyint_min",
+            str(framerate * 2),
+            "-sc_threshold",
+            "0",
+            "-preset",
+            "ultrafast",  # Crucial for Pi performance
+            # --- ENCODING STREAM 2 (Low - 480p) ---
+            "-map",
+            "[v2out]",
+            "-c:v:1",
+            "libx264",
+            "-b:v:1",
+            "600k",
+            "-maxrate:v:1",
+            "642k",
+            "-bufsize:v:1",
+            "800k",
+            "-g",
+            str(framerate * 2),
+            "-keyint_min",
+            str(framerate * 2),
+            "-sc_threshold",
+            "0",
+            "-preset",
+            "ultrafast",
+            # --- HLS SETTINGS ---
             "-f",
             "hls",
             "-hls_time",
@@ -231,15 +298,22 @@ def _start_hls_video_stream_raspberry_pi(
             "-hls_list_size",
             str(HLS_LIST_SIZE),
             "-hls_flags",
-            "delete_segments",
+            "delete_segments+independent_segments",
+            "-master_pl_name",
+            str(master_playlist.name),
+            # Map the variants to specific output m3u8 files
             "-hls_segment_filename",
-            str(segment_filename),
-            str(stream_file_path),
+            f"{stream_file_path.parent}/{base_stream_name}_%v_%03d.ts",
+            "-var_stream_map",
+            "v:0 v:1",
+            # The output pattern for the variant playlists
+            f"{stream_file_path.parent}/{base_stream_name}_%v.m3u8",
         ],
         stdin=rpicam.stdout,
         stdout=subprocess.PIPE,
         stderr=subprocess.PIPE,
     )
+
     return [rpicam, ffmpeg]
 
 
