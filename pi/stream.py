@@ -95,6 +95,7 @@ def _start_hls_video_stream(
     playlist_path, processes = _start_stream_processes(
         work_dir, test_stream, bitrate, framerate
     )
+    logging.info("Waiting for playlist to be created...")
     _wait_until_exists(playlist_path)
     return playlist_path.relative_to(work_dir), processes
 
@@ -121,7 +122,7 @@ def _wait_until_exists(path: Path) -> None:
 
 def _start_test_stream(work_dir: Path) -> tuple[Path, list[subprocess.Popen]]:
     test_file = _create_test_video_file(work_dir)
-    playlist_path, hls_args = _ffmpeg_hls_arguments(work_dir)
+    playlist_path, hls_args = _ffmpeg_abr_hls_arguments(work_dir)
     process = subprocess.Popen(
         [
             "ffmpeg",
@@ -148,7 +149,7 @@ def _create_test_video_file(work_dir: Path) -> Path:
 def _start_hls_video_stream_mac(
     segment_filename: Path,
 ) -> tuple[Path, list[subprocess.Popen]]:
-    playlist_path, hls_args = _ffmpeg_hls_arguments(segment_filename)
+    playlist_path, hls_args = _ffmpeg_abr_hls_arguments(segment_filename)
     process = subprocess.Popen(
         [
             "ffmpeg",
@@ -190,7 +191,7 @@ def _start_hls_video_stream_raspberry_pi(
         stderr=subprocess.PIPE,
     )
     # fmt: on
-    playlist_path, hls_args = _ffmpeg_hls_arguments(work_dir)
+    playlist_path, hls_args = _ffmpeg_abr_hls_arguments(work_dir)
     ffmpeg = subprocess.Popen(
         [
             "ffmpeg",
@@ -224,6 +225,38 @@ def _ffmpeg_hls_arguments(work_dir: Path) -> tuple[Path, list[str]]:
         str(playlist_path),
     ]
     return playlist_path, args
+
+
+def _ffmpeg_abr_hls_arguments(work_dir: Path) -> tuple[Path, list[str]]:
+    master_pl_name = "master.m3u8"
+    segment_path = work_dir / "stream_%v_data%03d.ts"
+    pl_path = work_dir / "stream_%v.m3u8"
+    args = [
+        "-map",
+        "0:v",
+        "-map",
+        "0:v",
+        "-b:v:0",
+        "100k",
+        "-b:v:1",
+        "1000k",
+        "-f",
+        "hls",
+        "-hls_time",
+        "5",
+        "-hls_list_size",
+        "30",
+        "-hls_flags",
+        "delete_segments",
+        "-var_stream_map",
+        "v:0 v:1",
+        "-hls_segment_filename",
+        str(segment_path),
+        "-master_pl_name",
+        str(master_pl_name),
+        str(pl_path),
+    ]
+    return work_dir / master_pl_name, args
 
 
 def _raspberry_pi_camera_available() -> bool:
