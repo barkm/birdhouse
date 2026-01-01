@@ -13,7 +13,7 @@ logger = logging.getLogger(__name__)
 
 @dataclass
 class Video:
-    process: list[subprocess.Popen]
+    processes: list[subprocess.Popen]
     directory: Path
     playlist_filename: str
     timer: Timer
@@ -46,7 +46,7 @@ class Stream:
             else:
                 logger.info("Starting video stream")
                 directory = Path(tempfile.mkdtemp())
-                playlist_filename, process = _start_hls_video_stream(
+                playlist_filename, processes = _start_hls_video_stream(
                     directory,
                     self.test_stream,
                     bitrate,
@@ -55,7 +55,7 @@ class Stream:
                 self.video = Video(
                     directory=directory,
                     playlist_filename=playlist_filename,
-                    process=process,
+                    processes=processes,
                     timer=self._get_video_timer(),
                 )
             self.video.timer.start()
@@ -72,7 +72,7 @@ class Stream:
         with self.video_lock:
             if self.video:
                 logger.info("Stopping video stream")
-                for process in self.video.process:
+                for process in self.video.processes:
                     process.terminate()
                 _remove_directory(self.video.directory)
                 self.video.timer.cancel()
@@ -93,14 +93,14 @@ def _start_hls_video_stream(
 ) -> tuple[str, list[subprocess.Popen]]:
     stream_dir.mkdir(parents=True, exist_ok=True)
     stream_file_path = stream_dir / "playlist.m3u8"
-    process = _start_stream_process(
+    processes = _start_stream_processes(
         stream_dir, stream_file_path, test_stream, bitrate, framerate
     )
     _wait_until_exists(stream_file_path)
-    return "playlist.m3u8", process
+    return "playlist.m3u8", processes
 
 
-def _start_stream_process(
+def _start_stream_processes(
     stream_dir: Path,
     stream_filepath: Path,
     test_stream: bool,
