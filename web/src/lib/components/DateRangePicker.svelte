@@ -35,8 +35,8 @@
 				md:text-sm
             "
 			bind:value={start_date_input}
-			oninputcapture={() => {
-				start_date = fromInputString(start_date_input);
+			oninputcapture={(e: any) => {
+				start_date = fromInputString(e.target.value);
 			}}
 		/>
 
@@ -52,8 +52,8 @@
             "
 			min={start_date_input}
 			bind:value={end_date_input}
-			oninputcapture={() => {
-				end_date = fromInputString(end_date_input);
+			oninputcapture={(e: any) => {
+				end_date = fromInputString(e.target.value);
 			}}
 		/>
 	</div>
