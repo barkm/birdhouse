@@ -11,13 +11,11 @@ import logging
 logger = logging.getLogger(__name__)
 
 
-PLAYLIST_FILENAME = "playlist.m3u8"
-
-
 @dataclass
 class Video:
     process: list[subprocess.Popen]
     directory: Path
+    playlist_filename: str
     timer: Timer
 
 
@@ -27,7 +25,6 @@ class Stream:
         test_stream: bool,
         idle_timeout: float | None = None,
     ):
-        self.playlist_filename = PLAYLIST_FILENAME
         self.test_stream = test_stream
         self.idle_timeout = idle_timeout
         self.video = None
@@ -49,19 +46,20 @@ class Stream:
             else:
                 logger.info("Starting video stream")
                 directory = Path(tempfile.mkdtemp())
+                playlist_filename, process = _start_hls_video_stream(
+                    directory,
+                    self.test_stream,
+                    bitrate,
+                    framerate,
+                )
                 self.video = Video(
-                    process=_start_hls_video_stream(
-                        directory,
-                        self.playlist_filename,
-                        self.test_stream,
-                        bitrate,
-                        framerate,
-                    ),
                     directory=directory,
+                    playlist_filename=playlist_filename,
+                    process=process,
                     timer=self._get_video_timer(),
                 )
             self.video.timer.start()
-        return self.playlist_filename
+        return self.video.playlist_filename
 
     def _get_video_timer(self) -> Timer:
         return (
@@ -91,16 +89,16 @@ def _remove_directory(dirpath: Path) -> None:
 
 
 def _start_hls_video_stream(
-    stream_dir: Path, playlist_filename, test_stream: bool, bitrate: int, framerate: int
-) -> list[subprocess.Popen]:
+    stream_dir: Path, test_stream: bool, bitrate: int, framerate: int
+) -> tuple[str, list[subprocess.Popen]]:
     stream_dir.mkdir(parents=True, exist_ok=True)
-    stream_file_path = stream_dir / playlist_filename
+    stream_file_path = stream_dir / "playlist.m3u8"
     segment_filename = stream_dir / (uuid.uuid4().hex + "_%04d.ts")
     process = _start_stream_process(
         stream_dir, stream_file_path, segment_filename, test_stream, bitrate, framerate
     )
     _wait_until_exists(stream_file_path)
-    return process
+    return "playlist.m3u8", process
 
 
 def _start_stream_process(
