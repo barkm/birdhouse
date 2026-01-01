@@ -15,7 +15,7 @@ logger = logging.getLogger(__name__)
 class Video:
     processes: list[subprocess.Popen]
     directory: Path
-    playlist_filename: str
+    playlist_filename: Path
     timer: Timer
 
 
@@ -38,7 +38,7 @@ class Stream:
         path = self.video.directory / filename
         return path if path.exists() else None
 
-    def start(self, bitrate: int = 500000, framerate: int = 24) -> str:
+    def start(self, bitrate: int = 500000, framerate: int = 24) -> Path:
         with self.video_lock:
             if self.video:
                 self.video.timer.cancel()
@@ -54,7 +54,7 @@ class Stream:
                 )
                 self.video = Video(
                     directory=directory,
-                    playlist_filename=playlist_path.name,
+                    playlist_filename=playlist_path.relative_to(directory),
                     processes=processes,
                     timer=self._get_video_timer(),
                 )
