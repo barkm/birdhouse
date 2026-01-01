@@ -23,7 +23,7 @@ class Stream:
     def __init__(
         self,
         test_stream: bool,
-        idle_timeout: float | None = None,
+        idle_timeout: float | None = 60,
     ):
         self.test_stream = test_stream
         self.idle_timeout = idle_timeout
