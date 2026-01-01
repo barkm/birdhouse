@@ -54,7 +54,7 @@ class Stream:
                 )
                 self.video = Video(
                     directory=directory,
-                    playlist_filename=playlist_path.relative_to(directory),
+                    playlist_filename=playlist_path,
                     processes=processes,
                     timer=self._get_video_timer(),
                 )
@@ -96,7 +96,7 @@ def _start_hls_video_stream(
         stream_dir, test_stream, bitrate, framerate
     )
     _wait_until_exists(playlist_path)
-    return playlist_path, processes
+    return playlist_path.relative_to(stream_dir), processes
 
 
 def _start_stream_processes(
