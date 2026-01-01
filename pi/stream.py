@@ -34,10 +34,12 @@ class Stream:
     def get_file(self, filename: str) -> Path | None:
         if Path(filename).suffix not in {".m3u8", ".ts"}:
             return None
-        path = self.start() / filename
+        if not self.video:
+            return None
+        path = self.video.directory / filename
         return path if path.exists() else None
 
-    def start(self, bitrate: int = 500000, framerate: int = 24) -> Path:
+    def start(self, bitrate: int = 500000, framerate: int = 24) -> None:
         with self.video_lock:
             if self.video:
                 self.video.timer.cancel()
@@ -57,7 +59,6 @@ class Stream:
                     timer=self._get_video_timer(),
                 )
             self.video.timer.start()
-        return self.video.directory
 
     def _get_video_timer(self) -> Timer:
         return (
