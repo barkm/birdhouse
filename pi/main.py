@@ -74,10 +74,10 @@ async def serve_hls_files(request: Request, filename: str):
 async def start_stream(request: Request, bitrate: int = 500000, framerate: int = 24):
     stream: Stream = request.app.state.stream
     try:
-        stream.start(bitrate, framerate)
+        playlist_filename = stream.start(bitrate, framerate)
     except RuntimeError as e:
         raise HTTPException(status_code=501, detail="Stream not available") from e
-    return {"playlist": f"/hls/{PLAYLIST_FILENAME}"}
+    return {"playlist": f"/hls/{playlist_filename}"}
 
 
 def _is_filename(filename: str) -> bool:

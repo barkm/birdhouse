@@ -39,7 +39,7 @@ class Stream:
         path = self.video.directory / filename
         return path if path.exists() else None
 
-    def start(self, bitrate: int = 500000, framerate: int = 24) -> None:
+    def start(self, bitrate: int = 500000, framerate: int = 24) -> str:
         with self.video_lock:
             if self.video:
                 self.video.timer.cancel()
@@ -59,6 +59,7 @@ class Stream:
                     timer=self._get_video_timer(),
                 )
             self.video.timer.start()
+        return self.playlist_filename
 
     def _get_video_timer(self) -> Timer:
         return (
