@@ -11,9 +11,6 @@ from stream import Stream
 from sensor import read_sensor_data
 
 
-PLAYLIST_FILENAME = "playlist.m3u8"
-
-
 class Settings(BaseSettings):
     name: str = "birdhouse"
     test_stream: bool = False
@@ -25,7 +22,7 @@ settings = Settings()
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    app.state.stream = Stream(PLAYLIST_FILENAME, settings.test_stream)
+    app.state.stream = Stream(settings.test_stream)
     yield
     app.state.stream.stop()
 

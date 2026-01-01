@@ -11,6 +11,9 @@ import logging
 logger = logging.getLogger(__name__)
 
 
+PLAYLIST_FILENAME = "playlist.m3u8"
+
+
 @dataclass
 class Video:
     process: list[subprocess.Popen]
@@ -21,11 +24,10 @@ class Video:
 class Stream:
     def __init__(
         self,
-        playlist_filename: str,
         test_stream: bool,
         idle_timeout: float | None = None,
     ):
-        self.playlist_filename = playlist_filename
+        self.playlist_filename = PLAYLIST_FILENAME
         self.test_stream = test_stream
         self.idle_timeout = idle_timeout
         self.video = None
