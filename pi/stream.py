@@ -93,9 +93,8 @@ def _start_hls_video_stream(
 ) -> tuple[str, list[subprocess.Popen]]:
     stream_dir.mkdir(parents=True, exist_ok=True)
     stream_file_path = stream_dir / "playlist.m3u8"
-    segment_filename = stream_dir / (uuid.uuid4().hex + "_%04d.ts")
     process = _start_stream_process(
-        stream_dir, stream_file_path, segment_filename, test_stream, bitrate, framerate
+        stream_dir, stream_file_path, test_stream, bitrate, framerate
     )
     _wait_until_exists(stream_file_path)
     return "playlist.m3u8", process
@@ -104,19 +103,18 @@ def _start_hls_video_stream(
 def _start_stream_process(
     stream_dir: Path,
     stream_filepath: Path,
-    segment_filepath: Path,
     test_stream: bool,
     bitrate: int,
     framerate: int,
 ) -> list[subprocess.Popen]:
     if test_stream:
-        return [_start_test_stream(stream_dir, segment_filepath, stream_filepath)]
+        return [_start_test_stream(stream_dir, stream_filepath)]
     if is_raspberry_pi():
         return _start_hls_video_stream_raspberry_pi(
-            segment_filepath, stream_filepath, bitrate, framerate
+            stream_dir, stream_filepath, bitrate, framerate
         )
     if is_mac():
-        return [_start_hls_video_stream_mac(segment_filepath, stream_filepath)]
+        return [_start_hls_video_stream_mac(stream_dir, stream_filepath)]
     raise RuntimeError("Unsupported platform for HLS streaming")
 
 
@@ -125,9 +123,7 @@ def _wait_until_exists(path: Path) -> None:
         time.sleep(0.1)
 
 
-def _start_test_stream(
-    stream_dir: Path, segment_filename: Path, stream_file_path: Path
-) -> subprocess.Popen:
+def _start_test_stream(stream_dir: Path, stream_file_path: Path) -> subprocess.Popen:
     test_file = _create_test_video_file(stream_dir)
     return subprocess.Popen(
         [
@@ -137,7 +133,7 @@ def _start_test_stream(
             "-1",
             "-i",
             str(test_file),
-            *_ffmpeg_hls_arguments(segment_filename, stream_file_path),
+            *_ffmpeg_hls_arguments(stream_dir, stream_file_path),
         ],
         stdout=subprocess.PIPE,
         stderr=subprocess.PIPE,
@@ -171,7 +167,7 @@ def _start_hls_video_stream_mac(
 
 
 def _start_hls_video_stream_raspberry_pi(
-    segment_filename: Path, stream_file_path: Path, bitrate: int, framerate: int
+    stream_dir: Path, stream_file_path: Path, bitrate: int, framerate: int
 ) -> list[subprocess.Popen]:
     if not _raspberry_pi_camera_available():
         raise RuntimeError("Raspberry Pi camera not available")
@@ -199,7 +195,7 @@ def _start_hls_video_stream_raspberry_pi(
             "ffmpeg",
             "-i",
             "-",
-            *_ffmpeg_hls_arguments(segment_filename, stream_file_path),
+            *_ffmpeg_hls_arguments(stream_dir, stream_file_path),
         ],
         stdin=rpicam.stdout,
         stdout=subprocess.PIPE,
@@ -208,7 +204,8 @@ def _start_hls_video_stream_raspberry_pi(
     return [rpicam, ffmpeg]
 
 
-def _ffmpeg_hls_arguments(segment_filename: Path, stream_file_path: Path) -> list[str]:
+def _ffmpeg_hls_arguments(stream_dir: Path, stream_file_path: Path) -> list[str]:
+    segment_filename = stream_dir / (uuid.uuid4().hex + "_%04d.ts")
     return [
         "-c:v",
         "copy",
