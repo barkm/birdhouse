@@ -135,8 +135,6 @@ def _start_test_stream(
             "-1",
             "-i",
             str(test_file),
-            "-c",
-            "copy",
             *_ffmpeg_hls_arguments(segment_filename, stream_file_path),
         ],
         stdout=subprocess.PIPE,
@@ -199,8 +197,6 @@ def _start_hls_video_stream_raspberry_pi(
             "ffmpeg",
             "-i",
             "-",
-            "-c:v",
-            "copy",
             *_ffmpeg_hls_arguments(segment_filename, stream_file_path),
         ],
         stdin=rpicam.stdout,
@@ -212,6 +208,8 @@ def _start_hls_video_stream_raspberry_pi(
 
 def _ffmpeg_hls_arguments(segment_filename: Path, stream_file_path: Path) -> list[str]:
     return [
+        "-c:v",
+        "copy",
         "-f",
         "hls",
         "-hls_time",
