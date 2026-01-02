@@ -74,6 +74,8 @@ class Stream:
                 logger.info("Stopping video stream")
                 for process in self.video.processes:
                     process.terminate()
+                for process in self.video.processes:
+                    process.wait()
                 _remove_directory(self.video.directory)
                 self.video.timer.cancel()
                 self.video = None
