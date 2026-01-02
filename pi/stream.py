@@ -214,7 +214,7 @@ def _ffmpeg_hls_arguments(work_dir: Path) -> tuple[Path, list[str]]:
         "-f",
         "hls",
         "-hls_time",
-        "10",
+        "5",
         "-hls_list_size",
         "60",
         "-hls_flags",
