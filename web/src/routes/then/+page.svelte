@@ -100,7 +100,7 @@
 		<Loader />
 	</div>
 {:then [outside_data, inside_data, outside_limits, inside_limits]}
-	<div class="h-[300px] rounded-sm border border-gray-300 p-4">
+	<div class="h-[300px] rounded-lg border border-gray-300 p-4">
 		<LineChart
 			x="created_at"
 			y="temperature"
