@@ -231,7 +231,7 @@ def _record(relay_url: str, device: str, output_path: str, duration: int) -> Non
     logging.info(f"Saving recording for {device}")
     start_url = f"{relay_url}/{device}/start"
     start_response = httpx.get(
-        start_url, params={"bitrate": 10000000, "framerate": 30}, timeout=20.0
+        start_url, params={"bitrate": 10000000, "framerate": 30}, timeout=60.0
     )
     try:
         start_response.raise_for_status()
