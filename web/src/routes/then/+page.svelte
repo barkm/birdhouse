@@ -107,7 +107,7 @@
 			series={[
 				{
 					key: 'Utomhus',
-					data: outside_data.map((d) => ({ ...d, sensor: 'Utomhus' })), // Calibration offset
+					data: outside_data.map((d) => ({ ...d, sensor: 'Utomhus' })),
 					color: colors.blue[400],
 					props: {
 						strokeWidth: 2
