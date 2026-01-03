@@ -54,6 +54,14 @@ def get_sensor():
         raise RuntimeError("Failed to initialize sensor")
 
 
+def has_sensor() -> bool:
+    try:
+        get_sensor()
+        return True
+    except RuntimeError:
+        return False
+
+
 def read_pi_sensor_status() -> SensorStatus:
     sensor = get_sensor()
     return parse_hdc302x_status(sensor.status)
