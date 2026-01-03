@@ -35,12 +35,16 @@ def read_sensor_data(mock_data: bool) -> SensorData:
     return sum(sensor_readings, SensorData(0.0, 0.0, 0.0)) / len(sensor_readings)
 
 
-def read_pi_sensor() -> SensorData:
+def get_sensor():
     try:
         i2c = board.I2C()  # pyright: ignore[reportPossiblyUnboundVariable]
-        sensor = adafruit_hdc302x.HDC302x(i2c)  # pyright: ignore[reportPossiblyUnboundVariable]
+        return adafruit_hdc302x.HDC302x(i2c)  # pyright: ignore[reportPossiblyUnboundVariable]
     except Exception:
         raise RuntimeError("Failed to initialize sensor")
+
+
+def read_pi_sensor() -> SensorData:
+    sensor = get_sensor()
     return SensorData(
         temperature=sensor.temperature,
         humidity=sensor.relative_humidity,
