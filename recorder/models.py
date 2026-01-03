@@ -16,9 +16,9 @@ class Sensor(SQLModel, table=True):
         sa_column=Column(DateTime(timezone=True), nullable=False),
     )
     device_id: uuid.UUID = Field(foreign_key="device.id")
-    temperature: float
-    humidity: float
-    cpu_temperature: float
+    temperature: float | None
+    humidity: float | None
+    cpu_temperature: float | None
 
 
 class Recording(SQLModel, table=True):
