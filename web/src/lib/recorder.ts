@@ -57,22 +57,3 @@ export const getSensorData = async (
 		humidity: entry.humidity
 	}));
 };
-
-// const fetch_recordings = async (device: Device): Promise<Recording[]> => {
-// 	if (!$user) {
-// 		return [];
-// 	}
-// 	const recordings_response = await authorizedRequest(
-// 		$user,
-// 		PUBLIC_RECORDER_URL,
-// 		`recordings/${device.name}`
-// 	);
-// 	return await recordings_response.json();
-// };
-
-// const fetchTemperatures = async (device_name: string): Promise<TemperatureData[]> => {
-// 	if (!$user) return [];
-//     const response = await authorizedRequest($user, PUBLIC_RECORDER_URL, `sensors/${device_name}`)
-//     const parsedResponse = await response.json();
-//     return parsedResponse.map((entry: { created_at: string; temperature: number }) => ({ created_at: new Date(entry.created_at), temperature: entry.temperature }));
-// };
