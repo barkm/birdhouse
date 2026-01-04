@@ -31,8 +31,8 @@ export const getRecordings = async (
 
 export interface SensorData {
 	created_at: Date;
-	temperature: number;
-	humidity: number;
+	temperature?: number;
+	humidity?: number;
 }
 
 export const getSensorData = async (

@@ -3,8 +3,8 @@ import { authorizedRequest } from './request';
 import { PUBLIC_RELAY_URL } from '$env/static/public';
 
 export interface SensorData {
-	temperature: number;
-	humidity: number;
+	temperature?: number;
+	humidity?: number;
 }
 
 export const getSensorData = async (user: User, device_name: string): Promise<SensorData> => {

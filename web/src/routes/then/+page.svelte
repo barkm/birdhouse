@@ -3,7 +3,7 @@
 	import SensorCard from '$lib/components/SensorCard.svelte';
 	import SensorLoader from '$lib/components/SensorLoader.svelte';
 	import { user } from '$lib/firebase';
-	import { getRecordings, getSensorData, type Recording, type SensorData } from '$lib/recorder';
+	import { getRecordings, getSensorData, type Recording, type SensorData as OptionalSensorData} from '$lib/recorder';
 	import { LineChart, Tooltip } from 'layerchart';
 	import { format, PeriodType } from '@layerstack/utils';
 	import { curveCatmullRom } from 'd3-shape';
@@ -25,6 +25,16 @@
 		if (arr.length === 0) return 0;
 		const sum = arr.reduce((a, b) => a + b, 0);
 		return sum / arr.length;
+	};
+
+	interface SensorData {
+		created_at: Date;
+		temperature: number;
+		humidity: number;
+	}
+
+	const filter_sensor_data = (data: OptionalSensorData[]): SensorData[] => {
+		return data.filter((d) => d.temperature !== undefined && d.humidity !== undefined);
 	};
 
 	const average_sensor_data = (data: SensorData[]) => {
@@ -52,17 +62,25 @@
 		getSensorData($user!, 'birdhouse', start_date, end_date)
 	);
 	const inside_sensor_data_promise = $derived(getSensorData($user!, 'house', start_date, end_date));
+
+	const filtered_outside_sensor_data_promise = $derived(
+		outside_sensor_data_promise.then(filter_sensor_data)
+	);
+	const filtered_inside_sensor_data_promise = $derived(
+		inside_sensor_data_promise.then(filter_sensor_data)
+	);
+
 	const outside_temperature_limits_promise = $derived(
-		outside_sensor_data_promise.then(get_temperature_limits)
+		filtered_outside_sensor_data_promise.then(get_temperature_limits)
 	);
 	const inside_temperature_limits_promise = $derived(
-		inside_sensor_data_promise.then(get_temperature_limits)
+		filtered_inside_sensor_data_promise.then(get_temperature_limits)
 	);
 	const average_outside_sensor_promise = $derived(
-		outside_sensor_data_promise.then(average_sensor_data)
+		filtered_outside_sensor_data_promise.then(average_sensor_data)
 	);
 	const average_inside_sensor_promise = $derived(
-		inside_sensor_data_promise.then(average_sensor_data)
+		filtered_inside_sensor_data_promise.then(average_sensor_data)
 	);
 
 	const recordings_promise = $derived(
@@ -95,7 +113,7 @@
 		/>
 	{/await}
 </div>
-{#await Promise.all( [outside_sensor_data_promise, inside_sensor_data_promise, outside_temperature_limits_promise, inside_temperature_limits_promise] )}
+{#await Promise.all( [filtered_outside_sensor_data_promise, filtered_inside_sensor_data_promise, outside_temperature_limits_promise, inside_temperature_limits_promise] )}
 	<div class="h-[300px]">
 		<Loader />
 	</div>
