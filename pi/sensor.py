@@ -1,32 +1,50 @@
 from dataclasses import dataclass
+import logging
 import random
+
+logger = logging.getLogger(__name__)
 
 try:
     import board  # pyright: ignore[reportMissingImports]
     import adafruit_hdc302x  # pyright: ignore[reportMissingImports]
 except ImportError:
+    logger.warning(
+        "Failed to import sensor libraries; sensor functionality will be disabled."
+    )
     pass
 
 
 @dataclass
 class SensorData:
-    temperature: float
-    humidity: float
-    cpu_temperature: float = 0.0
+    temperature: float | None
+    humidity: float | None
+    cpu_temperature: float | None
 
     def __add__(self, other: "SensorData") -> "SensorData":
         return SensorData(
-            temperature=self.temperature + other.temperature,
-            humidity=self.humidity + other.humidity,
-            cpu_temperature=self.cpu_temperature + other.cpu_temperature,
+            temperature=_safe_add(self.temperature, other.temperature),
+            humidity=_safe_add(self.humidity, other.humidity),
+            cpu_temperature=_safe_add(self.cpu_temperature, other.cpu_temperature),
         )
 
     def __truediv__(self, divisor: float) -> "SensorData":
         return SensorData(
-            temperature=self.temperature / divisor,
-            humidity=self.humidity / divisor,
-            cpu_temperature=self.cpu_temperature / divisor,
+            temperature=_safe_divide(self.temperature, divisor),
+            humidity=_safe_divide(self.humidity, divisor),
+            cpu_temperature=_safe_divide(self.cpu_temperature, divisor),
         )
+
+
+def _safe_add(a: float | None, b: float | None) -> float | None:
+    if a is None or b is None:
+        return None
+    return a + b
+
+
+def _safe_divide(a: float | None, divisor: float) -> float | None:
+    if a is None:
+        return None
+    return a / divisor
 
 
 @dataclass
@@ -51,7 +69,8 @@ def get_sensor():
         i2c = board.I2C()  # pyright: ignore[reportPossiblyUnboundVariable]
         return adafruit_hdc302x.HDC302x(i2c)  # pyright: ignore[reportPossiblyUnboundVariable]
     except Exception:
-        raise RuntimeError("Failed to initialize sensor")
+        logger.error("Failed to initialize sensor", exc_info=True)
+        return None
 
 
 def has_sensor() -> bool:
@@ -62,8 +81,10 @@ def has_sensor() -> bool:
         return False
 
 
-def read_pi_sensor_status() -> SensorStatus:
+def read_pi_sensor_status() -> SensorStatus | None:
     sensor = get_sensor()
+    if sensor is None:
+        return None
     return parse_hdc302x_status(sensor.status)
 
 
@@ -85,19 +106,20 @@ def parse_hdc302x_status(status_int: int) -> SensorStatus:
 def read_pi_sensor() -> SensorData:
     sensor = get_sensor()
     return SensorData(
-        temperature=sensor.temperature,
-        humidity=sensor.relative_humidity,
+        temperature=sensor.temperature if sensor else None,
+        humidity=sensor.relative_humidity if sensor else None,
         cpu_temperature=read_cpu_temperature(),
     )
 
 
-def read_cpu_temperature() -> float:
+def read_cpu_temperature() -> float | None:
     try:
         with open("/sys/class/thermal/thermal_zone0/temp", "r") as f:
             temp_str = f.read().strip()
             return float(temp_str) / 1000.0
     except Exception:
-        raise RuntimeError("Failed to read CPU temperature")
+        logger.error("Failed to read CPU temperature", exc_info=True)
+        return None
 
 
 def mock_sensor_data() -> SensorData:
