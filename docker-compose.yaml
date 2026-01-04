@@ -88,7 +88,7 @@ services:
       - RELAY_URL=http://relay:8001
       - RECORDING_DIR=gs://birdhouse-recordings/dev
       - GOOGLE_APPLICATION_CREDENTIALS=/run/secrets/gcp_key
-      - DATABASE_URL=postgresql+psycopg://moja:moja@host.docker.internal:5433/moja
+      - DATABASE_URL=postgresql+psycopg://moja:moja@host.docker.internal:5432/moja
       - FASTAPI_MODE=dev
     env_file:
       - ./recorder/.env
