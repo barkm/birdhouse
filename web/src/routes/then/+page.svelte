@@ -34,7 +34,7 @@
 	}
 
 	const filter_sensor_data = (data: OptionalSensorData[]): SensorData[] => {
-		return data.filter((d) => d.temperature !== undefined && d.humidity !== undefined);
+		return data.filter((d) => d.temperature !== undefined && d.humidity !== undefined) as SensorData[];
 	};
 
 	const average_sensor_data = (data: SensorData[]) => {
