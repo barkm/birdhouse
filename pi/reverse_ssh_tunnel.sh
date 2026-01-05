@@ -19,7 +19,7 @@ if [[ "$1" == "install" ]]; then
   $UV sync
   sudo $UV run service install \
       --name $SERVICE_NAME \
-      --command "$AUTO_SSH_PATH -M 0 -N -o "ExitOnForwardFailure=yes" -o "StrictHostKeyChecking=accept-new" -o "ServerAliveInterval=60" -o "ServerAliveCountMax=3" -R ${SERVER_PORT}:localhost:8000 -R ${SSH_PORT}:localhost:22 -L 5000:localhost:5000 ${REMOTE_HOST}" \
+      --command "$AUTO_SSH_PATH -M 0 -N -o ExitOnForwardFailure=yes -o StrictHostKeyChecking=accept-new -o ServerAliveInterval=60 -o ServerAliveCountMax=3 -R ${SERVER_PORT}:localhost:8000 -R ${SSH_PORT}:localhost:22 -L 5000:localhost:5000 ${REMOTE_HOST}" \
       --environment "AUTOSSH_GATETIME=0"
 elif [[ "$1" == "uninstall" ]]; then
   $UV sync
