@@ -33,6 +33,7 @@ class Stream:
     def get_file(self, filename: str) -> Path | None:
         if Path(filename).suffix not in {".m3u8", ".ts"}:
             return None
+        self.start()
         if not self.video:
             return None
         path = self.video.directory / filename
