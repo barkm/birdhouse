@@ -59,12 +59,12 @@ class SensorStatus:
 
 
 def read_sensor_data(mock_data: bool) -> SensorData:
-    read_sensor = mock_sensor_data if mock_data else read_pi_sensor
+    read_sensor = _mock_sensor_data if mock_data else _read_pi_sensor
     sensor_readings = [read_sensor() for _ in range(5)]
     return sum(sensor_readings, SensorData(0.0, 0.0, 0.0)) / len(sensor_readings)
 
 
-def get_sensor():
+def _get_sensor():
     try:
         i2c = board.I2C()  # pyright: ignore[reportPossiblyUnboundVariable]
         return adafruit_hdc302x.HDC302x(i2c)  # pyright: ignore[reportPossiblyUnboundVariable]
@@ -75,20 +75,20 @@ def get_sensor():
 
 def has_sensor() -> bool:
     try:
-        get_sensor()
+        _get_sensor()
         return True
     except RuntimeError:
         return False
 
 
 def read_pi_sensor_status() -> SensorStatus | None:
-    sensor = get_sensor()
+    sensor = _get_sensor()
     if sensor is None:
         return None
-    return parse_hdc302x_status(sensor.status)
+    return _parse_hdc302x_status(sensor.status)
 
 
-def parse_hdc302x_status(status_int: int) -> SensorStatus:
+def _parse_hdc302x_status(status_int: int) -> SensorStatus:
     """
     Parses the 16-bit integer status from the HDC302x into a readable dataclass.
     """
@@ -103,16 +103,16 @@ def parse_hdc302x_status(status_int: int) -> SensorStatus:
     )
 
 
-def read_pi_sensor() -> SensorData:
-    sensor = get_sensor()
+def _read_pi_sensor() -> SensorData:
+    sensor = _get_sensor()
     return SensorData(
         temperature=sensor.temperature if sensor else None,
         humidity=sensor.relative_humidity if sensor else None,
-        cpu_temperature=read_cpu_temperature(),
+        cpu_temperature=_read_cpu_temperature(),
     )
 
 
-def read_cpu_temperature() -> float | None:
+def _read_cpu_temperature() -> float | None:
     try:
         with open("/sys/class/thermal/thermal_zone0/temp", "r") as f:
             temp_str = f.read().strip()
@@ -122,7 +122,7 @@ def read_cpu_temperature() -> float | None:
         return None
 
 
-def mock_sensor_data() -> SensorData:
+def _mock_sensor_data() -> SensorData:
     temperature = 25 + random.random()
     humidity = 40 + random.random()
     cpu_temperature = 50 + random.random()
