@@ -1,6 +1,6 @@
 <script lang="ts">
 	import { listDevices as listRecordedDevices } from "$lib/recorder";
-    import { getStatus, listDevices as listActiveDevices } from "$lib/relay";
+    import { checkDeviceAvailability, getStatus, listDevices as listActiveDevices } from "$lib/relay";
 	import type { User } from "firebase/auth";
 
 
@@ -28,22 +28,29 @@
         return [...all_devices].map(device => ({
             name: device,
             is_active: active_set.has(device),
-            status: active.find(d => d.name === device)?.status
+            status: active.find(d => d.name === device)?.status,
         }));
+    }));
+
+    const devices_with_locality_promise = $derived(devices_promise.then(devices => {
+        return Promise.all(devices.map(async device => ({
+            ...device,
+            local: await checkDeviceAvailability(device.name)
+        })));
     }));
 
 </script>
 
-{#await devices_promise then devices}
+{#await devices_with_locality_promise then devices}
     <div class="flex flex-col gap-4">
         {#each devices as device}
             <div class="rounded-lg border border-gray-300 p-4">
                 <div class="flex items-center justify-between">
                     <div class="text-xl font-semibold">{device.name}</div>
                     {#if device.is_active}
-                        <div class="rounded bg-green-100 px-2 py-1 text-sm font-medium text-green-800">Aktiv</div>
+                        <div class="rounded bg-green-100 px-2 py-1 text-sm font-medium text-green-800">Aktiv {device.local ? "(Lokal)" : "(Fjärr)"}</div>
                     {:else}
-                        <div class="rounded bg-gray-100 px-2 py-1 text-sm font-medium text-gray-800">Inaktiv</div>
+                        <div class="rounded bg-gray-100 px-2 py-1 text-sm font-medium text-gray-800">Inaktiv {device.local ? "(Lokal)" : "(Fjärr)"}</div>
                     {/if}
                 </div>
                 {#if device.is_active}

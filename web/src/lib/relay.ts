@@ -44,7 +44,7 @@ const localRequestWithRelayFallback = async (
 	return { response, base_url };
 };
 
-const checkDeviceAvailability = async (device_name: string): Promise<boolean> => {
+export const checkDeviceAvailability = async (device_name: string): Promise<boolean> => {
 	const url = `http://${device_name}.local:8000/status`;
 	const controller = new AbortController();
 	const timeoutId = setTimeout(() => controller.abort(), 500);
