@@ -93,6 +93,11 @@ app.add_middleware(
 )
 
 
+@app.get("/list_devices")
+async def list_devices(session: Session = Depends(get_session)) -> list[dict[str, str]]:
+    return [{"name": device.name} for device in _get_devices(session)]
+
+
 @app.get("/record_sensors")
 async def record_sensors(session: Session = Depends(get_session)) -> dict:
     if settings.relay_url is None:
