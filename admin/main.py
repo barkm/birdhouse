@@ -13,10 +13,20 @@ def cli():
 
 @cli.command()
 @click.argument("uids", nargs=-1, required=True)
-def authorize(uids: tuple[str, ...]):
+@click.option(
+    "--role",
+    type=click.Choice([role.value for role in Role]),
+    default=Role.USER.value,
+    help="Role to assign",
+)
+def authorize(uids: tuple[str, ...], role: str):
     for uid in uids:
-        set_role(uid, Role.USER)
-        click.echo(f"User {uid} authorized")
+        set_role(uid, Role(role))
+        click.echo(
+            click.style(
+                f"User {uid} authorized as {role}", fg=_get_role_color(Role(role))
+            )
+        )
 
 
 @cli.command()
@@ -24,7 +34,7 @@ def authorize(uids: tuple[str, ...]):
 def unauthorize(uids: tuple[str, ...]):
     for uid in uids:
         set_role(uid, None)
-        click.echo(f"User {uid} unauthorized")
+        click.echo(click.style(f"User {uid} unauthorized", fg=_get_role_color(None)))
 
 
 @cli.command()
@@ -34,8 +44,19 @@ def list():
     while page:
         for u in page.users:
             role = get_role(u.custom_claims or {})
-            click.echo(f"{u.uid} \t {role} \t {u.email}")
+            click.echo(
+                click.style(f"{u.uid} \t {role} \t {u.email}", fg=_get_role_color(role))
+            )
         page = page.get_next_page()
+
+
+def _get_role_color(role: Role | None) -> str:
+    if role == Role.ADMIN:
+        return "green"
+    elif role == Role.USER:
+        return "blue"
+    else:
+        return "red"
 
 
 if __name__ == "__main__":

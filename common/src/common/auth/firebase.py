@@ -33,6 +33,7 @@ def verify(headers: dict[str, str]) -> None:
 
 class Role(str, enum.Enum):
     USER = "user"
+    ADMIN = "admin"
 
 
 def get_role(claims: dict) -> Role | None:
@@ -40,7 +41,7 @@ def get_role(claims: dict) -> Role | None:
 
 
 def set_role(uid: str, role: Role | None):
-    _set_claim(uid, "role", role)
+    _set_claim(uid, "role", role.value if role else None)
 
 
 def _set_claim(uid: str, key: str, value):
