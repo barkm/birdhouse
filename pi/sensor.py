@@ -73,14 +73,6 @@ def _get_sensor():
         return None
 
 
-def has_sensor() -> bool:
-    try:
-        _get_sensor()
-        return True
-    except RuntimeError:
-        return False
-
-
 def read_pi_sensor_status() -> SensorStatus | None:
     sensor = _get_sensor()
     if sensor is None:
