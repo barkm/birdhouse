@@ -1,3 +1,4 @@
+import enum
 import logging
 
 from common.auth.exception import AuthException
@@ -26,16 +27,20 @@ def verify(headers: dict[str, str]) -> None:
         logger.exception(f"Token verification failed: {e}")
         raise AuthException("Token verification failed", status_code=401)
 
-    if not get_authorization(claims):
+    if not get_role(claims):
         raise AuthException("User not authorized", status_code=403)
 
 
-def get_authorization(claims: dict) -> bool:
-    return claims.get("authorized", False)
+class Role(str, enum.Enum):
+    USER = "user"
 
 
-def set_authorization(uid: str, authorized: bool):
-    _set_claim(uid, "authorized", authorized)
+def get_role(claims: dict) -> Role | None:
+    return claims.get("role", None)
+
+
+def set_role(uid: str, role: Role | None):
+    _set_claim(uid, "role", role)
 
 
 def _set_claim(uid: str, key: str, value):

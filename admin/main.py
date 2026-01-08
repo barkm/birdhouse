@@ -2,7 +2,7 @@ import click
 
 from firebase_admin import auth
 
-from common.auth.firebase import initialize, set_authorization, get_authorization
+from common.auth.firebase import Role, initialize, set_role, get_role
 
 
 @click.group()
@@ -15,7 +15,7 @@ def cli():
 @click.argument("uids", nargs=-1, required=True)
 def authorize(uids: tuple[str, ...]):
     for uid in uids:
-        set_authorization(uid, True)
+        set_role(uid, Role.USER)
         click.echo(f"User {uid} authorized")
 
 
@@ -23,18 +23,18 @@ def authorize(uids: tuple[str, ...]):
 @click.argument("uids", nargs=-1, required=True)
 def unauthorize(uids: tuple[str, ...]):
     for uid in uids:
-        set_authorization(uid, False)
+        set_role(uid, None)
         click.echo(f"User {uid} unauthorized")
 
 
 @cli.command()
 def list():
     page = auth.list_users()
-    click.echo(click.style("UID \t\t\t\t Authorized \t Email", bold=True))
+    click.echo(click.style("UID \t\t\t\t Role \t Email", bold=True))
     while page:
         for u in page.users:
-            authorized = get_authorization(u.custom_claims or {})
-            click.echo(f"{u.uid} \t {authorized} \t\t {u.email}")
+            role = get_role(u.custom_claims or {})
+            click.echo(f"{u.uid} \t {role} \t {u.email}")
         page = page.get_next_page()
 
 
