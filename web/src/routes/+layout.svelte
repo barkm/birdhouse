@@ -1,6 +1,6 @@
 <script lang="ts">
 	import './layout.css';
-	import { loginWithGoogle, logout, user, isLoading } from '$lib/firebase';
+	import { loginWithGoogle, logout, user, isLoading, role } from '$lib/firebase';
 	import Navbar from '$lib/components/Navbar.svelte';
 	import AnimatedKobbar from '$lib/components/loader/AnimatedKobbar.svelte';
 
@@ -9,15 +9,35 @@
 
 {#if !$isLoading}
 	{#if $user}
-		<div class="mx-auto max-w-4xl space-y-4 p-6">
-			<Navbar />
-			{@render children()}
-			<div class="grid place-items-center">
-				<button class="rounded border border-black px-4 py-1 hover:bg-gray-100" onclick={logout}
-					>Logga ut</button
-				>
+		{#if $role}
+			<div class="mx-auto max-w-4xl space-y-4 p-6">
+				<Navbar />
+				{@render children()}
+				<div class="grid place-items-center">
+					<button class="rounded border border-black px-4 py-1 hover:bg-gray-100" onclick={logout}
+						>Logga ut</button
+					>
+				</div>
 			</div>
-		</div>
+		{:else}
+			<div class="flex h-screen flex-col items-center justify-center gap-10">
+				<div class="w-3/4 max-w-sm">
+					<AnimatedKobbar />
+				</div>
+
+				<p class="text-center text-lg">
+					Din användare har ingen roll tilldelad. Vänligen kontakta en administratör för att få
+					tillgång.
+				</p>
+
+				<button
+					class="rounded border border-black px-4 py-1 transition hover:bg-gray-100"
+					onclick={logout}
+				>
+					Logga ut
+				</button>
+			</div>
+		{/if}
 	{:else}
 		<div class="flex h-screen flex-col items-center justify-center gap-10">
 			<div class="w-3/4 max-w-sm">
