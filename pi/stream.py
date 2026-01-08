@@ -110,9 +110,9 @@ def _start_stream_processes(
 ) -> tuple[Path, list[subprocess.Popen]]:
     if test_stream:
         return _start_test_stream(work_dir)
-    if is_raspberry_pi():
+    if _is_raspberry_pi():
         return _start_hls_video_stream_raspberry_pi(work_dir, bitrate, framerate)
-    if is_mac():
+    if _is_mac():
         return _start_hls_video_stream_mac(work_dir)
     raise RuntimeError("Unsupported platform for HLS streaming")
 
@@ -235,13 +235,11 @@ def _raspberry_pi_camera_available() -> bool:
     ).decode("utf-8")
 
 
-def is_mac():
-    """Checks if the code is running on a macOS machine."""
+def _is_mac():
     return platform.system() == "Darwin"
 
 
-def is_raspberry_pi():
-    """Checks if the code is running on a Raspberry Pi."""
+def _is_raspberry_pi():
     if not platform.system() == "Linux":
         return False
 
