@@ -10,7 +10,7 @@
 	let isLoading = $state(true);
 </script>
 
-<stream-with-loader >
+<stream-with-loader>
 	{#if isLoading || !src}
 		<div class="h-full" transition:fade|global={{ duration: 500 }}>
 			<Loader />

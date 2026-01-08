@@ -3,7 +3,12 @@
 	import SensorCard from '$lib/components/SensorCard.svelte';
 	import SensorLoader from '$lib/components/SensorLoader.svelte';
 	import { user } from '$lib/firebase';
-	import { getRecordings, getSensorData, type Recording, type SensorData as OptionalSensorData} from '$lib/recorder';
+	import {
+		getRecordings,
+		getSensorData,
+		type Recording,
+		type SensorData as OptionalSensorData
+	} from '$lib/recorder';
 	import { LineChart, Tooltip } from 'layerchart';
 	import { format, PeriodType } from '@layerstack/utils';
 	import { curveCatmullRom } from 'd3-shape';
@@ -34,7 +39,9 @@
 	}
 
 	const filter_sensor_data = (data: OptionalSensorData[]): SensorData[] => {
-		return data.filter((d) => d.temperature !== undefined && d.humidity !== undefined) as SensorData[];
+		return data.filter(
+			(d) => d.temperature !== undefined && d.humidity !== undefined
+		) as SensorData[];
 	};
 
 	const average_sensor_data = (data: SensorData[]) => {
@@ -93,7 +100,7 @@
 <DateRangePicker bind:start_date bind:end_date />
 <div class="grid grid-cols-2 gap-4">
 	{#await Promise.all([average_outside_sensor_promise, outside_temperature_limits_promise])}
-		<SensorLoader limits/>
+		<SensorLoader limits />
 	{:then [average_outside_sensor, outside_temperature_limits]}
 		<SensorCard
 			title={'Utomhus'}
@@ -103,7 +110,7 @@
 		/>
 	{/await}
 	{#await Promise.all([average_inside_sensor_promise, inside_temperature_limits_promise])}
-		<SensorLoader limits/>
+		<SensorLoader limits />
 	{:then [average_inside_sensor, inside_temperature_limits]}
 		<SensorCard
 			title={'Inomhus'}
@@ -171,14 +178,14 @@
 	</div>
 {/await}
 <div class="grid grid-cols-1 gap-4 md:grid-cols-2">
-{#await recordings_promise}
-	{#each Array(4) as _}
-		<div class="aspect-video flex flex-col items-center justify-center">
-			<div class="mb-3 h-4 w-30 rounded bg-gray-100"></div>
-			<Loader />
-		</div>
-	{/each}
-{:then recordings}
+	{#await recordings_promise}
+		{#each Array(4) as _}
+			<div class="flex aspect-video flex-col items-center justify-center">
+				<div class="mb-3 h-4 w-30 rounded bg-gray-100"></div>
+				<Loader />
+			</div>
+		{/each}
+	{:then recordings}
 		{#each recordings as recording}
 			<div>
 				<span class="mb-2 block text-center text-sm text-gray-600">
@@ -195,5 +202,5 @@
 				/>
 			</div>
 		{/each}
-{/await}
+	{/await}
 </div>
