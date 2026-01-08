@@ -57,3 +57,9 @@ export const getSensorData = async (
 		humidity: entry.humidity
 	}));
 };
+
+
+export const listDevices = async (user: User): Promise<{name: string}[]> => {
+	const response = await authorizedRequest(user, PUBLIC_RECORDER_URL, "list_devices");
+	return response.json();
+}
