@@ -35,7 +35,11 @@ def get_authorization(claims: dict) -> bool:
 
 
 def set_authorization(uid: str, authorized: bool):
+    _set_claim(uid, "authorized", authorized)
+
+
+def _set_claim(uid: str, key: str, value):
     user = auth.get_user(uid)
     claims = user.custom_claims or {}
-    claims["authorized"] = authorized
+    claims[key] = value
     auth.set_custom_user_claims(uid, claims)
