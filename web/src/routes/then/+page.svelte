@@ -153,7 +153,18 @@
 			]}
 			legend
 			props={{
-				spline: { curve: curveCatmullRom }
+				spline: { curve: curveCatmullRom },
+				xAxis: {
+					format: (value) =>
+						format(value, (d) =>
+							Intl.DateTimeFormat('sv-SE', {
+								hour: '2-digit',
+								minute: '2-digit',
+								day: '2-digit',
+								month: '2-digit'
+							}).format(d)
+						)
+				}
 			}}
 		>
 			{#snippet tooltip({ context, series })}
@@ -162,7 +173,12 @@
 				)?.color}
 				<Tooltip.Root>
 					{#snippet children({ data })}
-						<Tooltip.Header>{format(context.x(data), PeriodType.DayTime)}</Tooltip.Header>
+						<Tooltip.Header
+							>{format(context.x(data), {
+								type: PeriodType.DayTime,
+								locale: 'sv-SE'
+							})}</Tooltip.Header
+						>
 						<Tooltip.List>
 							<Tooltip.Item
 								label={data.sensor}
