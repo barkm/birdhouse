@@ -1,6 +1,7 @@
 from dataclasses import dataclass
 from pathlib import Path
 import platform
+import re
 import subprocess
 import tempfile
 import uuid
@@ -186,36 +187,51 @@ def _start_hls_video_stream_raspberry_pi(
 ) -> tuple[Path, list[subprocess.Popen]]:
     if not _raspberry_pi_camera_available():
         raise RuntimeError("Raspberry Pi camera not available")
+    microphone = _get_raspberry_pi_microphone()
+    microphone_args = []
+    if microphone is not None:
+        microphone_args = [
+            "--libav-audio",
+            "--audio-codec",
+            "aac",
+            "--audio-device",
+            f"plughw:{microphone.card},{microphone.device}",
+            "--audio-source",
+            "alsa",
+        ]
     # fmt: off
-    rpicam = subprocess.Popen(
-        [
+    command = [
             "rpicam-vid",
             "-t", "0",
             "--width", "1920",
             "--height", "1080",
             "--framerate", f"{framerate}",
             "--intra", f"{framerate * 2}",
-            "--codec", "h264",
+            "--codec", "libav",
+            "--libav-format", "matroska",
             "--profile", "high",
             "--bitrate", f"{bitrate}",
+            *microphone_args,
             "-o",
             "-",
-        ],
+    ]
+    logger.debug(" ".join(command))
+    rpicam = subprocess.Popen(
+        command,
         stdout=subprocess.PIPE,
-        stderr=subprocess.PIPE,
     )
     # fmt: on
     playlist_path, hls_args = _ffmpeg_hls_arguments(work_dir)
+    command = [
+        "ffmpeg",
+        "-i",
+        "-",
+        *hls_args,
+    ]
+    logger.debug(" ".join(command))
     ffmpeg = subprocess.Popen(
-        [
-            "ffmpeg",
-            "-i",
-            "-",
-            *hls_args,
-        ],
+        command,
         stdin=rpicam.stdout,
-        stdout=subprocess.PIPE,
-        stderr=subprocess.PIPE,
     )
     return playlist_path, [rpicam, ffmpeg]
 
@@ -257,3 +273,27 @@ def _is_raspberry_pi():
 
     model_file = Path("/sys/firmware/devicetree/base/model")
     return model_file.exists() and "raspberry pi" in model_file.read_text().lower()
+
+
+@dataclass
+class MicrophoneInfo:
+    name: str
+    card: int
+    device: int
+
+
+def _get_raspberry_pi_microphone() -> MicrophoneInfo | None:
+    try:
+        output = subprocess.check_output(
+            ["arecord", "-l"], stderr=subprocess.STDOUT
+        ).decode("utf-8")
+        pattern = r"card\s+(\d+):.*?\[(.*?)\].*?device\s+(\d+):"
+        match = re.search(pattern, output)
+        if match:
+            card = int(match.group(1))
+            name = match.group(2).strip()
+            device = int(match.group(3))
+            return MicrophoneInfo(name=name, card=card, device=device)
+    except subprocess.CalledProcessError:
+        logger.error("Failed to list audio capture devices")
+    return None
