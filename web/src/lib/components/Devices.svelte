@@ -49,8 +49,15 @@
 	);
 </script>
 
-{#await devices_with_locality_promise then devices}
-	<div class="flex flex-col gap-4">
+<div class="flex flex-col gap-4">
+	{#await devices_with_locality_promise}
+		{#each Array(3) as _}
+			<div class="animate-pulse rounded-lg bg-gray-100 p-4">
+				<div class="h-6 w-1/3 rounded bg-gray-300"></div>
+				<div class="mt-2 h-4 w-1/2 rounded bg-gray-300"></div>
+			</div>
+		{/each}
+	{:then devices}
 		{#each devices as device}
 			<div class="rounded-lg border border-gray-300 p-4">
 				<div class="flex items-center justify-between">
@@ -70,5 +77,5 @@
 				{/if}
 			</div>
 		{/each}
-	</div>
-{/await}
+	{/await}
+</div>
