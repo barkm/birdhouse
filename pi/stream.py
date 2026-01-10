@@ -219,6 +219,7 @@ def _start_hls_video_stream_raspberry_pi(
     rpicam = subprocess.Popen(
         command,
         stdout=subprocess.PIPE,
+        stderr=subprocess.DEVNULL,
     )
     # fmt: on
     playlist_path, hls_args = _ffmpeg_hls_arguments(work_dir)
@@ -232,6 +233,7 @@ def _start_hls_video_stream_raspberry_pi(
     ffmpeg = subprocess.Popen(
         command,
         stdin=rpicam.stdout,
+        stderr=subprocess.DEVNULL,
     )
     return playlist_path, [rpicam, ffmpeg]
 
