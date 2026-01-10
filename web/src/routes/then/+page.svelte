@@ -18,8 +18,7 @@
 
 	const get_previous_day_from_midnight = () => {
 		const date = new Date();
-		date.setDate(date.getDate() - 1);
-		date.setHours(0, 0, 0, 0);
+		date.setDate(date.getDate() - 2);
 		return date;
 	};
 
