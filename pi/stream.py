@@ -143,7 +143,19 @@ def _start_test_stream(work_dir: Path) -> tuple[Path, list[subprocess.Popen]]:
 
 def _create_test_video_file(work_dir: Path) -> Path:
     video_file_path = work_dir / "test.mp4"
-    command = f"ffmpeg -f lavfi -i testsrc=size=1280x720:rate=30 -t 20 -c:v libx264 -g 60 -preset ultrafast {video_file_path}".split()
+    # fmt: off
+    command = [
+        "ffmpeg",
+        "-y",
+        "-f", "lavfi", "-i", "testsrc=size=1280x720:rate=30",
+        "-f", "lavfi", "-i", "sine=frequency=1000:sample_rate=48000",
+        "-t", "20",
+        "-c:v", "libx264", "-g", "60", "-preset", "ultrafast",
+        "-c:a", "aac",
+        "-pix_fmt", "yuv420p",
+        str(video_file_path)
+    ]
+    # fmt: on
     subprocess.check_call(command, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
     return video_file_path
 
