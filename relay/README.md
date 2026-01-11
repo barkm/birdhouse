@@ -7,9 +7,3 @@ Relays http requests to registered devices
 ```bash
 uv run fastapi run main.py --port $PORT
 ```
-
-## HTTPS
-
-```bash
-./caddy.sh $DOMAIN $PORT
-```

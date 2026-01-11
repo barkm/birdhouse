@@ -41,29 +41,37 @@ uv run ansible all -m ping  -i ansible/inventory.yaml
 ## Deploy
 
 ### Relay
+
+#### Relay service
 ```bash
-uv run ansible-playbook -i ansible/inventory.yaml ansible/playbooks/relay.yaml
+uv run ansible-playbook -i ansible/inventory.yaml ansible/playbooks/relay/relay.yaml
+```
+
+#### Caddy
+```bash
+DOMAIN=<domain> run ansible-playbook -i ansible/inventory.yaml ansible/playbooks/relay/caddy.yaml
 ```
 
 ### Pi
 
 #### Camera server
 ```bash
-uv run ansible-playbook -i ansible/inventory.yaml ansible/playbooks/camera_server.yaml
+uv run ansible-playbook -i ansible/inventory.yaml ansible/playbooks/pi/camera_server.yaml
 ```
 
 #### Reverse ssh tunnel
 ```bash
-RELAY_HOST=<relay-host> SSH_PORT=<ssh-port> SERVER_PORT=<server-port> uv run ansible-playbook -i ansible/inventory.yaml ansible/playbooks/reverse_ssh_tunnel.yaml
+RELAY_HOST=<relay-host> SSH_PORT=<ssh-port> SERVER_PORT=<server-port> uv run ansible-playbook -i ansible/inventory.yaml ansible/playbooks/pi/reverse_ssh_tunnel.yaml
 ```
 
 #### Crontab
 ```bash
-NAME=<name> SERVER_PORT=<server-port> uv run ansible-playbook -i ansible/inventory.yaml ansible/playbooks/crontab.yaml
+NAME=<name> SERVER_PORT=<server-port> uv run ansible-playbook -i ansible/inventory.yaml ansible/playbooks/pi/crontab.yaml
 ```
 
 #### Caddy
+
 If you want to be able to access devices over the local network you need to install a Caddy as an HTTPS server in front of the camera server
 ```bash
-run ansible-playbook -i ansible/inventory.yaml ansible/playbooks/caddy.yaml
+run ansible-playbook -i ansible/inventory.yaml ansible/playbooks/pi/caddy.yaml
 ```
