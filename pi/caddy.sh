@@ -12,3 +12,4 @@ if [[ -z $(which caddy) ]]; then
 fi
 
 envsubst < Caddyfile > /etc/caddy/Caddyfile
+sudo systemctl reload caddy
