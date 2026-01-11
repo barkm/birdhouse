@@ -10,8 +10,8 @@
     repo_version: "main"
 
   pre_tasks:
-    - include_tasks: tasks/uv.yaml
-    - include_tasks: tasks/git.yaml
+    - include_tasks: ../tasks/uv.yaml
+    - include_tasks: ../tasks/git.yaml
 
   tasks:
     - name: Install relay server

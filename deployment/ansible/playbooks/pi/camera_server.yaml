@@ -1,4 +1,4 @@
-- name: Deploy crontab
+- name: Deploy camera server
   hosts: pis
   gather_facts: true
   become: false
@@ -10,13 +10,14 @@
     repo_version: "main"
 
   pre_tasks:
-    - include_tasks: tasks/git.yaml
+    - include_tasks: ../tasks/uv.yaml
+    - include_tasks: ../tasks/git.yaml
 
   tasks:
-    - name: Install crontab
-      ansible.builtin.command: ./crontab.sh $NAME $SERVER_PORT
+    - name: Install camera server
+      ansible.builtin.command: ./camera_server.sh install $NAME
       args:
         chdir: "{{ repo_dest }}/pi"
       environment:
-        NAME: "{{ lookup('env', 'NAME') }}"
-        SERVER_PORT: "{{ lookup('env', 'SERVER_PORT') }}"
+        PATH: "{{ uv_binary_path | dirname }}:{{ ansible_env.PATH }}"
+        NAME: "{{ inventory_hostname }}"

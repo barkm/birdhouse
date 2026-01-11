@@ -9,11 +9,11 @@
     repo_version: "main"
 
   pre_tasks:
-    - include_tasks: tasks/git.yaml
+    - include_tasks: ../tasks/git.yaml
 
   tasks:
     - name: Setup application
-      import_tasks: tasks/caddy.yaml
+      import_tasks: ../tasks/caddy.yaml
       vars:
         caddy_file: "{{ repo_dest }}/pi/Caddyfile"
         task_env:

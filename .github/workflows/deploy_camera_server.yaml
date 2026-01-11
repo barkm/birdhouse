@@ -6,7 +6,7 @@ on:
     branches: main
     paths:
       - pi/**
-      - ansible/playbooks/camera_server.yaml
+      - ansible/playbooks/pi/camera_server.yaml
       - ./github/workflows/deploy_camera_server.yaml
 
 
@@ -15,5 +15,5 @@ jobs:
   deploy:
     uses: ./.github/workflows/run_ansible.yaml
     with:
-      command: uv run ansible-playbook -i ansible/inventory.yaml ansible/playbooks/camera_server.yaml
+      command: uv run ansible-playbook -i ansible/inventory.yaml ansible/playbooks/pi/camera_server.yaml
     secrets: inherit

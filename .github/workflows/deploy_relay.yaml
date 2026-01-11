@@ -6,7 +6,7 @@ on:
     branches: main
     paths:
       - relay/**
-      - ansible/playbooks/relay.yaml
+      - ansible/playbooks/relay/relay.yaml
       - ./github/workflows/deploy_relay.yaml
 
 concurrency:
@@ -16,5 +16,5 @@ jobs:
   deploy:
     uses: ./.github/workflows/run_ansible.yaml
     with:
-      command: uv run ansible-playbook -i ansible/inventory.yaml ansible/playbooks/relay.yaml
+      command: uv run ansible-playbook -i ansible/inventory.yaml ansible/playbooks/relay/relay.yaml
     secrets: inherit
