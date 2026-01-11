@@ -1,0 +1,20 @@
+- name: Install caddy
+  hosts: relays
+  gather_facts: true
+  become: false
+
+  vars:
+    repo_url: "git@github.com:barkm/birdhouse.git"
+    repo_dest: "{{ ansible_user_dir }}/code/birdhouse"
+    repo_version: "main"
+
+  pre_tasks:
+    - include_tasks: ../tasks/git.yaml
+
+  tasks:
+    - name: Setup application
+      import_tasks: ../tasks/caddy.yaml
+      vars:
+        caddy_file: "{{ repo_dest }}/relay/Caddyfile"
+        task_env:
+          DOMAIN: "{{ lookup('env', 'DOMAIN') }}"
