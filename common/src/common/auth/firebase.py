@@ -31,7 +31,7 @@ def verify(headers: dict[str, str]) -> None:
         raise AuthException("User not authorized", status_code=403)
 
 
-class Role(str, enum.Enum):
+class Role(enum.StrEnum):
     USER = "user"
     ADMIN = "admin"
 
