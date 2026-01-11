@@ -1,5 +1,5 @@
 $DOMAIN {
-        reverse_proxy $SERVER {
+        reverse_proxy localhost:$SERVER_PORT {
             header_up X-External true
         }
 }
