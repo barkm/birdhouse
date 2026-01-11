@@ -1,12 +1,24 @@
 import uuid
 from datetime import datetime, timezone
+from common.auth.firebase import Role
 from sqlmodel import SQLModel, Field
-from sqlalchemy import Column, DateTime
+from sqlalchemy import Column, DateTime, JSON
 
 
 class Device(SQLModel, table=True):
     id: uuid.UUID = Field(default_factory=uuid.uuid4, primary_key=True)
     name: str = Field(index=True, unique=True)
+    allowed_roles: list[str] = Field(
+        sa_column=Column(JSON, nullable=False),
+        default_factory=lambda: [Role.USER.value],
+    )
+
+    @property
+    def allowed_role_enums(self) -> list[Role]:
+        return [Role(r) for r in self.allowed_roles]
+
+    def set_allowed_roles(self, roles: list[Role]) -> None:
+        self.allowed_roles = [r.value for r in roles]
 
 
 class Sensor(SQLModel, table=True):
