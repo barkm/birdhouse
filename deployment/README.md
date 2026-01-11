@@ -61,3 +61,9 @@ RELAY_HOST=<relay-host> SSH_PORT=<ssh-port> SERVER_PORT=<server-port> uv run ans
 ```bash
 NAME=<name> SERVER_PORT=<server-port> uv run ansible-playbook -i ansible/inventory.yaml ansible/playbooks/crontab.yaml
 ```
+
+#### Caddy
+If you want to be able to access devices over the local network you need to install a Caddy as an HTTPS server in front of the camera server
+```bash
+run ansible-playbook -i ansible/inventory.yaml ansible/playbooks/caddy.yaml
+```
