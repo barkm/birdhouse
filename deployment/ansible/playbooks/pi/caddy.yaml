@@ -17,4 +17,4 @@
       vars:
         caddy_file: "{{ repo_dest }}/pi/Caddyfile"
         task_env:
-          HOSTNAME: "{{ inventory_hostname }}"
+          HOSTNAME: "{{ inventory_hostname }}.local"
