@@ -5,7 +5,7 @@
 
   vars:
     repo_url: "git@github.com:barkm/birdhouse.git"
-    repo_dest: "{{ ansible_user_dir }}/code/birdhouse"
+    repo_dest: "{{ ansible_user_dir }}/birdhouse"
     repo_version: "main"
 
   pre_tasks:
