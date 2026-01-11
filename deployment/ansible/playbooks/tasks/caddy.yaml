@@ -1,0 +1,32 @@
+- name: Validate inputs
+  assert:
+    that:
+      - caddy_file is defined
+    fail_msg: "caddy_file must be provided"
+
+- name: Check if caddy is installed
+  ansible.builtin.stat:
+    path: "/usr/bin/caddy"
+  register: caddy_binary
+
+- name: Install caddy
+  ansible.builtin.shell: |
+    sudo apt install -y debian-keyring debian-archive-keyring apt-transport-https curl
+    curl -1sLf 'https://dl.cloudsmith.io/public/caddy/stable/gpg.key' | sudo gpg --dearmor -o /usr/share/keyrings/caddy-stable-archive-keyring.gpg
+    curl -1sLf 'https://dl.cloudsmith.io/public/caddy/stable/debian.deb.txt' | sudo tee /etc/apt/sources.list.d/caddy-stable.list
+    chmod o+r /usr/share/keyrings/caddy-stable-archive-keyring.gpg
+    chmod o+r /etc/apt/sources.list.d/caddy-stable.list
+    sudo apt update
+    sudo apt install -y caddy
+  args:
+    executable: /bin/bash
+  when: not caddy_binary.stat.exists
+
+- name: Verify that caddy is callable
+  ansible.builtin.command: "/usr/bin/caddy --version"
+
+- name: Setup Caddyfile
+  ansible.builtin.shell: |
+    envsubst < {{ caddy_file }} > /etc/caddy/Caddyfile
+    sudo systemctl reload caddy
+  environment: "{{ task_env | default({}) }}"

@@ -12,7 +12,9 @@
     - include_tasks: tasks/git.yaml
 
   tasks:
-    - name: Install caddy
-      ansible.builtin.command: ./caddy.sh
-      args:
-        chdir: "{{ repo_dest }}/pi"
+    - name: Setup application
+      import_tasks: tasks/caddy.yaml
+      vars:
+        caddy_file: "{{ repo_dest }}/pi/Caddyfile"
+        task_env:
+          HOSTNAME: "{{ inventory_hostname }}"
