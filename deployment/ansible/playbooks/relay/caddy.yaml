@@ -18,3 +18,4 @@
         caddy_file: "{{ repo_dest }}/relay/Caddyfile"
         task_env:
           DOMAIN: "{{ lookup('env', 'DOMAIN') }}"
+          SERVER: "localhost:5000"

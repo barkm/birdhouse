@@ -27,6 +27,6 @@
 
 - name: Setup Caddyfile
   ansible.builtin.shell: |
-    envsubst < {{ caddy_file }} | sudo tee /etc/caddy/Caddyfile > /dev/null
+    sed -E 's/\{\$([A-Za-z_][A-Za-z0-9_]*)\}/\${\1}/g' {{ caddy_file }} | envsubst | sudo tee /etc/caddy/Caddyfile > /dev/null
     sudo systemctl reload caddy
   environment: "{{ task_env | default({}) }}"

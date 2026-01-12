@@ -1,5 +1,5 @@
-$DOMAIN {
-        reverse_proxy localhost:5000 {
+{$DOMAIN} {
+        reverse_proxy {$SERVER} {
             header_up X-External true
         }
 }
