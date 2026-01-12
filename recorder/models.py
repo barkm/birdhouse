@@ -19,7 +19,7 @@ class Device(SQLModel, table=True):
         sa_column=Column(
             ARRAY(role_enum),
             nullable=False,
-            server_default="{}",
+            server_default="{user}",
         )
     )
 
