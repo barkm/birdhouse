@@ -200,6 +200,7 @@ def _get_active_devices(relay_url: str, session: Session) -> list[models.Device]
         device = session.exec(statement).first()
         if not device:
             device = models.Device(name=device_name)
+            device.set_allowed_roles([firebase.Role.USER])
             session.add(device)
             session.commit()
             session.refresh(device)
