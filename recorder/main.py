@@ -100,8 +100,12 @@ app.add_middleware(
 
 
 @app.get("/list_devices")
-async def list_devices(session: Session = Depends(get_session)) -> list[dict[str, str]]:
-    return [{"name": device.name} for device in _get_devices(session)]
+async def list_devices(
+    request: Request, session: Session = Depends(get_session)
+) -> list[dict[str, str]]:
+    return [
+        {"name": device.name} for device in _get_devices(request.state.role, session)
+    ]
 
 
 @app.get("/record_sensors")
@@ -142,6 +146,7 @@ async def record_sensors(session: Session = Depends(get_session)) -> dict:
 
 @app.get("/sensors/{device_name}")
 async def get_sensors(
+    request: Request,
     device_name: str,
     from_: Annotated[datetime | None, Query(alias="from")] = None,
     to: datetime | None = None,
@@ -152,6 +157,7 @@ async def get_sensors(
         .join(models.Device)
         .where(models.Device.name == device_name)
         .where(models.Sensor.temperature > -30)
+        .where(models.Device.allowed_roles.any(request.state.role))  # type: ignore
     )
     if from_:
         statement = statement.where(models.Sensor.created_at >= from_)
@@ -168,7 +174,7 @@ async def record(
     if settings.relay_url is None:
         logging.error("Relay url not set")
         return {"error": "Relay url not set"}
-    devices = _get_active_devices(settings.relay_url, session)
+    devices = _get_active_devices(request.state.role, settings.relay_url, session)
     for device in devices:
         try:
             _record_and_save(
@@ -184,7 +190,9 @@ async def record(
     return {}
 
 
-def _get_active_devices(relay_url: str, session: Session) -> list[models.Device]:
+def _get_active_devices(
+    role: firebase.Role, relay_url: str, session: Session
+) -> list[models.Device]:
     list_url = f"{relay_url}/list"
     try:
         response = httpx.get(list_url)
@@ -194,7 +202,7 @@ def _get_active_devices(relay_url: str, session: Session) -> list[models.Device]
         logging.warning(f"Failed to get devices from {list_url}: {e}")
         return []
 
-    devices = []
+    devices: list[models.Device] = []
     for device_name in device_names:
         statement = select(models.Device).where(models.Device.name == device_name)
         device = session.exec(statement).first()
@@ -206,11 +214,11 @@ def _get_active_devices(relay_url: str, session: Session) -> list[models.Device]
             session.commit()
             session.refresh(device)
         devices.append(device)
-    return devices
+    return [d for d in devices if role in d.allowed_roles]
 
 
-def _get_devices(session: Session) -> list[models.Device]:
-    statement = select(models.Device)
+def _get_devices(role: firebase.Role, session: Session) -> list[models.Device]:
+    statement = select(models.Device).where(models.Device.allowed_roles.any(role))  # type: ignore
     return list(session.exec(statement).all())
 
 
@@ -282,13 +290,18 @@ def get_recording(path: str) -> FileResponse:
 
 @app.get("/recordings/{device}")
 def list_recordings(
+    request: Request,
     device: str,
     from_: Annotated[datetime | None, Query(alias="from")] = None,
     to: datetime | None = None,
     session: Session = Depends(get_session),
 ) -> Sequence[models.Recording]:
     device_obj = session.exec(
-        select(models.Device).where(models.Device.name == device)
+        select(models.Device)
+        .where(models.Device.name == device)
+        .where(
+            models.Device.allowed_roles.any(request.state.role)  # type: ignore
+        )
     ).first()
     if not device_obj:
         logging.error(f"Device {device} not found in database")
