@@ -1,4 +1,5 @@
 from common.auth.exception import AuthException
+from common.auth.firebase import Role
 from common.auth.token import get_token
 from google.oauth2 import id_token
 from google.auth.transport import requests
@@ -8,7 +9,7 @@ def verify(
     headers: dict[str, str],
     allowed_emails: list[str] | None = None,
     audience: str | None = None,
-) -> None:
+) -> Role:
     token = get_token(headers)
     try:
         decoded = id_token.verify_oauth2_token(
@@ -22,3 +23,5 @@ def verify(
 
     if allowed_emails is not None and decoded.get("email") not in allowed_emails:
         raise AuthException("Unauthorized", status_code=403)
+
+    return Role.ADMIN

@@ -69,16 +69,22 @@ async def auth_middleware(request: Request, call_next):
 
     responses = [get_auth_response(headers, verify) for verify in verifiers]
 
-    if any(response is None for response in responses):
+    roles = [response for response in responses if isinstance(response, firebase.Role)]
+    sorted_roles = sorted(roles, key=firebase.role_order, reverse=True)
+
+    if sorted_roles:
+        request.state.role = sorted_roles[0]
         return await call_next(request)
 
-    return next(response for response in responses if response is not None)
+    return next(
+        response for response in responses if isinstance(response, JSONResponse)
+    )
 
 
 def get_auth_response(
     headers: dict[str, str],
-    verify: Callable[[dict[str, str]], JSONResponse | None],
-) -> JSONResponse | None:
+    verify: Callable[[dict[str, str]], firebase.Role],
+) -> JSONResponse | firebase.Role:
     try:
         return verify(headers)
     except AuthException as e:

@@ -9,11 +9,21 @@ from firebase_admin import auth
 logger = logging.getLogger(__name__)
 
 
+class Role(enum.StrEnum):
+    USER = "user"
+    ADMIN = "admin"
+
+
+def role_order(role: Role) -> int:
+    order = {Role.USER: 1, Role.ADMIN: 2}
+    return order.get(role, 0)
+
+
 def initialize(cert_path: str | None = None):
     initialize_app(credentials.Certificate(cert_path) if cert_path else None)
 
 
-def verify(headers: dict[str, str]) -> None:
+def verify(headers: dict[str, str]) -> Role:
     token = get_token(headers)
     try:
         claims = auth.verify_id_token(token, check_revoked=True)
@@ -27,17 +37,17 @@ def verify(headers: dict[str, str]) -> None:
         logger.exception(f"Token verification failed: {e}")
         raise AuthException("Token verification failed", status_code=401)
 
-    if not get_role(claims):
+    role = get_role(claims)
+
+    if not role:
         raise AuthException("User not authorized", status_code=403)
 
-
-class Role(enum.StrEnum):
-    USER = "user"
-    ADMIN = "admin"
+    return role
 
 
 def get_role(claims: dict) -> Role | None:
-    return claims.get("role", None)
+    role = claims.get("role", None)
+    return Role(role) if role else None
 
 
 def set_role(uid: str, role: Role | None):
