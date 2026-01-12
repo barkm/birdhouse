@@ -199,7 +199,9 @@ def _get_active_devices(relay_url: str, session: Session) -> list[models.Device]
         statement = select(models.Device).where(models.Device.name == device_name)
         device = session.exec(statement).first()
         if not device:
-            device = models.Device(name=device_name)
+            device = models.Device(
+                name=device_name, allowed_roles=[firebase.Role.ADMIN]
+            )
             session.add(device)
             session.commit()
             session.refresh(device)
