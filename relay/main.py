@@ -1,5 +1,6 @@
 from contextlib import asynccontextmanager
 from dataclasses import dataclass
+from datetime import datetime, timedelta
 from threading import Timer
 import logging
 
@@ -78,9 +79,6 @@ class Device:
     removalTimer: Timer
 
 
-URL_FROM_NAME: dict[str, Device] = {}
-
-
 class RegisterRequest(BaseModel):
     name: str
     url: str
@@ -95,18 +93,6 @@ async def register_device(
     device = _get_device(request.name, session)
     _register_to_db(device, request.url, session)
 
-    def remove_device():
-        logging.info(f"Removing device {request.name}")
-        URL_FROM_NAME.pop(request.name, None)
-
-    timer = Timer(60 * 5, remove_device)
-    if request.name in URL_FROM_NAME:
-        URL_FROM_NAME[request.name].removalTimer.cancel()
-    URL_FROM_NAME[request.name] = Device(
-        request.url,
-        timer,
-    )
-    timer.start()
     return "OK"
 
 
@@ -129,25 +115,33 @@ def _register_to_db(device: models.Device, url: str, session: Session):
 
 
 @app.get("/list")
-async def list_devices():
-    return [{"name": name} for name in URL_FROM_NAME.keys()]
+async def list_devices(session: Session = Depends(get_session)):
+    devices = _get_active_devices(session)
+    return [{"name": device.name} for device in devices]
 
 
 @app.get("/{name}/{path:path}")
-async def forward(request: Request, name: str, path: str) -> Response:
+async def forward(
+    request: Request, name: str, path: str, session: Session = Depends(get_session)
+) -> Response:
     forward_func = _cached_forward if ".ts" in path else _forward
-    return forward_func(name, path, request.query_params)
+    return forward_func(name, path, request.query_params, session)
 
 
-@cached(max_size=100)
-def _cached_forward(name: str, path: str, query_params: QueryParams) -> Response:
-    return _forward(name, path, query_params)
+@cached(
+    max_size=100,
+    custom_key_maker=lambda name, path, query_params, _: (name, path, query_params),
+)
+def _cached_forward(
+    name: str, path: str, query_params: QueryParams, session: Session
+) -> Response:
+    return _forward(name, path, query_params, session)
 
 
-def _forward(name: str, path: str, query_params: QueryParams) -> Response:
-    if name not in URL_FROM_NAME:
-        raise HTTPException(status_code=404, detail="Name not registered")
-    url = URL_FROM_NAME[name].url
+def _forward(
+    name: str, path: str, query_params: QueryParams, session: Session
+) -> Response:
+    url = _get_url(name, session)
     device_url = f"{url}/{path}"
     response = httpx.get(device_url, timeout=20.0, params=query_params)
     return Response(
@@ -155,3 +149,28 @@ def _forward(name: str, path: str, query_params: QueryParams) -> Response:
         status_code=response.status_code,
         headers=dict(response.headers),
     )
+
+
+def _get_url(name: str, session: Session) -> str:
+    statement = (
+        select(models.Register)
+        .join(models.Device)
+        .where(models.Device.name == name)
+        .order_by(models.Register.created_at.desc())  # type: ignore
+    )
+    register = session.exec(statement).first()
+    if not register:
+        raise HTTPException(status_code=404, detail="Name not registered")
+    if register.created_at < datetime.now() - timedelta(minutes=5):
+        raise HTTPException(status_code=404, detail="Device registration expired")
+    return register.url
+
+
+def _get_active_devices(session: Session) -> list[models.Device]:
+    statement = (
+        select(models.Device)
+        .join(models.Register)
+        .where(models.Register.created_at >= datetime.now() - timedelta(minutes=5))
+        .distinct()
+    )
+    return list(session.exec(statement).all())
