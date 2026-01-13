@@ -1,6 +1,6 @@
 from contextlib import asynccontextmanager
 from dataclasses import dataclass
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from threading import Timer
 import logging
 
@@ -161,7 +161,7 @@ def _get_url(name: str, session: Session) -> str:
     register = session.exec(statement).first()
     if not register:
         raise HTTPException(status_code=404, detail="Name not registered")
-    if register.created_at < datetime.now() - timedelta(minutes=5):
+    if register.created_at < datetime.now(timezone.utc) - timedelta(minutes=5):
         raise HTTPException(status_code=404, detail="Device registration expired")
     return register.url
 
@@ -170,7 +170,10 @@ def _get_active_devices(session: Session) -> list[models.Device]:
     statement = (
         select(models.Device)
         .join(models.Register)
-        .where(models.Register.created_at >= datetime.now() - timedelta(minutes=5))
+        .where(
+            models.Register.created_at
+            >= datetime.now(timezone.utc) - timedelta(minutes=5)
+        )
         .distinct()
     )
     return list(session.exec(statement).all())
