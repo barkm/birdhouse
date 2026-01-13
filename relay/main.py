@@ -107,6 +107,11 @@ def list_devices(session: Session = Depends(get_session)):
 def forward(
     request: Request, name: str, path: str, session: Session = Depends(get_session)
 ) -> Response:
+    device = _get_device(name, session)
+    if not device:
+        raise HTTPException(status_code=404, detail="Name not registered")
+    if request.state.role not in device.allowed_roles:
+        raise HTTPException(status_code=403, detail="Forbidden")
     forward_func = _cached_forward if ".ts" in path else _forward
     url = f"{_get_url(name, session)}/{path}"
     return forward_func(url, request.query_params)
