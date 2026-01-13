@@ -130,7 +130,11 @@ async def forward(
 
 @cached(
     max_size=100,
-    custom_key_maker=lambda name, path, query_params, _: (name, path, query_params),
+    custom_key_maker=lambda name, path, query_params, session: (
+        name,
+        path,
+        query_params,
+    ),
 )
 def _cached_forward(
     name: str, path: str, query_params: QueryParams, session: Session
