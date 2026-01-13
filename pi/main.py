@@ -68,7 +68,7 @@ async def serve_hls_files(request: Request, filename: str):
 
 
 @app.get("/start")
-async def start_stream(request: Request, bitrate: int = 500000, framerate: int = 24):
+def start_stream(request: Request, bitrate: int = 500000, framerate: int = 24):
     stream: Stream = request.app.state.stream
     try:
         playlist_filename = stream.start(bitrate, framerate)
@@ -85,7 +85,7 @@ def _is_filename(filename: str) -> bool:
 
 
 @app.get("/sensor")
-async def get_sensor_data():
+def get_sensor_data():
     try:
         return read_sensor_data(settings.test_sensor)
     except RuntimeError as e:
