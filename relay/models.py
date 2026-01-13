@@ -1,6 +1,7 @@
+from datetime import datetime, timezone
 import uuid
 from common.auth.firebase import Role
-from sqlmodel import ARRAY, Enum, SQLModel, Field
+from sqlmodel import ARRAY, DateTime, Enum, SQLModel, Field
 from sqlalchemy import Column
 
 role_enum = Enum(
@@ -20,4 +21,14 @@ class Device(SQLModel, table=True):
             nullable=False,
             server_default="{admin}",
         )
+    )
+
+
+class Register(SQLModel, table=True):
+    id: uuid.UUID = Field(default_factory=uuid.uuid4, primary_key=True)
+    device_id: uuid.UUID = Field(foreign_key="device.id", index=True)
+    url: str
+    created_at: datetime = Field(
+        default_factory=lambda: datetime.now(timezone.utc),
+        sa_column=Column(DateTime(timezone=True), nullable=False),
     )
