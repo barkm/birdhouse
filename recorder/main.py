@@ -158,7 +158,7 @@ async def get_sensors(
         select(models.Sensor)
         .join(models.Device)
         .where(models.Device.name == device_name)
-        .where(models.Sensor.temperature > -30)
+        .where(models.Sensor.temperature is None or models.Sensor.temperature > -30)
         .where(models.Device.allowed_roles.any(request.state.role))  # type: ignore
     )
     if from_:
