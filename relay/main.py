@@ -57,9 +57,10 @@ def get_session():
 async def auth_middleware(request: Request, call_next):
     headers = dict(request.headers)
     if "x-external" not in headers:
+        request.state.role = firebase.Role.ADMIN
         return await call_next(request)
     try:
-        firebase.verify(headers)
+        request.state.role = firebase.verify(headers)
     except AuthException as e:
         return JSONResponse({"detail": e.detail}, status_code=e.status_code)
     return await call_next(request)
