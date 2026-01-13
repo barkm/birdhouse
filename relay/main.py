@@ -91,7 +91,7 @@ def register_device(
     logging.info(f"Registering device {request.name} with url {request.url}")
 
     device = _get_device(request.name, session) or _add_device(request.name, session)
-    _register_to_db(device, request.url, session)
+    _register_device(device, request.url, session)
 
     return "OK"
 
@@ -109,7 +109,7 @@ def _add_device(name: str, session: Session) -> models.Device:
     return device
 
 
-def _register_to_db(device: models.Device, url: str, session: Session):
+def _register_device(device: models.Device, url: str, session: Session):
     register = models.Register(device_id=device.id, url=url)
     session.add(register)
     session.commit()
