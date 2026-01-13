@@ -133,7 +133,7 @@ async def forward(
     custom_key_maker=lambda name, path, query_params, session: (
         name,
         path,
-        query_params,
+        tuple(sorted(query_params.items())),
     ),
 )
 def _cached_forward(
