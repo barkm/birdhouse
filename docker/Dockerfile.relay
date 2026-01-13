@@ -7,6 +7,7 @@ COPY relay/pyproject.toml relay/pyproject.toml
 COPY relay/uv.lock relay/uv.lock
 RUN uv --project relay sync
 COPY relay/main.py relay/main.py
+COPY relay/models.py relay/models.py
 ENV PYTHONUNBUFFERED=1
 ENV FASTAPI_MODE=run
 CMD uv --project relay run fastapi ${FASTAPI_MODE} relay/main.py --port $PORT --host 0.0.0.0

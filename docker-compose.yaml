@@ -11,6 +11,7 @@ services:
       - PORT=8001
       - GOOGLE_APPLICATION_CREDENTIALS=/run/secrets/gcp_key
       - FASTAPI_MODE=dev
+      - DATABASE_URL=postgresql+psycopg://relay:relay@relay-db:5432/relay
     env_file:
       - ./relay/.env
     networks:

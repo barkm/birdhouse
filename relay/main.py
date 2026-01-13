@@ -7,12 +7,17 @@ from common.auth.exception import AuthException
 from fastapi.datastructures import QueryParams
 from fastapi.responses import JSONResponse
 import httpx
-from fastapi import FastAPI, HTTPException, Request, Response
+from fastapi import Depends, FastAPI, HTTPException, Request, Response
 from fastapi.middleware.cors import CORSMiddleware
+from pydantic_settings import BaseSettings, SettingsConfigDict
+from sqlalchemy import create_engine
+from sqlmodel import Session, select
 from memoization import cached
 from pydantic import BaseModel
 
 from common.auth import firebase
+
+import models
 
 
 logging.basicConfig(
@@ -22,6 +27,15 @@ logging.basicConfig(
 )
 
 
+class Settings(BaseSettings):
+    database_url: str = "postgresql+psycopg://relay:relay@localhost/relay"
+
+    model_config = SettingsConfigDict(env_file=".env", extra="ignore")
+
+
+settings = Settings()
+
+
 @asynccontextmanager
 async def lifespan(_: FastAPI):
     firebase.initialize()
@@ -29,6 +43,13 @@ async def lifespan(_: FastAPI):
 
 
 app = FastAPI(lifespan=lifespan)
+
+engine = create_engine(settings.database_url)
+
+
+def get_session():
+    with Session(engine) as session:
+        yield session
 
 
 @app.middleware("http")
@@ -66,8 +87,12 @@ class RegisterRequest(BaseModel):
 
 
 @app.post("/register")
-async def register_device(request: RegisterRequest) -> str:
+async def register_device(
+    request: RegisterRequest, session: Session = Depends(get_session)
+) -> str:
     logging.info(f"Registering device {request.name} with url {request.url}")
+
+    _add_device_to_db(request.name, request.url, session)
 
     def remove_device():
         logging.info(f"Removing device {request.name}")
@@ -82,6 +107,16 @@ async def register_device(request: RegisterRequest) -> str:
     )
     timer.start()
     return "OK"
+
+
+def _add_device_to_db(name: str, url: str, session: Session):
+    statement = select(models.Device).where(models.Device.name == name)
+    device = session.exec(statement).first()
+    if not device:
+        device = models.Device(name=name, allowed_roles=[firebase.Role.ADMIN])
+        session.add(device)
+        session.commit()
+        session.refresh(device)
 
 
 @app.get("/list")
