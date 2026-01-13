@@ -26,6 +26,21 @@ services:
           path: ./common/
           target: /app/common
 
+  relay-db:
+    image: postgres:17
+    container_name: relay-db
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: relay
+      POSTGRES_USER: relay
+      POSTGRES_PASSWORD: relay
+    ports:
+      - "5433:5432"
+    volumes:
+      - relay-db-data:/var/lib/postgresql/data
+    networks:
+      - relay_net
+
   pi:
     build:
       context: .
@@ -162,3 +177,4 @@ secrets:
   
 volumes:
   db-data:
+  relay-db-data:

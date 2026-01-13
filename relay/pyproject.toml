@@ -4,11 +4,14 @@ version = "0.1.0"
 readme = "README.md"
 requires-python = "==3.13.*"
 dependencies = [
+    "alembic>=1.18.0",
     "common[auth]",
     "fastapi[standard]>=0.116.1",
     "httpx>=0.28.1",
     "memoization>=0.4.0",
+    "psycopg[binary]>=3.3.2",
     "pydantic-settings>=2.10.1",
+    "sqlmodel>=0.0.31",
 ]
 
 [tool.uv.sources]
