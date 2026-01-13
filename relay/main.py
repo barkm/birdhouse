@@ -90,20 +90,22 @@ def register_device(
 ) -> str:
     logging.info(f"Registering device {request.name} with url {request.url}")
 
-    device = _get_device(request.name, session)
+    device = _get_device(request.name, session) or _add_device(request.name, session)
     _register_to_db(device, request.url, session)
 
     return "OK"
 
 
-def _get_device(name: str, session: Session) -> models.Device:
+def _get_device(name: str, session: Session) -> models.Device | None:
     statement = select(models.Device).where(models.Device.name == name)
-    device = session.exec(statement).first()
-    if not device:
-        device = models.Device(name=name, allowed_roles=[firebase.Role.ADMIN])
-        session.add(device)
-        session.commit()
-        session.refresh(device)
+    return session.exec(statement).first()
+
+
+def _add_device(name: str, session: Session) -> models.Device:
+    device = models.Device(name=name, allowed_roles=[firebase.Role.ADMIN])
+    session.add(device)
+    session.commit()
+    session.refresh(device)
     return device
 
 
