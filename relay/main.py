@@ -125,29 +125,17 @@ def forward(
     request: Request, name: str, path: str, session: Session = Depends(get_session)
 ) -> Response:
     forward_func = _cached_forward if ".ts" in path else _forward
-    return forward_func(name, path, request.query_params, session)
+    url = f"{_get_url(name, session)}/{path}"
+    return forward_func(url, request.query_params)
 
 
-@cached(
-    max_size=100,
-    custom_key_maker=lambda name, path, query_params, session: (
-        name,
-        path,
-        tuple(sorted(query_params.items())),
-    ),
-)
-def _cached_forward(
-    name: str, path: str, query_params: QueryParams, session: Session
-) -> Response:
-    return _forward(name, path, query_params, session)
+@cached(max_size=100)
+def _cached_forward(url: str, query_params: QueryParams) -> Response:
+    return _forward(url, query_params)
 
 
-def _forward(
-    name: str, path: str, query_params: QueryParams, session: Session
-) -> Response:
-    url = _get_url(name, session)
-    device_url = f"{url}/{path}"
-    response = httpx.get(device_url, timeout=20.0, params=query_params)
+def _forward(url: str, query_params: QueryParams) -> Response:
+    response = httpx.get(url, timeout=20.0, params=query_params)
     return Response(
         content=response.content,
         status_code=response.status_code,
