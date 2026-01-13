@@ -85,7 +85,7 @@ class RegisterRequest(BaseModel):
 
 
 @app.post("/register")
-async def register_device(
+def register_device(
     request: RegisterRequest, session: Session = Depends(get_session)
 ) -> str:
     logging.info(f"Registering device {request.name} with url {request.url}")
@@ -115,13 +115,13 @@ def _register_to_db(device: models.Device, url: str, session: Session):
 
 
 @app.get("/list")
-async def list_devices(session: Session = Depends(get_session)):
+def list_devices(session: Session = Depends(get_session)):
     devices = _get_active_devices(session)
     return [{"name": device.name} for device in devices]
 
 
 @app.get("/{name}/{path:path}")
-async def forward(
+def forward(
     request: Request, name: str, path: str, session: Session = Depends(get_session)
 ) -> Response:
     forward_func = _cached_forward if ".ts" in path else _forward
