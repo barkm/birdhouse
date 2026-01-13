@@ -28,7 +28,7 @@ logging.basicConfig(
 
 
 class Settings(BaseSettings):
-    database_url: str = "postgresql+psycopg://relay:relay@localhost/relay"
+    database_url: str = "postgresql+psycopg://relay_user:relay@localhost/relay"
 
     model_config = SettingsConfigDict(env_file=".env", extra="ignore")
 
