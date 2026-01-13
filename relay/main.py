@@ -96,26 +96,6 @@ def register_device(
     return "OK"
 
 
-def _get_device(name: str, session: Session) -> models.Device | None:
-    statement = select(models.Device).where(models.Device.name == name)
-    return session.exec(statement).first()
-
-
-def _add_device(name: str, session: Session) -> models.Device:
-    device = models.Device(name=name, allowed_roles=[firebase.Role.ADMIN])
-    session.add(device)
-    session.commit()
-    session.refresh(device)
-    return device
-
-
-def _register_device(device: models.Device, url: str, session: Session):
-    register = models.Register(device_id=device.id, url=url)
-    session.add(register)
-    session.commit()
-    session.refresh(register)
-
-
 @app.get("/list")
 def list_devices(session: Session = Depends(get_session)):
     devices = _get_active_devices(session)
@@ -143,6 +123,26 @@ def _forward(url: str, query_params: QueryParams) -> Response:
         status_code=response.status_code,
         headers=dict(response.headers),
     )
+
+
+def _get_device(name: str, session: Session) -> models.Device | None:
+    statement = select(models.Device).where(models.Device.name == name)
+    return session.exec(statement).first()
+
+
+def _add_device(name: str, session: Session) -> models.Device:
+    device = models.Device(name=name, allowed_roles=[firebase.Role.ADMIN])
+    session.add(device)
+    session.commit()
+    session.refresh(device)
+    return device
+
+
+def _register_device(device: models.Device, url: str, session: Session):
+    register = models.Register(device_id=device.id, url=url)
+    session.add(register)
+    session.commit()
+    session.refresh(register)
 
 
 def _get_url(name: str, session: Session) -> str:
