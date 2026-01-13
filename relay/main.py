@@ -92,7 +92,8 @@ async def register_device(
 ) -> str:
     logging.info(f"Registering device {request.name} with url {request.url}")
 
-    _add_device_to_db(request.name, request.url, session)
+    device = _get_device(request.name, session)
+    _register_to_db(device, request.url, session)
 
     def remove_device():
         logging.info(f"Removing device {request.name}")
@@ -109,7 +110,7 @@ async def register_device(
     return "OK"
 
 
-def _add_device_to_db(name: str, url: str, session: Session):
+def _get_device(name: str, session: Session) -> models.Device:
     statement = select(models.Device).where(models.Device.name == name)
     device = session.exec(statement).first()
     if not device:
@@ -117,6 +118,14 @@ def _add_device_to_db(name: str, url: str, session: Session):
         session.add(device)
         session.commit()
         session.refresh(device)
+    return device
+
+
+def _register_to_db(device: models.Device, url: str, session: Session):
+    register = models.Register(device_id=device.id, url=url)
+    session.add(register)
+    session.commit()
+    session.refresh(register)
 
 
 @app.get("/list")
