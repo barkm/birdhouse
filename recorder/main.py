@@ -100,7 +100,7 @@ app.add_middleware(
 
 
 @app.get("/list_devices")
-async def list_devices(
+def list_devices(
     request: Request, session: Session = Depends(get_session)
 ) -> list[dict[str, str]]:
     return [
@@ -109,9 +109,7 @@ async def list_devices(
 
 
 @app.get("/record_sensors")
-async def record_sensors(
-    request: Request, session: Session = Depends(get_session)
-) -> dict:
+def record_sensors(request: Request, session: Session = Depends(get_session)) -> dict:
     if settings.relay_url is None:
         logging.error("Relay url not set")
         return {"error": "Relay url not set"}
@@ -147,7 +145,7 @@ async def record_sensors(
 
 
 @app.get("/sensors/{device_name}")
-async def get_sensors(
+def get_sensors(
     request: Request,
     device_name: str,
     from_: Annotated[datetime | None, Query(alias="from")] = None,
@@ -170,7 +168,7 @@ async def get_sensors(
 
 
 @app.get("/record")
-async def record(
+def record(
     request: Request, duration: int = 10, session: Session = Depends(get_session)
 ) -> dict:
     if settings.relay_url is None:
