@@ -87,13 +87,19 @@ class RegisterRequest(BaseModel):
 
 @app.post("/register")
 def register_device(
-    request: RegisterRequest, session: Session = Depends(get_session)
+    request: Request,
+    register_request: RegisterRequest,
+    session: Session = Depends(get_session),
 ) -> str:
-    logging.info(f"Registering device {request.name} with url {request.url}")
-
-    device = _get_device(request.name, session) or _add_device(request.name, session)
-    _register_device(device, request.url, session)
-
+    if request.state.role != firebase.Role.ADMIN:
+        raise HTTPException(status_code=403, detail="Forbidden")
+    logging.info(
+        f"Registering device {register_request.name} with url {register_request.url}"
+    )
+    device = _get_device(register_request.name, session) or _add_device(
+        register_request.name, session
+    )
+    _register_device(device, register_request.url, session)
     return "OK"
 
 
