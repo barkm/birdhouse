@@ -109,11 +109,13 @@ async def list_devices(
 
 
 @app.get("/record_sensors")
-async def record_sensors(session: Session = Depends(get_session)) -> dict:
+async def record_sensors(
+    request: Request, session: Session = Depends(get_session)
+) -> dict:
     if settings.relay_url is None:
         logging.error("Relay url not set")
         return {"error": "Relay url not set"}
-    devices = _get_active_devices(settings.relay_url, session)
+    devices = _get_active_devices(request.state.role, settings.relay_url, session)
     for device in devices:
         try:
             response = httpx.get(f"{settings.relay_url}/{device.name}/sensor")
@@ -318,6 +320,7 @@ def list_recordings(
 
 @app.get("/timelapse")
 def create_timelapse(
+    request: Request,
     start: datetime,
     end: datetime,
     duration: int | None = None,
@@ -325,7 +328,7 @@ def create_timelapse(
     batch_size: int | None = None,
     session: Session = Depends(get_session),
 ) -> None:
-    devices = _get_devices(session)
+    devices = _get_devices(request.state.role, session)
     for device in devices:
         logging.info(f"Creating timelapse for device {device}")
         _create_and_upload_timelapse(
