@@ -98,9 +98,13 @@ def register_device(
 
 
 @app.get("/list")
-def list_devices(session: Session = Depends(get_session)):
+def list_devices(request: Request, session: Session = Depends(get_session)):
     devices = _get_active_devices(session)
-    return [{"name": device.name} for device in devices]
+    return [
+        {"name": device.name}
+        for device in devices
+        if request.state.role in device.allowed_roles
+    ]
 
 
 @app.get("/{name}/{path:path}")
