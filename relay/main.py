@@ -1,6 +1,5 @@
 from contextlib import asynccontextmanager
 from dataclasses import dataclass
-from datetime import datetime, timedelta, timezone
 from threading import Timer
 import logging
 
@@ -12,7 +11,8 @@ from fastapi import Depends, FastAPI, HTTPException, Request, Response
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic_settings import BaseSettings, SettingsConfigDict
 from sqlalchemy import create_engine
-from sqlmodel import Session, select
+from sqlalchemy.orm import aliased
+from sqlmodel import Session, func, select
 from memoization import cached
 from pydantic import BaseModel
 
@@ -171,19 +171,32 @@ def _get_url(name: str, session: Session) -> str:
     register = session.exec(statement).first()
     if not register:
         raise HTTPException(status_code=404, detail="Name not registered")
-    if register.created_at < datetime.now(timezone.utc) - timedelta(minutes=5):
-        raise HTTPException(status_code=404, detail="Device registration expired")
+    if not _is_active(register.url):
+        raise HTTPException(status_code=503, detail="Device is not active")
     return register.url
 
 
 def _get_active_devices(session: Session) -> list[models.Device]:
-    statement = (
-        select(models.Device)
-        .join(models.Register)
-        .where(
-            models.Register.created_at
-            >= datetime.now(timezone.utc) - timedelta(minutes=5)
-        )
-        .distinct()
+    r = aliased(models.Register)
+    ranked = select(
+        r.id,
+        r.device_id,
+        func.row_number()
+        .over(partition_by=r.device_id, order_by=r.created_at.desc())  # type: ignore
+        .label("rn"),
+    ).subquery()
+    device_registers = (
+        select(models.Device, models.Register)
+        .join(models.Register, models.Register.device_id == models.Device.id)  # type: ignore
+        .join(ranked, ranked.c.id == models.Register.id)
+        .where(ranked.c.rn == 1)
     )
-    return list(session.exec(statement).all())
+    return [d for d, r in session.exec(device_registers).all() if _is_active(r.url)]
+
+
+def _is_active(url: str) -> bool:
+    try:
+        response = httpx.get(f"{url}/status", timeout=5.0)
+        return response.status_code == 200
+    except httpx.RequestError:
+        return False
