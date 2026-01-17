@@ -1,6 +1,4 @@
 from contextlib import asynccontextmanager
-from dataclasses import dataclass
-from threading import Timer
 import logging
 
 from common.auth.exception import AuthException
@@ -63,12 +61,6 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
-
-
-@dataclass
-class Device:
-    url: str
-    removalTimer: Timer
 
 
 class RegisterRequest(BaseModel):
