@@ -1,3 +1,5 @@
+import os
+
 from common.auth.exception import AuthException
 from common.auth.firebase import Role
 from common.auth.token import get_token
@@ -28,7 +30,9 @@ def verify(
 
 
 def get_id_token(audience: str) -> str:
-    token = id_token.fetch_id_token(requests.Request(), audience)
+    token = os.getenv("GOOGLE_ID_TOKEN") or id_token.fetch_id_token(
+        requests.Request(), audience
+    )
     if not token:
         raise AuthException("Failed to fetch id token", status_code=500)
     return token
