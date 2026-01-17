@@ -4,6 +4,7 @@ from threading import Timer
 import logging
 
 from common.auth.exception import AuthException
+from common.auth.google import get_id_token
 from fastapi.datastructures import QueryParams
 from fastapi.responses import JSONResponse
 import httpx
@@ -30,6 +31,7 @@ logging.basicConfig(
 
 class Settings(BaseSettings):
     database_url: str = "postgresql+psycopg://relay_user:relay@localhost/relay"
+    register_url: str = "http://localhost:8003/register"
 
     model_config = SettingsConfigDict(env_file=".env", extra="ignore")
 
@@ -100,6 +102,14 @@ def register_device(
         register_request.name, session
     )
     _register_device(device, register_request.url, session)
+
+    token = get_id_token(settings.register_url)
+    httpx.post(
+        settings.register_url,
+        headers={"Authorization": f"Bearer {token}"},
+        json={"name": register_request.name, "url": register_request.url},
+    )
+
     return "OK"
 
 
