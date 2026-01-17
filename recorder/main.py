@@ -132,7 +132,10 @@ def forward(
         raise HTTPException(status_code=404, detail="Name not registered")
     if request.state.role not in device.allowed_roles:
         raise HTTPException(status_code=403, detail="Forbidden")
-    url = f"{_get_url(name, session)}/{path}"
+    base_url = _get_url(name, session)
+    if not base_url:
+        raise HTTPException(status_code=404, detail="Device not registered")
+    url = f"{base_url}/{path}"
     response = httpx.get(url, timeout=20.0, params=request.query_params)
     return Response(
         content=response.content,
@@ -161,7 +164,7 @@ def _register_device(device: models.Device, url: str, session: Session):
     session.refresh(register)
 
 
-def _get_url(name: str, session: Session) -> str:
+def _get_url(name: str, session: Session) -> str | None:
     statement = (
         select(models.Registration)
         .join(models.Device)
@@ -169,11 +172,7 @@ def _get_url(name: str, session: Session) -> str:
         .order_by(models.Registration.created_at.desc())  # type: ignore
     )
     register = session.exec(statement).first()
-    if not register:
-        raise HTTPException(status_code=404, detail="Name not registered")
-    if not _is_active(register.url):
-        raise HTTPException(status_code=503, detail="Device is not active")
-    return register.url
+    return register.url if register else None
 
 
 def _is_active(url: str) -> bool:
