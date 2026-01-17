@@ -256,15 +256,16 @@ def get_sensors(
 def record(
     request: Request, duration: int = 10, session: Session = Depends(get_session)
 ) -> dict:
-    if settings.relay_url is None:
-        logging.error("Relay url not set")
-        return {"error": "Relay url not set"}
-    devices = _get_active_devices(request.state.role, settings.relay_url, session)
-    for device in devices:
+    devices = [
+        (d, url)
+        for d in _get_devices(request.state.role, session)
+        if (url := _get_url(d.name, session)) and _is_active(url)
+    ]
+    for device, url in devices:
         try:
             _record_and_save(
                 str(request.base_url),
-                settings.relay_url,
+                url,
                 device,
                 settings.recording_dir,
                 duration,
@@ -309,7 +310,7 @@ def _get_devices(role: firebase.Role, session: Session) -> list[models.Device]:
 
 def _record_and_save(
     base_url: str,
-    relay_url: str,
+    device_url: str,
     device: models.Device,
     recording_dir: str,
     duration: int,
@@ -318,10 +319,10 @@ def _record_and_save(
     output_path = f"{recording_dir}/{device.name}/{datetime.now().isoformat()}.mp4"
     if recording_dir.startswith("gs://"):
         with NamedTemporaryFile(suffix=".mp4") as temp_file:
-            _record(relay_url, device.name, temp_file.name, duration)
+            _record(device_url, device.name, temp_file.name, duration)
             url = upload_to_gcs(temp_file.name, output_path)
     else:
-        _record(relay_url, device.name, output_path, duration)
+        _record(device_url, device.name, output_path, duration)
         url = _get_local_recording_url(base_url, recording_dir, Path(output_path))
     logging.info(f"Saved recording for {device.name} to {url}")
     recording = models.Recording(
@@ -333,9 +334,9 @@ def _record_and_save(
     session.refresh(recording)
 
 
-def _record(relay_url: str, device: str, output_path: str, duration: int) -> None:
+def _record(device_url: str, device: str, output_path: str, duration: int) -> None:
     logging.info(f"Saving recording for {device}")
-    start_url = f"{relay_url}/{device}/start"
+    start_url = f"{device_url}/start"
     start_response = httpx.get(
         start_url, params={"bitrate": 10000000, "framerate": 30}, timeout=60.0
     )
@@ -345,7 +346,7 @@ def _record(relay_url: str, device: str, output_path: str, duration: int) -> Non
         logging.error(f"Failed to start recording for {device}: {e}")
         raise RuntimeError(f"Failed to start recording for {device}: {e}") from e
     playlist_path = start_response.json()["playlist"]
-    playlist_url = f"{relay_url}/{device}{playlist_path}"
+    playlist_url = f"{device_url}{playlist_path}"
     Path(output_path).parent.mkdir(parents=True, exist_ok=True)
     input_ = ffmpeg.input(playlist_url, t=duration)
     output = ffmpeg.output(
