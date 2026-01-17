@@ -122,7 +122,7 @@ def register_device(
     return {"status": "OK"}
 
 
-@app.get("/{name}/{path:path}")
+@app.get("/get/{name}/{path:path}")
 def forward(
     request: Request, name: str, path: str, session: Session = Depends(get_session)
 ) -> Response:
