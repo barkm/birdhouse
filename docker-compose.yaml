@@ -6,12 +6,13 @@ services:
     ports:
       - "8001:8001"
     secrets:
-      - gcp_key
+      - gcp_sa_key
     environment:
       - PORT=8001
-      - GOOGLE_APPLICATION_CREDENTIALS=/run/secrets/gcp_key
+      - GOOGLE_APPLICATION_CREDENTIALS=/run/secrets/gcp_sa_key
       - FASTAPI_MODE=dev
       - DATABASE_URL=postgresql+psycopg://relay_user:relay@db:5432/relay
+      - REGISTER_URL=http://recorder:8003/register
     env_file:
       - ./relay/.env
     networks:
@@ -160,6 +161,8 @@ networks:
 secrets:
   gcp_key:
     file: ~/.config/gcloud/application_default_credentials.json
-  
+  gcp_sa_key:
+    file: ./sa.json
+
 volumes:
   db-data:
