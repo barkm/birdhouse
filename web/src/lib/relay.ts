@@ -1,6 +1,6 @@
 import type { User } from 'firebase/auth';
 import { authorizedRequest } from './request';
-import { PUBLIC_RELAY_URL } from '$env/static/public';
+import { PUBLIC_RECORDER_URL } from '$env/static/public';
 
 export interface SensorData {
 	temperature?: number;
@@ -34,7 +34,7 @@ const localRequestWithRelayFallback = async (
 ): Promise<{ response: Response; base_url: string }> => {
 	const base_url = (await checkDeviceAvailability(device_name))
 		? `https://${device_name}.local`
-		: `${PUBLIC_RELAY_URL}${device_name}`;
+		: `${PUBLIC_RECORDER_URL}${device_name}`;
 	const response = await authorizedRequest(user, base_url, endpoint);
 	return { response, base_url };
 };
