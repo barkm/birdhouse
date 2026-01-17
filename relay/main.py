@@ -6,7 +6,6 @@ import httpx
 from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic_settings import BaseSettings, SettingsConfigDict
-from sqlalchemy import create_engine
 from pydantic import BaseModel
 
 
@@ -18,7 +17,6 @@ logging.basicConfig(
 
 
 class Settings(BaseSettings):
-    database_url: str = "postgresql+psycopg://relay_user:relay@localhost/relay"
     register_url: str = "http://localhost:8003/register"
 
     model_config = SettingsConfigDict(env_file=".env", extra="ignore")
@@ -28,8 +26,6 @@ settings = Settings()
 
 
 app = FastAPI()
-
-engine = create_engine(settings.database_url)
 
 
 @app.middleware("http")
