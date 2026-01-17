@@ -58,24 +58,27 @@ export const getSensorData = async (
 	}));
 };
 
-export const listDevices = async (user: User): Promise<{ name: string, active: boolean }[]> => {
+export const listDevices = async (user: User): Promise<{ name: string; active: boolean }[]> => {
 	const response = await authorizedRequest(user, PUBLIC_RECORDER_URL, 'list_devices');
 	return response.json();
 };
 
-export const getStatus = async (user: User, device_name: string): Promise<{ status: string; }> => {
+export const getStatus = async (user: User, device_name: string): Promise<{ status: string }> => {
 	const { response } = await localRequestWithRelayFallback(user, device_name, `/status`);
 	return response.json();
 };
 
-export const getCurrentSensorData = async (user: User, device_name: string): Promise<SensorData> => {
+export const getCurrentSensorData = async (
+	user: User,
+	device_name: string
+): Promise<SensorData> => {
 	const { response } = await localRequestWithRelayFallback(user, device_name, `/sensor`);
 	const sensor_data = await response.json();
 	return {
 		created_at: new Date(),
 		temperature: sensor_data.temperature,
 		humidity: sensor_data.humidity
-	}
+	};
 };
 
 export const startAndGetStreamUrl = async (user: User, device_name: string): Promise<string> => {
@@ -92,7 +95,7 @@ export const localRequestWithRelayFallback = async (
 	user: User,
 	device_name: string,
 	endpoint: string
-): Promise<{ response: Response; base_url: string; }> => {
+): Promise<{ response: Response; base_url: string }> => {
 	const base_url = (await checkDeviceAvailability(device_name))
 		? `https://${device_name}.local`
 		: `${PUBLIC_RECORDER_URL}${device_name}`;
@@ -119,4 +122,3 @@ export const checkDeviceAvailability = async (device_name: string): Promise<bool
 		clearTimeout(timeoutId);
 	}
 };
-

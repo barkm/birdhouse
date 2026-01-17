@@ -1,4 +1,3 @@
-
 <script lang="ts">
 	import DateRangePicker from '$lib/components/DateRangePicker.svelte';
 	import SensorCard from '$lib/components/SensorCard.svelte';
@@ -17,11 +16,11 @@
 	import colors from 'tailwindcss/colors';
 	import type { User } from 'firebase/auth';
 
-    interface Props {
-        user: User;
-    }
+	interface Props {
+		user: User;
+	}
 
-    const { user }: Props = $props();
+	const { user }: Props = $props();
 
 	const get_previous_day_from_midnight = () => {
 		const date = new Date();
