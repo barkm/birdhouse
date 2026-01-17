@@ -11,7 +11,7 @@ from typing import Annotated, Callable, Sequence
 from common.auth.exception import AuthException
 from fastapi.responses import FileResponse, JSONResponse
 import httpx
-from fastapi import Depends, FastAPI, HTTPException, Query, Request
+from fastapi import Depends, FastAPI, HTTPException, Query, Request, Response
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic_settings import BaseSettings, SettingsConfigDict
 import ffmpeg
@@ -123,6 +123,24 @@ def register_device(
     return {"status": "OK"}
 
 
+@app.get("/{name}/{path:path}")
+def forward(
+    request: Request, name: str, path: str, session: Session = Depends(get_session)
+) -> Response:
+    device = _get_device(name, session)
+    if not device:
+        raise HTTPException(status_code=404, detail="Name not registered")
+    if request.state.role not in device.allowed_roles:
+        raise HTTPException(status_code=403, detail="Forbidden")
+    url = f"{_get_url(name, session)}/{path}"
+    response = httpx.get(url, timeout=20.0, params=request.query_params)
+    return Response(
+        content=response.content,
+        status_code=response.status_code,
+        headers=dict(response.headers),
+    )
+
+
 def _get_device(name: str, session: Session) -> models.Device | None:
     statement = select(models.Device).where(models.Device.name == name)
     return session.exec(statement).first()
@@ -141,6 +159,29 @@ def _register_device(device: models.Device, url: str, session: Session):
     session.add(register)
     session.commit()
     session.refresh(register)
+
+
+def _get_url(name: str, session: Session) -> str:
+    statement = (
+        select(models.Registration)
+        .join(models.Device)
+        .where(models.Device.name == name)
+        .order_by(models.Registration.created_at.desc())  # type: ignore
+    )
+    register = session.exec(statement).first()
+    if not register:
+        raise HTTPException(status_code=404, detail="Name not registered")
+    if not _is_active(register.url):
+        raise HTTPException(status_code=503, detail="Device is not active")
+    return register.url
+
+
+def _is_active(url: str) -> bool:
+    try:
+        response = httpx.get(f"{url}/status", timeout=5.0)
+        return response.status_code == 200
+    except httpx.RequestError:
+        return False
 
 
 @app.get("/list_devices")
