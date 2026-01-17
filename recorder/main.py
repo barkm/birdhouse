@@ -185,9 +185,15 @@ def _is_active(url: str) -> bool:
 @app.get("/list_devices")
 def list_devices(
     request: Request, session: Session = Depends(get_session)
-) -> list[dict[str, str]]:
+) -> list[dict[str, str | bool]]:
     return [
-        {"name": device.name} for device in _get_devices(request.state.role, session)
+        {
+            "name": device.name,
+            "active": _is_active(url)
+            if (url := _get_url(device.name, session))
+            else False,
+        }
+        for device in _get_devices(request.state.role, session)
     ]
 
 
