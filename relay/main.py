@@ -3,7 +3,7 @@ import logging
 from common.auth.google import get_id_token
 from fastapi.responses import JSONResponse
 import httpx
-from fastapi import FastAPI, Request
+from fastapi import FastAPI, Request, Response
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic_settings import BaseSettings, SettingsConfigDict
 from pydantic import BaseModel
@@ -50,14 +50,18 @@ class RegisterRequest(BaseModel):
 
 
 @app.post("/register")
-def register_device(register_request: RegisterRequest) -> str:
+def register_device(register_request: RegisterRequest) -> Response:
     logging.info(
         f"Registering device {register_request.name} with url {register_request.url}"
     )
     token = get_id_token(settings.register_url)
-    httpx.post(
+    response = httpx.post(
         settings.register_url,
         headers={"Authorization": f"Bearer {token}"},
         json={"name": register_request.name, "url": register_request.url},
     )
-    return "OK"
+    return Response(
+        content=response.content,
+        status_code=response.status_code,
+        headers=response.headers,
+    )
