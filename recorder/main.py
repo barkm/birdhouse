@@ -194,13 +194,14 @@ def list_devices(
 
 @app.get("/record_sensors")
 def record_sensors(request: Request, session: Session = Depends(get_session)) -> dict:
-    if settings.relay_url is None:
-        logging.error("Relay url not set")
-        return {"error": "Relay url not set"}
-    devices = _get_active_devices(request.state.role, settings.relay_url, session)
-    for device in devices:
+    devices = [
+        (d, url)
+        for d in _get_devices(request.state.role, session)
+        if (url := _get_url(d.name, session)) and _is_active(url)
+    ]
+    for device, url in devices:
         try:
-            response = httpx.get(f"{settings.relay_url}/{device.name}/sensor")
+            response = httpx.get(f"{url}/sensor")
         except httpx.HTTPError as e:
             logging.error(f"Failed to get sensor data for {device.name}: {e}")
             continue
