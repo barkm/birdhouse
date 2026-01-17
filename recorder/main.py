@@ -11,10 +11,11 @@ from typing import Annotated, Callable, Sequence
 from common.auth.exception import AuthException
 from fastapi.responses import FileResponse, JSONResponse
 import httpx
-from fastapi import Depends, FastAPI, Query, Request
+from fastapi import Depends, FastAPI, HTTPException, Query, Request
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic_settings import BaseSettings, SettingsConfigDict
 import ffmpeg
+from pydantic import BaseModel
 
 from common.auth import firebase
 from common.auth import google
@@ -97,6 +98,49 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+
+class RegisterRequest(BaseModel):
+    name: str
+    url: str
+
+
+@app.post("/register")
+def register_device(
+    request: Request,
+    register_request: RegisterRequest,
+    session: Session = Depends(get_session),
+) -> dict[str, str]:
+    if request.state.role != firebase.Role.ADMIN:
+        raise HTTPException(status_code=403, detail="Unauthorized")
+    logging.info(
+        f"Registering device {register_request.name} with url {register_request.url}"
+    )
+    device = _get_device(register_request.name, session) or _add_device(
+        register_request.name, session
+    )
+    _register_device(device, register_request.url, session)
+    return {"status": "OK"}
+
+
+def _get_device(name: str, session: Session) -> models.Device | None:
+    statement = select(models.Device).where(models.Device.name == name)
+    return session.exec(statement).first()
+
+
+def _add_device(name: str, session: Session) -> models.Device:
+    device = models.Device(name=name, allowed_roles=[firebase.Role.ADMIN])
+    session.add(device)
+    session.commit()
+    session.refresh(device)
+    return device
+
+
+def _register_device(device: models.Device, url: str, session: Session):
+    register = models.Registration(device_id=device.id, url=url)
+    session.add(register)
+    session.commit()
+    session.refresh(register)
 
 
 @app.get("/list_devices")
