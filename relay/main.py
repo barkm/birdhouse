@@ -1,17 +1,13 @@
-from contextlib import asynccontextmanager
 import logging
 
-from common.auth.exception import AuthException
 from common.auth.google import get_id_token
 from fastapi.responses import JSONResponse
 import httpx
-from fastapi import FastAPI, HTTPException, Request
+from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic_settings import BaseSettings, SettingsConfigDict
 from sqlalchemy import create_engine
 from pydantic import BaseModel
-
-from common.auth import firebase
 
 
 logging.basicConfig(
@@ -31,13 +27,7 @@ class Settings(BaseSettings):
 settings = Settings()
 
 
-@asynccontextmanager
-async def lifespan(_: FastAPI):
-    firebase.initialize()
-    yield
-
-
-app = FastAPI(lifespan=lifespan)
+app = FastAPI()
 
 engine = create_engine(settings.database_url)
 
@@ -45,13 +35,8 @@ engine = create_engine(settings.database_url)
 @app.middleware("http")
 async def auth_middleware(request: Request, call_next):
     headers = dict(request.headers)
-    if "x-external" not in headers:
-        request.state.role = firebase.Role.ADMIN
-        return await call_next(request)
-    try:
-        request.state.role = firebase.verify(headers)
-    except AuthException as e:
-        return JSONResponse({"detail": e.detail}, status_code=e.status_code)
+    if "x-external" in headers:
+        return JSONResponse({"detail": "Forbidden"}, status_code=403)
     return await call_next(request)
 
 
@@ -69,12 +54,7 @@ class RegisterRequest(BaseModel):
 
 
 @app.post("/register")
-def register_device(
-    request: Request,
-    register_request: RegisterRequest,
-) -> str:
-    if request.state.role != firebase.Role.ADMIN:
-        raise HTTPException(status_code=403, detail="Forbidden")
+def register_device(register_request: RegisterRequest) -> str:
     logging.info(
         f"Registering device {register_request.name} with url {register_request.url}"
     )
