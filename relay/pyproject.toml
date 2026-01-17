@@ -4,7 +4,6 @@ version = "0.1.0"
 readme = "README.md"
 requires-python = "==3.13.*"
 dependencies = [
-    "alembic>=1.18.0",
     "common[auth]",
     "fastapi[standard]>=0.116.1",
     "httpx>=0.28.1",
