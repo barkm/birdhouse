@@ -61,7 +61,7 @@ RELAY_HOST=<relay-host> SSH_PORT=<ssh-port> SERVER_PORT=<server-port> uv run ans
 
 #### Crontab
 ```bash
-NAME=<name> SERVER_PORT=<server-port> uv run ansible-playbook -i ansible/inventory.yaml ansible/playbooks/pi/crontab.yaml
+NAME=<name> URL=<server-url> uv run ansible-playbook -i ansible/inventory.yaml ansible/playbooks/pi/crontab.yaml
 ```
 
 #### Caddy
