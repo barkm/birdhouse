@@ -276,33 +276,6 @@ def record(
     return {}
 
 
-def _get_active_devices(
-    role: firebase.Role, relay_url: str, session: Session
-) -> list[models.Device]:
-    list_url = f"{relay_url}/list"
-    try:
-        response = httpx.get(list_url)
-        response.raise_for_status()
-        device_names = [device["name"] for device in response.json()]
-    except httpx.HTTPError as e:
-        logging.warning(f"Failed to get devices from {list_url}: {e}")
-        return []
-
-    devices: list[models.Device] = []
-    for device_name in device_names:
-        statement = select(models.Device).where(models.Device.name == device_name)
-        device = session.exec(statement).first()
-        if not device:
-            device = models.Device(
-                name=device_name, allowed_roles=[firebase.Role.ADMIN]
-            )
-            session.add(device)
-            session.commit()
-            session.refresh(device)
-        devices.append(device)
-    return [d for d in devices if role in d.allowed_roles]
-
-
 def _get_devices(role: firebase.Role, session: Session) -> list[models.Device]:
     statement = select(models.Device).where(models.Device.allowed_roles.any(role))  # type: ignore
     return list(session.exec(statement).all())
