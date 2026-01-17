@@ -1,6 +1,7 @@
 <script lang="ts">
 	import { listDevices as listRecordedDevices } from '$lib/recorder';
-	import { checkDeviceAvailability, getStatus } from '$lib/relay';
+	import { checkDeviceAvailability } from "$lib/recorder";
+	import { getStatus } from '$lib/recorder';
 	import type { User } from 'firebase/auth';
 
 	interface Props {
