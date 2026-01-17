@@ -120,20 +120,6 @@ services:
       - ./deployment/initdb:/docker-entrypoint-initdb.d
     networks:
       - relay_net
-    
-  caddy:
-    image: caddy:2
-    volumes:
-      - ./relay/Caddyfile:/etc/caddy/Caddyfile:ro
-    ports:
-      - "8080:8080"
-    environment:
-      - DOMAIN=http://localhost:8080
-      - SERVER=relay:8001
-    depends_on:
-      - relay
-    networks:
-      - relay_net
 
   web:
     build:
