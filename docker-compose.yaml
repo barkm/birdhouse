@@ -17,7 +17,7 @@ services:
     networks:
       - relay_net
     depends_on:
-      - db
+      - recorder
     develop:
       watch:
         - action: sync
