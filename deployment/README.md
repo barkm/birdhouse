@@ -47,11 +47,6 @@ uv run ansible all -m ping  -i ansible/inventory.yaml
 uv run ansible-playbook -i ansible/inventory.yaml ansible/playbooks/relay/relay.yaml
 ```
 
-#### Caddy
-```bash
-DOMAIN=<domain> run ansible-playbook -i ansible/inventory.yaml ansible/playbooks/relay/caddy.yaml
-```
-
 ### Pi
 
 #### Camera server
