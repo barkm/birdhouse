@@ -58,7 +58,7 @@ export const getSensorData = async (
 	}));
 };
 
-export const listDevices = async (user: User): Promise<{ name: string }[]> => {
+export const listDevices = async (user: User): Promise<{ name: string, active: boolean }[]> => {
 	const response = await authorizedRequest(user, PUBLIC_RECORDER_URL, 'list_devices');
 	return response.json();
 };
