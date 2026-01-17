@@ -25,3 +25,10 @@ def verify(
         raise AuthException("Unauthorized", status_code=403)
 
     return Role.ADMIN
+
+
+def get_id_token(audience: str) -> str:
+    token = id_token.fetch_id_token(requests.Request(), audience)
+    if not token:
+        raise AuthException("Failed to fetch id token", status_code=500)
+    return token
