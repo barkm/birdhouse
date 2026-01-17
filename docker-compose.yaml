@@ -11,7 +11,6 @@ services:
       - PORT=8001
       - GOOGLE_APPLICATION_CREDENTIALS=/run/secrets/gcp_key
       - FASTAPI_MODE=dev
-      - DATABASE_URL=postgresql+psycopg://relay_user:relay@db:5432/relay
       - REGISTER_URL=http://recorder:8003/register
     env_file:
       - ./relay/.env
