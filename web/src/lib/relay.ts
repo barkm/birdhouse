@@ -7,11 +7,6 @@ export interface SensorData {
 	humidity?: number;
 }
 
-export const listDevices = async (user: User): Promise<{ name: string }[]> => {
-	const response = await authorizedRequest(user, PUBLIC_RELAY_URL, `list`);
-	return response.json();
-};
-
 export const getStatus = async (user: User, device_name: string): Promise<{ status: string }> => {
 	const { response } = await localRequestWithRelayFallback(user, device_name, `/status`);
 	return response.json();
