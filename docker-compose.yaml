@@ -88,7 +88,6 @@ services:
       - gcp_key
     environment:
       - PORT=8003
-      - RELAY_URL=http://relay:8001
       - RECORDING_DIR=gs://birdhouse-recordings/dev
       - GOOGLE_APPLICATION_CREDENTIALS=/run/secrets/gcp_key
       - DATABASE_URL=postgresql+psycopg://moja:moja@host.docker.internal:5432/moja

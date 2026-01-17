@@ -34,7 +34,6 @@ logging.basicConfig(
 
 
 class Settings(BaseSettings):
-    relay_url: str | None = None
     recording_dir: str = "/recordings"
     allowed_emails: list[str] | None = None
     database_url: str = "postgresql+psycopg://moja:moja@localhost/moja"
