@@ -7,16 +7,13 @@ from common.auth.exception import AuthException
 from common.auth.google import get_id_token
 from fastapi.responses import JSONResponse
 import httpx
-from fastapi import Depends, FastAPI, HTTPException, Request
+from fastapi import FastAPI, HTTPException, Request
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic_settings import BaseSettings, SettingsConfigDict
 from sqlalchemy import create_engine
-from sqlmodel import Session, select
 from pydantic import BaseModel
 
 from common.auth import firebase
-
-import models
 
 
 logging.basicConfig(
@@ -45,11 +42,6 @@ async def lifespan(_: FastAPI):
 app = FastAPI(lifespan=lifespan)
 
 engine = create_engine(settings.database_url)
-
-
-def get_session():
-    with Session(engine) as session:
-        yield session
 
 
 @app.middleware("http")
@@ -88,43 +80,16 @@ class RegisterRequest(BaseModel):
 def register_device(
     request: Request,
     register_request: RegisterRequest,
-    session: Session = Depends(get_session),
 ) -> str:
     if request.state.role != firebase.Role.ADMIN:
         raise HTTPException(status_code=403, detail="Forbidden")
     logging.info(
         f"Registering device {register_request.name} with url {register_request.url}"
     )
-    device = _get_device(register_request.name, session) or _add_device(
-        register_request.name, session
-    )
-    _register_device(device, register_request.url, session)
-
     token = get_id_token(settings.register_url)
     httpx.post(
         settings.register_url,
         headers={"Authorization": f"Bearer {token}"},
         json={"name": register_request.name, "url": register_request.url},
     )
-
     return "OK"
-
-
-def _get_device(name: str, session: Session) -> models.Device | None:
-    statement = select(models.Device).where(models.Device.name == name)
-    return session.exec(statement).first()
-
-
-def _add_device(name: str, session: Session) -> models.Device:
-    device = models.Device(name=name, allowed_roles=[firebase.Role.ADMIN])
-    session.add(device)
-    session.commit()
-    session.refresh(device)
-    return device
-
-
-def _register_device(device: models.Device, url: str, session: Session):
-    register = models.Register(device_id=device.id, url=url)
-    session.add(register)
-    session.commit()
-    session.refresh(register)
