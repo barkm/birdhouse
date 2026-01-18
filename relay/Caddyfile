@@ -1,5 +1,0 @@
-{$DOMAIN} {
-        reverse_proxy {$SERVER} {
-            header_up X-External true
-        }
-}
