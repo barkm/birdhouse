@@ -181,13 +181,8 @@ def record_sensors(request: Request, session: Session = Depends(get_session)) ->
     for device, url in devices:
         try:
             response = httpx.get(f"{url}/sensor")
-        except httpx.HTTPError as e:
-            logging.error(f"Failed to get sensor data for {device.name}: {e}")
-            continue
-
-        try:
             response.raise_for_status()
-        except httpx.HTTPStatusError as e:
+        except (httpx.HTTPError, httpx.HTTPStatusError) as e:
             logging.error(f"Failed to get sensor data for {device.name}: {e}")
             continue
 
