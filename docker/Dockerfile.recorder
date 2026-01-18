@@ -7,10 +7,7 @@ COPY common/src common/src
 COPY recorder/pyproject.toml recorder/pyproject.toml
 COPY recorder/uv.lock recorder/uv.lock
 RUN uv --project recorder sync
-COPY recorder/main.py recorder/main.py
-COPY recorder/gcs.py recorder/gcs.py
-COPY recorder/timelapse.py recorder/timelapse.py
-COPY recorder/models.py recorder/models.py
+COPY recorder/src recorder/src
 ENV PYTHONUNBUFFERED=1
 ENV FASTAPI_MODE=run
-CMD uv --project recorder run fastapi ${FASTAPI_MODE} recorder/main.py --port $PORT --host 0.0.0.0
+CMD uv --project recorder run fastapi ${FASTAPI_MODE} recorder/src/main.py --port $PORT --host 0.0.0.0
