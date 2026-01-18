@@ -20,7 +20,7 @@ from pydantic import BaseModel
 from common.auth import firebase
 from common.auth import google
 from sqlalchemy import create_engine
-from sqlmodel import Session, text
+from sqlmodel import Session
 
 from gcs import upload_to_gcs
 from recorder.src.db import queries
@@ -110,10 +110,8 @@ class RegisterRequest(BaseModel):
 
 @app.get("/healthz", include_in_schema=False)
 def healthz(session: Session = Depends(get_session)) -> dict[str, str]:
-    try:
-        session.exec(text("SELECT 1")).first()  # type: ignore
-    except Exception:
-        raise HTTPException(status_code=503, detail="unhealthy")
+    if not queries.session_is_alive(session):
+        raise HTTPException(status_code=503, detail="Database connection not alive")
     return {"status": "ok"}
 
 

@@ -6,6 +6,14 @@ from common.auth import firebase
 import models
 
 
+def session_is_alive(session: Session) -> bool:
+    try:
+        session.exec(select(1)).first()
+        return True
+    except Exception:
+        return False
+
+
 def get_device(
     name: str, session: Session, role: firebase.Role | None = None
 ) -> models.Device | None:
