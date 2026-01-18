@@ -15,8 +15,9 @@
 
   tasks:
     - name: Install relay server
-      ansible.builtin.command: ./relay.sh install
+      ansible.builtin.command: ./relay.sh install $REGISTER_URL
       args:
         chdir: "{{ repo_dest }}/relay"
       environment:
         PATH: "{{ uv_binary_path | dirname }}:{{ ansible_env.PATH }}"
+        REGISTER_URL: "{{ lookup('env', 'REGISTER_URL') }}"
