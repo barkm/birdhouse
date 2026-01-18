@@ -55,7 +55,10 @@ def get_url(session: Session, name: str) -> str | None:
 
 
 def get_recordings(
-    session: Session, device_name: str, start: datetime | None, end: datetime | None
+    session: Session,
+    device_name: str,
+    start: datetime | None = None,
+    end: datetime | None = None,
 ) -> list[models.Recording]:
     statement = (
         select(models.Recording)
@@ -73,8 +76,8 @@ def get_sensors(
     session: Session,
     role: firebase.Role,
     device_name: str,
-    start: datetime | None,
-    end: datetime | None,
+    start: datetime | None = None,
+    end: datetime | None = None,
 ) -> list[models.Sensor]:
     statement = (
         select(models.Sensor)

@@ -370,7 +370,7 @@ def _create_and_upload_timelapse(
     session: Session,
 ) -> None:
     with NamedTemporaryFile(suffix=".mp4") as temp_file:
-        recordings = queries.get_recordings(session, device.name, None, None)
+        recordings = queries.get_recordings(session, device.name)
         if not recordings:
             logging.info(f"No recordings found for device {device}, skipping timelapse")
             return
