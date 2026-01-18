@@ -23,6 +23,7 @@ from sqlalchemy import create_engine
 from sqlmodel import Session, select, text
 
 from gcs import upload_to_gcs
+from recorder.src.db import queries
 from timelapse import make_timelapse
 import recorder.src.db.models as models
 
@@ -127,10 +128,10 @@ def register_device(
     logging.info(
         f"Registering device {register_request.name} with url {register_request.url}"
     )
-    device = _get_device(register_request.name, session) or _add_device(
+    device = queries.get_device(register_request.name, session) or queries.add_device(
         register_request.name, session
     )
-    _register_device(device, register_request.url, session)
+    queries.register_device(device, register_request.url, session)
     return {"status": "OK"}
 
 
@@ -138,12 +139,12 @@ def register_device(
 def forward(
     request: Request, name: str, path: str, session: Session = Depends(get_session)
 ) -> Response:
-    device = _get_device(name, session)
+    device = queries.get_device(name, session)
     if not device:
         raise HTTPException(status_code=404, detail="Name not registered")
     if request.state.role not in device.allowed_roles:
         raise HTTPException(status_code=403, detail="Forbidden")
-    base_url = _get_url(name, session)
+    base_url = queries.get_url(name, session)
     if not base_url:
         raise HTTPException(status_code=404, detail="Device not registered")
     url = f"{base_url}/{path}"
@@ -153,37 +154,6 @@ def forward(
         status_code=response.status_code,
         headers=dict(response.headers),
     )
-
-
-def _get_device(name: str, session: Session) -> models.Device | None:
-    statement = select(models.Device).where(models.Device.name == name)
-    return session.exec(statement).first()
-
-
-def _add_device(name: str, session: Session) -> models.Device:
-    device = models.Device(name=name, allowed_roles=[firebase.Role.ADMIN])
-    session.add(device)
-    session.commit()
-    session.refresh(device)
-    return device
-
-
-def _register_device(device: models.Device, url: str, session: Session):
-    register = models.Registration(device_id=device.id, url=url)
-    session.add(register)
-    session.commit()
-    session.refresh(register)
-
-
-def _get_url(name: str, session: Session) -> str | None:
-    statement = (
-        select(models.Registration)
-        .join(models.Device)
-        .where(models.Device.name == name)
-        .order_by(models.Registration.created_at.desc())  # type: ignore
-    )
-    register = session.exec(statement).first()
-    return register.url if register else None
 
 
 def _is_active(url: str) -> bool:
@@ -202,10 +172,10 @@ def list_devices(
         {
             "name": device.name,
             "active": _is_active(url)
-            if (url := _get_url(device.name, session))
+            if (url := queries.get_url(device.name, session))
             else False,
         }
-        for device in _get_devices(request.state.role, session)
+        for device in queries.get_devices(request.state.role, session)
     ]
 
 
@@ -213,8 +183,8 @@ def list_devices(
 def record_sensors(request: Request, session: Session = Depends(get_session)) -> dict:
     devices = [
         (d, url)
-        for d in _get_devices(request.state.role, session)
-        if (url := _get_url(d.name, session)) and _is_active(url)
+        for d in queries.get_devices(request.state.role, session)
+        if (url := queries.get_url(d.name, session)) and _is_active(url)
     ]
     for device, url in devices:
         try:
@@ -275,8 +245,8 @@ def record(
 ) -> dict:
     devices = [
         (d, url)
-        for d in _get_devices(request.state.role, session)
-        if (url := _get_url(d.name, session)) and _is_active(url)
+        for d in queries.get_devices(request.state.role, session)
+        if (url := queries.get_url(d.name, session)) and _is_active(url)
     ]
     for device, url in devices:
         try:
@@ -291,11 +261,6 @@ def record(
         except RuntimeError as e:
             logging.error(f"Failed to record for device {device.name}: {e}")
     return {}
-
-
-def _get_devices(role: firebase.Role, session: Session) -> list[models.Device]:
-    statement = select(models.Device).where(models.Device.allowed_roles.any(role))  # type: ignore
-    return list(session.exec(statement).all())
 
 
 def _record_and_save(
@@ -402,7 +367,7 @@ def create_timelapse(
     batch_size: int | None = None,
     session: Session = Depends(get_session),
 ) -> None:
-    devices = _get_devices(request.state.role, session)
+    devices = queries.get_devices(request.state.role, session)
     for device in devices:
         logging.info(f"Creating timelapse for device {device}")
         _create_and_upload_timelapse(
