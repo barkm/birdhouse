@@ -39,3 +39,13 @@ def get_url(name: str, session: Session) -> str | None:
     )
     register = session.exec(statement).first()
     return register.url if register else None
+
+
+def get_recordings(device_name: str, session: Session) -> list[models.Recording]:
+    return list(
+        session.exec(
+            select(models.Recording)
+            .join(models.Device)
+            .where(models.Device.name == device_name)
+        ).all()
+    )

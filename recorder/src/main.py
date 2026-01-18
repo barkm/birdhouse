@@ -397,11 +397,7 @@ def _create_and_upload_timelapse(
     session: Session,
 ) -> None:
     with NamedTemporaryFile(suffix=".mp4") as temp_file:
-        recordings = session.exec(
-            select(models.Recording)
-            .join(models.Device)
-            .where(models.Device.name == device)
-        ).all()
+        recordings = queries.get_recordings(device.name, session)
         if not recordings:
             logging.info(f"No recordings found for device {device}, skipping timelapse")
             return
