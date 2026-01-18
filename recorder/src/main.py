@@ -196,15 +196,13 @@ def record_sensors(request: Request, session: Session = Depends(get_session)) ->
         if not device:
             logging.error(f"Device {device} not found in database")
             continue
-        sensor = models.Sensor(
-            device_id=device.id,
-            temperature=sensor_data["temperature"],
-            humidity=sensor_data["humidity"],
-            cpu_temperature=sensor_data["cpu_temperature"],
+        queries.add_sensor(
+            session,
+            device,
+            sensor_data["temperature"],
+            sensor_data["humidity"],
+            sensor_data["cpu_temperature"],
         )
-        session.add(sensor)
-        session.commit()
-        session.refresh(sensor)
     return {}
 
 

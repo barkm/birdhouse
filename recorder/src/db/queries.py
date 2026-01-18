@@ -91,3 +91,22 @@ def get_sensors(
     if end:
         statement = statement.where(models.Sensor.created_at <= end)
     return list(session.exec(statement).all())
+
+
+def add_sensor(
+    session: Session,
+    device: models.Device,
+    temperature: float | None,
+    humidity: float | None,
+    cpu_temperature: float | None,
+) -> models.Sensor:
+    sensor = models.Sensor(
+        device_id=device.id,
+        temperature=temperature,
+        humidity=humidity,
+        cpu_temperature=cpu_temperature,
+    )
+    session.add(sensor)
+    session.commit()
+    session.refresh(sensor)
+    return sensor
