@@ -126,10 +126,10 @@ def register_device(
     logging.info(
         f"Registering device {register_request.name} with url {register_request.url}"
     )
-    device = queries.get_device(register_request.name, session) or queries.add_device(
-        register_request.name, session
+    device = queries.get_device(session, register_request.name) or queries.add_device(
+        session, register_request.name
     )
-    queries.register_device(device, register_request.url, session)
+    queries.register_device(session, device, register_request.url)
     return {"status": "OK"}
 
 
@@ -137,12 +137,12 @@ def register_device(
 def forward(
     request: Request, name: str, path: str, session: Session = Depends(get_session)
 ) -> Response:
-    device = queries.get_device(name, session)
+    device = queries.get_device(session, name)
     if not device:
         raise HTTPException(status_code=404, detail="Name not registered")
     if request.state.role not in device.allowed_roles:
         raise HTTPException(status_code=403, detail="Forbidden")
-    base_url = queries.get_url(name, session)
+    base_url = queries.get_url(session, name)
     if not base_url:
         raise HTTPException(status_code=404, detail="Device not registered")
     url = f"{base_url}/{path}"
@@ -170,10 +170,10 @@ def list_devices(
         {
             "name": device.name,
             "active": _is_active(url)
-            if (url := queries.get_url(device.name, session))
+            if (url := queries.get_url(session, device.name))
             else False,
         }
-        for device in queries.get_devices(request.state.role, session)
+        for device in queries.get_devices(session, request.state.role)
     ]
 
 
@@ -181,8 +181,8 @@ def list_devices(
 def record_sensors(request: Request, session: Session = Depends(get_session)) -> dict:
     devices = [
         (d, url)
-        for d in queries.get_devices(request.state.role, session)
-        if (url := queries.get_url(d.name, session)) and _is_active(url)
+        for d in queries.get_devices(session, request.state.role)
+        if (url := queries.get_url(session, d.name)) and _is_active(url)
     ]
     for device, url in devices:
         try:
@@ -222,7 +222,7 @@ def get_sensors(
     to: datetime | None = None,
     session: Session = Depends(get_session),
 ) -> Sequence[models.Sensor]:
-    return queries.get_sensors(request.state.role, device_name, from_, to, session)
+    return queries.get_sensors(session, request.state.role, device_name, from_, to)
 
 
 @app.get("/record")
@@ -231,8 +231,8 @@ def record(
 ) -> dict:
     devices = [
         (d, url)
-        for d in queries.get_devices(request.state.role, session)
-        if (url := queries.get_url(d.name, session)) and _is_active(url)
+        for d in queries.get_devices(session, request.state.role)
+        if (url := queries.get_url(session, d.name)) and _is_active(url)
     ]
     for device, url in devices:
         try:
@@ -323,11 +323,11 @@ def list_recordings(
     to: datetime | None = None,
     session: Session = Depends(get_session),
 ) -> Sequence[models.Recording]:
-    device_obj = queries.get_device(device, session, request.state.role)
+    device_obj = queries.get_device(session, device, request.state.role)
     if not device_obj:
         logging.error(f"Device {device} not found in database")
         return []
-    return queries.get_recordings(device_obj.name, from_, to, session)
+    return queries.get_recordings(session, device_obj.name, from_, to)
 
 
 @app.get("/timelapse")
@@ -340,7 +340,7 @@ def create_timelapse(
     batch_size: int | None = None,
     session: Session = Depends(get_session),
 ) -> None:
-    devices = queries.get_devices(request.state.role, session)
+    devices = queries.get_devices(session, request.state.role)
     for device in devices:
         logging.info(f"Creating timelapse for device {device}")
         _create_and_upload_timelapse(
@@ -370,7 +370,7 @@ def _create_and_upload_timelapse(
     session: Session,
 ) -> None:
     with NamedTemporaryFile(suffix=".mp4") as temp_file:
-        recordings = queries.get_recordings(device.name, None, None, session)
+        recordings = queries.get_recordings(session, device.name, None, None)
         if not recordings:
             logging.info(f"No recordings found for device {device}, skipping timelapse")
             return

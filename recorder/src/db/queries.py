@@ -15,7 +15,7 @@ def session_is_alive(session: Session) -> bool:
 
 
 def get_device(
-    name: str, session: Session, role: firebase.Role | None = None
+    session: Session, name: str, role: firebase.Role | None = None
 ) -> models.Device | None:
     statement = select(models.Device).where(models.Device.name == name)
     if role:
@@ -23,12 +23,12 @@ def get_device(
     return session.exec(statement).first()
 
 
-def get_devices(role: firebase.Role, session: Session) -> list[models.Device]:
+def get_devices(session: Session, role: firebase.Role) -> list[models.Device]:
     statement = select(models.Device).where(models.Device.allowed_roles.any(role))  # type: ignore
     return list(session.exec(statement).all())
 
 
-def add_device(name: str, session: Session) -> models.Device:
+def add_device(session: Session, name: str) -> models.Device:
     device = models.Device(name=name, allowed_roles=[firebase.Role.ADMIN])
     session.add(device)
     session.commit()
@@ -36,14 +36,14 @@ def add_device(name: str, session: Session) -> models.Device:
     return device
 
 
-def register_device(device: models.Device, url: str, session: Session):
+def register_device(session: Session, device: models.Device, url: str):
     register = models.Registration(device_id=device.id, url=url)
     session.add(register)
     session.commit()
     session.refresh(register)
 
 
-def get_url(name: str, session: Session) -> str | None:
+def get_url(session: Session, name: str) -> str | None:
     statement = (
         select(models.Registration)
         .join(models.Device)
@@ -55,7 +55,7 @@ def get_url(name: str, session: Session) -> str | None:
 
 
 def get_recordings(
-    device_name: str, start: datetime | None, end: datetime | None, session: Session
+    session: Session, device_name: str, start: datetime | None, end: datetime | None
 ) -> list[models.Recording]:
     statement = (
         select(models.Recording)
@@ -70,11 +70,11 @@ def get_recordings(
 
 
 def get_sensors(
+    session: Session,
     role: firebase.Role,
     device_name: str,
     start: datetime | None,
     end: datetime | None,
-    session: Session,
 ) -> list[models.Sensor]:
     statement = (
         select(models.Sensor)
