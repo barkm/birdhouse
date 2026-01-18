@@ -148,14 +148,6 @@ def forward(
     )
 
 
-def _is_active(url: str) -> bool:
-    try:
-        response = httpx.get(f"{url}/status", timeout=5.0)
-        return response.status_code == 200
-    except httpx.RequestError:
-        return False
-
-
 @app.get("/list_devices")
 def list_devices(
     request: Request, session: Session = Depends(get_session)
@@ -274,3 +266,11 @@ def create_timelapse(
             settings.recording_dir,
             session,
         )
+
+
+def _is_active(url: str) -> bool:
+    try:
+        response = httpx.get(f"{url}/status", timeout=5.0)
+        return response.status_code == 200
+    except httpx.RequestError:
+        return False
