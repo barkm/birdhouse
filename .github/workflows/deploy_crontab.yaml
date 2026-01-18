@@ -1,4 +1,4 @@
-name: Deploy camera server
+name: Deploy Crontab
 
 on:
   workflow_dispatch:
