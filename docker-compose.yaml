@@ -17,7 +17,8 @@ services:
     networks:
       - relay_net
     depends_on:
-      - recorder
+      recorder:
+        condition: service_healthy
     develop:
       watch:
         - action: sync
@@ -89,7 +90,7 @@ services:
       - PORT=8003
       - RECORDING_DIR=gs://birdhouse-recordings/dev
       - GOOGLE_APPLICATION_CREDENTIALS=/run/secrets/gcp_key
-      - DATABASE_URL=postgresql+psycopg://moja:moja@host.docker.internal:5432/moja
+      - DATABASE_URL=postgresql+psycopg://moja:moja@db:5432/moja
       - FASTAPI_MODE=dev
     env_file:
       - ./recorder/.env
@@ -103,7 +104,13 @@ services:
         - action: sync
           path: ./common/
           target: /app/common
-    
+    healthcheck:
+      test: ["CMD-SHELL", "curl -fsS http://localhost:8003/healthz || exit 1"]
+      interval: 2s
+      timeout: 2s
+      retries: 30
+      start_period: 5s
+
   db:
     image: postgres:17
     container_name: db
