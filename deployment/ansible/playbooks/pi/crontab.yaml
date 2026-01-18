@@ -19,4 +19,4 @@
         chdir: "{{ repo_dest }}/pi"
       environment:
         NAME: "{{ lookup('env', 'NAME') }}"
-        URL: "{{ lookup('env', 'URL') }}"
+        URL: "{{ lookup('env', 'REGISTER_ACCESS_URL') }}:{{ register_port }}"

@@ -5,8 +5,11 @@ relays:
 pis:
   hosts:
     birdhouse:
+      register_port: 8000
     house:
+      register_port: 8001
     zero:
+      register_port: 8002
 
 all:
   children:
