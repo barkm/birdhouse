@@ -224,19 +224,7 @@ def get_sensors(
     to: datetime | None = None,
     session: Session = Depends(get_session),
 ) -> Sequence[models.Sensor]:
-    statement = (
-        select(models.Sensor)
-        .join(models.Device)
-        .where(models.Device.name == device_name)
-        .where(models.Sensor.temperature is None or models.Sensor.temperature > -30)
-        .where(models.Device.allowed_roles.any(request.state.role))  # type: ignore
-    )
-    if from_:
-        statement = statement.where(models.Sensor.created_at >= from_)
-    if to:
-        statement = statement.where(models.Sensor.created_at <= to)
-    sensors = session.exec(statement).all()
-    return sensors
+    return queries.get_sensors(request.state.role, device_name, from_, to, session)
 
 
 @app.get("/record")

@@ -1,3 +1,4 @@
+from datetime import datetime
 from sqlmodel import Session, select
 
 from common.auth import firebase
@@ -49,3 +50,24 @@ def get_recordings(device_name: str, session: Session) -> list[models.Recording]
             .where(models.Device.name == device_name)
         ).all()
     )
+
+
+def get_sensors(
+    role: firebase.Role,
+    device_name: str,
+    start: datetime | None,
+    end: datetime | None,
+    session: Session,
+) -> list[models.Sensor]:
+    statement = (
+        select(models.Sensor)
+        .join(models.Device)
+        .where(models.Device.name == device_name)
+        .where(models.Sensor.temperature is None or models.Sensor.temperature > -30)
+        .where(models.Device.allowed_roles.any(role))  # type: ignore
+    )
+    if start:
+        statement = statement.where(models.Sensor.created_at >= start)
+    if end:
+        statement = statement.where(models.Sensor.created_at <= end)
+    return list(session.exec(statement).all())
