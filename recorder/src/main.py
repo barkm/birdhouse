@@ -20,7 +20,7 @@ from pydantic import BaseModel
 from common.auth import firebase
 from common.auth import google
 from sqlalchemy import create_engine
-from sqlmodel import Session, select, text
+from sqlmodel import Session, text
 
 from gcs import upload_to_gcs
 from recorder.src.db import queries
@@ -325,24 +325,11 @@ def list_recordings(
     to: datetime | None = None,
     session: Session = Depends(get_session),
 ) -> Sequence[models.Recording]:
-    device_obj = session.exec(
-        select(models.Device)
-        .where(models.Device.name == device)
-        .where(
-            models.Device.allowed_roles.any(request.state.role)  # type: ignore
-        )
-    ).first()
+    device_obj = queries.get_device(device, session, request.state.role)
     if not device_obj:
         logging.error(f"Device {device} not found in database")
         return []
-    statement = select(models.Recording).where(
-        models.Recording.device_id == device_obj.id
-    )
-    if from_:
-        statement = statement.where(models.Recording.created_at >= from_)
-    if to:
-        statement = statement.where(models.Recording.created_at <= to)
-    return session.exec(statement).all()
+    return queries.get_recordings(device_obj.name, from_, to, session)
 
 
 @app.get("/timelapse")
@@ -385,7 +372,7 @@ def _create_and_upload_timelapse(
     session: Session,
 ) -> None:
     with NamedTemporaryFile(suffix=".mp4") as temp_file:
-        recordings = queries.get_recordings(device.name, session)
+        recordings = queries.get_recordings(device.name, None, None, session)
         if not recordings:
             logging.info(f"No recordings found for device {device}, skipping timelapse")
             return

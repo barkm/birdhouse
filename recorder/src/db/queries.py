@@ -6,8 +6,12 @@ from common.auth import firebase
 import models
 
 
-def get_device(name: str, session: Session) -> models.Device | None:
+def get_device(
+    name: str, session: Session, role: firebase.Role | None = None
+) -> models.Device | None:
     statement = select(models.Device).where(models.Device.name == name)
+    if role:
+        statement = statement.where(models.Device.allowed_roles.any(role))  # type: ignore
     return session.exec(statement).first()
 
 
@@ -42,14 +46,19 @@ def get_url(name: str, session: Session) -> str | None:
     return register.url if register else None
 
 
-def get_recordings(device_name: str, session: Session) -> list[models.Recording]:
-    return list(
-        session.exec(
-            select(models.Recording)
-            .join(models.Device)
-            .where(models.Device.name == device_name)
-        ).all()
+def get_recordings(
+    device_name: str, start: datetime | None, end: datetime | None, session: Session
+) -> list[models.Recording]:
+    statement = (
+        select(models.Recording)
+        .join(models.Device)
+        .where(models.Device.name == device_name)
     )
+    if start:
+        statement = statement.where(models.Recording.created_at >= start)
+    if end:
+        statement = statement.where(models.Recording.created_at <= end)
+    return list(session.exec(statement).all())
 
 
 def get_sensors(
