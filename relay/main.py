@@ -17,7 +17,7 @@ logging.basicConfig(
 
 
 class Settings(BaseSettings):
-    register_url: str = "http://localhost:8003/register"
+    recorder_url: str = "http://localhost:8003"
 
     model_config = SettingsConfigDict(env_file=".env", extra="ignore")
 
@@ -54,9 +54,9 @@ def register_device(register_request: RegisterRequest) -> Response:
     logging.info(
         f"Registering device {register_request.name} with url {register_request.url}"
     )
-    token = get_id_token(settings.register_url)
+    token = get_id_token(settings.recorder_url)
     response = httpx.post(
-        settings.register_url,
+        f"{settings.recorder_url}/register",
         headers={"Authorization": f"Bearer {token}"},
         json={"name": register_request.name, "url": register_request.url},
     )
