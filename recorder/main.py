@@ -20,7 +20,7 @@ from pydantic import BaseModel
 from common.auth import firebase
 from common.auth import google
 from sqlalchemy import create_engine
-from sqlmodel import Session, select
+from sqlmodel import Session, select, text
 
 from gcs import upload_to_gcs
 from timelapse import make_timelapse
@@ -60,6 +60,9 @@ def get_session():
 
 @app.middleware("http")
 async def auth_middleware(request: Request, call_next):
+    if request.url.path == "/healthz":
+        return await call_next(request)
+
     headers = dict(request.headers)
 
     verifiers = [
@@ -102,6 +105,15 @@ app.add_middleware(
 class RegisterRequest(BaseModel):
     name: str
     url: str
+
+
+@app.get("/healthz", include_in_schema=False)
+def healthz(session: Session = Depends(get_session)) -> dict[str, str]:
+    try:
+        session.exec(text("SELECT 1")).first()  # type: ignore
+    except Exception:
+        raise HTTPException(status_code=503, detail="unhealthy")
+    return {"status": "ok"}
 
 
 @app.post("/register")
