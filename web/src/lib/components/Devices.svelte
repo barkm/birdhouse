@@ -3,6 +3,7 @@
 	import { checkDeviceAvailability } from '$lib/recorder';
 	import { getStatus } from '$lib/recorder';
 	import type { User } from 'firebase/auth';
+	import { onMount } from 'svelte';
 
 	interface Props {
 		user: User;
@@ -10,43 +11,47 @@
 
 	const { user }: Props = $props();
 
-	const recorded_devices_promise = $derived(listRecordedDevices(user));
-	const statuses_promise = $derived(
-		recorded_devices_promise.then((active) => {
-			return Promise.all(
-				active.map((device) =>
-					getStatus(user, device.name).then((status) => ({
-						name: device.name,
-						active: device.active,
-						status: status.status
-					}))
-				)
-			);
-		})
-	);
+	let devices_with_locality: {
+		name: string;
+		active: boolean;
+		status: string | null;
+		local: boolean;
+	}[] | null = $state(null);
 
-	const devices_with_locality_promise = $derived(
-		statuses_promise.then((devices) => {
-			return Promise.all(
-				devices.map(async (device) => ({
-					...device,
-					local: await checkDeviceAvailability(device.name)
-				}))
-			);
-		})
-	);
+	const load = async () => {
+		const recorded_devices = await listRecordedDevices(user);
+		const statuses = await Promise.all(
+			recorded_devices.map(async (device) => {
+				const status = await getStatus(user, device.name);
+				return {
+					name: device.name,
+					active: device.active,
+					status: status.status
+				};
+			})
+		);
+		devices_with_locality = await Promise.all(
+			statuses.map(async (device) => ({
+				...device,
+				local: await checkDeviceAvailability(device.name)
+			}))
+		);
+	};
+
+	onMount(load)
+
 </script>
 
 <div class="flex flex-col gap-4">
-	{#await devices_with_locality_promise}
+	{#if devices_with_locality === null}
 		{#each Array(3) as _}
 			<div class="animate-pulse rounded-lg bg-gray-100 p-4">
 				<div class="h-6 w-1/3 rounded bg-gray-300"></div>
 				<div class="mt-2 h-4 w-1/2 rounded bg-gray-300"></div>
 			</div>
 		{/each}
-	{:then devices}
-		{#each devices as device}
+	{:else}
+		{#each devices_with_locality as device}
 			<div class="rounded-lg border border-gray-300 p-4">
 				<div class="flex items-center justify-between">
 					<div class="text-xl font-semibold">{device.name}</div>
@@ -65,5 +70,5 @@
 				{/if}
 			</div>
 		{/each}
-	{/await}
+	{/if}
 </div>
