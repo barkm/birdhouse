@@ -19,7 +19,7 @@
       args:
         chdir: "{{ repo_dest }}/pi"
       environment:
-        PATH: "{{ uv_binary_path | dirname }}:{{ ansible_env.PATH }}"
+        PATH: "{{ uv_binary_path | dirname }}:{{ ansible_facts['env'].PATH }}"
         RELAY_HOST: "{{ lookup('env', 'RELAY_HOST') }}"
         SSH_PORT: "{{ lookup('env', 'SSH_PORT') }}"
         SERVER_PORT: "{{ lookup('env', 'SERVER_PORT') }}"

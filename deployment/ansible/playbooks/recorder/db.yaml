@@ -19,4 +19,4 @@
       args:
         chdir: "{{ repo_dest }}/recorder"
       environment:
-        PATH: "{{ uv_binary_path | dirname }}:{{ ansible_env.PATH }}"
+        PATH: "{{ uv_binary_path | dirname }}:{{ ansible_facts['env'].PATH }}"

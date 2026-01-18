@@ -19,5 +19,5 @@
       args:
         chdir: "{{ repo_dest }}/relay"
       environment:
-        PATH: "{{ uv_binary_path | dirname }}:{{ ansible_env.PATH }}"
+        PATH: "{{ uv_binary_path | dirname }}:{{ ansible_facts['env'].PATH }}"
         RECORDER_URL: "{{ lookup('env', 'RECORDER_URL') }}"

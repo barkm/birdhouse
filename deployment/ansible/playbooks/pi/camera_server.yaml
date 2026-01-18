@@ -19,5 +19,5 @@
       args:
         chdir: "{{ repo_dest }}/pi"
       environment:
-        PATH: "{{ uv_binary_path | dirname }}:{{ ansible_env.PATH }}"
+        PATH: "{{ uv_binary_path | dirname }}:{{ ansible_facts['env'].PATH }}"
         NAME: "{{ inventory_hostname }}"
