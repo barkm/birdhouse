@@ -24,7 +24,7 @@ from sqlmodel import Session, select, text
 
 from gcs import upload_to_gcs
 from timelapse import make_timelapse
-import models
+import recorder.src.db.models as models
 
 logging.basicConfig(
     level=logging.INFO,
