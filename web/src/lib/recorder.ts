@@ -64,6 +64,20 @@ export const listDevices = async (user: User): Promise<{ name: string; allowed_r
 	return response.json();
 };
 
+
+export const setDeviceRoles = async (
+	user: User,
+	device_name: string,
+	roles: Role[]
+): Promise<void> => {
+	const response = await authorizedRequest(user, PUBLIC_RECORDER_URL, `set_roles/${device_name}`, 'POST', 
+		roles
+	, {
+		'Content-Type': 'application/json'
+	});
+	await response.json();
+}
+
 export const getStatus = async (user: User, device_name: string): Promise<{ status: string }> => {
 	const { response } = await localRequestWithRelayFallback(user, device_name, `/status`);
 	return response.json();

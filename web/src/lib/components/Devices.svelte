@@ -1,9 +1,11 @@
 <script lang="ts">
-	import { listDevices as listRecordedDevices } from '$lib/recorder';
+	import { Role } from '$lib/firebase';
+	import { listDevices as listRecordedDevices, setDeviceRoles } from '$lib/recorder';
 	import { checkDeviceAvailability } from '$lib/recorder';
 	import { getStatus } from '$lib/recorder';
 	import type { User } from 'firebase/auth';
 	import { onMount } from 'svelte';
+	import Select from 'svelte-select'
 
 	interface Props {
 		user: User;
@@ -13,7 +15,8 @@
 
 	let devices_with_locality: {
 		name: string;
-		allowed_roles: string[];
+		allowed_roles: Role[];
+		ui_allowed_roles?: {value: Role, label: string}[];
 		active: boolean;
 		status: string;
 		local: boolean;
@@ -26,6 +29,7 @@
 				const status = await getStatus(user, device.name);
 				return {
 					...device,
+					ui_allowed_roles: device.allowed_roles.map(role => ({ value: role, label: role })),
 					status: status.status
 				};
 			})
@@ -39,6 +43,8 @@
 	};
 
 	onMount(load)
+
+	$inspect(devices_with_locality);
 
 </script>
 
@@ -68,9 +74,27 @@
 				{#if device.active}
 					<div class="mt-2 text-gray-600">Status: {device.status ?? 'Okänd'}</div>
 				{/if}
-				<div class="text-gray-600">
-					Roller: {device.allowed_roles.join(', ')}
-				</div>
+				<form class="mt-4 flex flex-row items-center gap-4">
+					<Select
+						class="mt-4"
+						items={Object.values(Role).map(role => ({ value: role, label: role }))}
+						bind:value={device.ui_allowed_roles}
+						multiple
+					/>
+					<button
+						type="button"
+						class="rounded border hover:bg-gray-100 disabled:opacity-25 px-4 py-2"
+						disabled={!device.ui_allowed_roles || device.ui_allowed_roles.map(role => role.value).toString() === device.allowed_roles.toString()}
+						onclick={() => {
+							if (!device.ui_allowed_roles) return;
+							setDeviceRoles(user, device.name, device.ui_allowed_roles.map(role => role.value));
+							device.allowed_roles = device.ui_allowed_roles.map(role => role.value);
+						}}
+						aria-label="Spara"
+					>
+						Spara
+					</button>
+				</form>
 			</div>
 		{/each}
 	{/if}
