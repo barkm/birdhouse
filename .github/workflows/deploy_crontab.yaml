@@ -1,0 +1,19 @@
+name: Deploy camera server
+
+on:
+  workflow_dispatch:
+  push:
+    branches: main
+    paths:
+      - pi/crontab.sh
+      - pi/crontab.txt
+      - ansible/playbooks/pi/crontab.yaml
+      - ./github/workflows/deploy_crontab.yaml
+
+
+jobs:
+  deploy:
+    uses: ./.github/workflows/run_ansible.yaml
+    with:
+      command: uv run ansible-playbook -i ansible/inventory.yaml ansible/playbooks/pi/crontab.yaml
+    secrets: inherit
