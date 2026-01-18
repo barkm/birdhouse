@@ -4,9 +4,9 @@
   become: false
 
   vars:
-    uv_binary_path: "{{ ansible_facts["user_dir"] }}/.local/bin/uv"
+    uv_binary_path: "{{ ansible_facts['user_dir'] }}/.local/bin/uv"
     repo_url: "git@github.com:barkm/birdhouse.git"
-    repo_dest: "{{ ansible_facts["user_dir"] }}/code/birdhouse"
+    repo_dest: "{{ ansible_facts['user_dir'] }}/code/birdhouse"
     repo_version: "main"
 
   pre_tasks:
