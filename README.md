@@ -5,7 +5,7 @@
 Run containers with
 
 ```
-docker compose up
+GOOGLE_ID_TOKEN=$(gcloud auth print-identity-token) docker compose up
 ```
 
 then go to `http://localhost:8004`
