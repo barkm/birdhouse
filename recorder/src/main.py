@@ -1,8 +1,6 @@
 from contextlib import asynccontextmanager
-import os
 from pathlib import Path
 from datetime import datetime
-import shutil
 from subprocess import CalledProcessError
 from tempfile import NamedTemporaryFile
 import logging
@@ -24,7 +22,7 @@ from sqlmodel import Session
 
 from gcs import upload_to_gcs
 from recorder.src.db import queries
-from recorder.src.timelapse.timelapse import make_timelapse
+from recorder.src.timelapse.create_save import create_and_save_timelapse
 import recorder.src.db.models as models
 
 logging.basicConfig(
@@ -343,7 +341,7 @@ def create_timelapse(
     devices = queries.get_devices(session, request.state.role)
     for device in devices:
         logging.info(f"Creating timelapse for device {device}")
-        _create_and_upload_timelapse(
+        create_and_save_timelapse(
             start,
             end,
             device,
@@ -357,46 +355,3 @@ def create_timelapse(
 
 def _get_local_recording_url(url: str, recording_dir: str, path: Path) -> str:
     return f"{url}recording/{path.relative_to(recording_dir)}"
-
-
-def _create_and_upload_timelapse(
-    start: datetime,
-    end: datetime,
-    device: models.Device,
-    duration: int | None,
-    fade_duration: float | None,
-    batch_size: int | None,
-    recording_dir: str,
-    session: Session,
-) -> None:
-    with NamedTemporaryFile(suffix=".mp4") as temp_file:
-        recordings = queries.get_recordings(session, device.name)
-        if not recordings:
-            logging.info(f"No recordings found for device {device}, skipping timelapse")
-            return
-        else:
-            logging.info(f"Found {len(recordings)} recordings for device {device}")
-        recordings_in_range = [r for r in recordings if start <= r.created_at <= end]
-        logging.info(
-            f"Found {len(recordings_in_range)} recordings for device {device} in range {start} - {end}"
-        )
-        urls = [r.url for r in recordings_in_range]
-        times = [r.created_at for r in recordings_in_range]
-        make_timelapse(
-            urls,
-            times,
-            Path(temp_file.name),
-            total_time=duration,
-            fade_duration=fade_duration,
-            batch_size=batch_size,
-        )
-        save_path = os.path.join(
-            recording_dir,
-            "timelapses",
-            device.name,
-            f"{start.isoformat()}_{end.isoformat()}.mp4",
-        )
-        if recording_dir.startswith("gs://"):
-            upload_to_gcs(temp_file.name, str(save_path))
-        else:
-            shutil.move(temp_file.name, save_path)
