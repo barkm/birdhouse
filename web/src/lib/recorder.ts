@@ -1,6 +1,7 @@
 import type { User } from 'firebase/auth';
 import { authorizedRequest } from './request';
 import { PUBLIC_RECORDER_URL } from '$env/static/public';
+import type { Role } from './firebase';
 
 export interface Recording {
 	url: string;
@@ -58,7 +59,7 @@ export const getSensorData = async (
 	}));
 };
 
-export const listDevices = async (user: User): Promise<{ name: string; active: boolean }[]> => {
+export const listDevices = async (user: User): Promise<{ name: string; allowed_roles: Role[]; active: boolean }[]> => {
 	const response = await authorizedRequest(user, PUBLIC_RECORDER_URL, 'list_devices');
 	return response.json();
 };

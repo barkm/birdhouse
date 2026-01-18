@@ -13,8 +13,9 @@
 
 	let devices_with_locality: {
 		name: string;
+		allowed_roles: string[];
 		active: boolean;
-		status: string | null;
+		status: string;
 		local: boolean;
 	}[] | null = $state(null);
 
@@ -24,8 +25,7 @@
 			recorded_devices.map(async (device) => {
 				const status = await getStatus(user, device.name);
 				return {
-					name: device.name,
-					active: device.active,
+					...device,
 					status: status.status
 				};
 			})
@@ -68,6 +68,9 @@
 				{#if device.active}
 					<div class="mt-2 text-gray-600">Status: {device.status ?? 'Okänd'}</div>
 				{/if}
+				<div class="text-gray-600">
+					Roller: {device.allowed_roles.join(', ')}
+				</div>
 			</div>
 		{/each}
 	{/if}
