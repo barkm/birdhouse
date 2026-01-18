@@ -151,10 +151,11 @@ def forward(
 @app.get("/list_devices")
 def list_devices(
     request: Request, session: Session = Depends(get_session)
-) -> list[dict[str, str | bool]]:
+) -> list[dict[str, str | bool | list[str]]]:
     return [
         {
             "name": device.name,
+            "allowed_roles": [role.value for role in device.allowed_roles],
             "active": _is_active(url)
             if (url := queries.get_url(session, device.name))
             else False,
