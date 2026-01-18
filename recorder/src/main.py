@@ -185,12 +185,7 @@ def record_sensors(request: Request, session: Session = Depends(get_session)) ->
         except (httpx.HTTPError, httpx.HTTPStatusError) as e:
             logging.error(f"Failed to get sensor data for {device.name}: {e}")
             continue
-
         sensor_data = response.json()
-
-        if not device:
-            logging.error(f"Device {device} not found in database")
-            continue
         queries.add_sensor(
             session,
             device,
