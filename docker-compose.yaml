@@ -11,7 +11,7 @@ services:
       - PORT=8001
       - GOOGLE_APPLICATION_CREDENTIALS=/run/secrets/gcp_key
       - FASTAPI_MODE=dev
-      - REGISTER_URL=http://recorder:8003/register
+      - RECORDER_URL=http://recorder:8003
     env_file:
       - ./relay/.env
     networks:
