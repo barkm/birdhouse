@@ -24,7 +24,7 @@ from sqlmodel import Session
 
 from gcs import upload_to_gcs
 from recorder.src.db import queries
-from timelapse import make_timelapse
+from recorder.src.timelapse.timelapse import make_timelapse
 import recorder.src.db.models as models
 
 logging.basicConfig(
