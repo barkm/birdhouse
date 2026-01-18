@@ -93,9 +93,6 @@ services:
       - FASTAPI_MODE=dev
     env_file:
       - ./recorder/.env
-    depends_on:
-      - relay
-      - pi
     networks:
       - relay_net
     develop:
