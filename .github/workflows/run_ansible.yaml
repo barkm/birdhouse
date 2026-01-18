@@ -71,3 +71,5 @@ jobs:
 
       - name: Run
         run: ${{ inputs.command }}
+        env:
+          RECORDER_URL: ${{ secrets.RECORDER_URL }}
