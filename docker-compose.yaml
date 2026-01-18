@@ -113,11 +113,12 @@ services:
     restart: unless-stopped
     environment:
       POSTGRES_PASSWORD: db
+      POSTGRES_USER: moja
+      POSTGRES_DB: moja
     ports:
       - "5432:5432"
     volumes:
       - db-data:/var/lib/postgresql/data
-      - ./deployment/initdb:/docker-entrypoint-initdb.d
     networks:
       - relay_net
 
