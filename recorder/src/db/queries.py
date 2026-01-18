@@ -36,6 +36,15 @@ def add_device(session: Session, name: str) -> models.Device:
     return device
 
 
+def set_device_roles(
+    session: Session, device: models.Device, roles: list[firebase.Role]
+):
+    device.allowed_roles = roles
+    session.add(device)
+    session.commit()
+    session.refresh(device)
+
+
 def register_device(session: Session, device: models.Device, url: str):
     register = models.Registration(device_id=device.id, url=url)
     session.add(register)

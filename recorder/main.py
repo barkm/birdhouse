@@ -164,6 +164,22 @@ def list_devices(
     ]
 
 
+@app.post("/set_roles/{device_name}")
+def set_device_roles(
+    request: Request,
+    device_name: str,
+    roles: list[firebase.Role],
+    session: Session = Depends(get_session),
+) -> dict[str, str]:
+    if request.state.role != firebase.Role.ADMIN:
+        raise HTTPException(status_code=403, detail="Unauthorized")
+    device = queries.get_device(session, device_name)
+    if not device:
+        raise HTTPException(status_code=404, detail="Device not found")
+    queries.set_device_roles(session, device, roles)
+    return {"status": "OK"}
+
+
 @app.get("/record_sensors")
 def record_sensors(request: Request, session: Session = Depends(get_session)) -> dict:
     devices = [
