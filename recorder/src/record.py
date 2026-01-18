@@ -8,8 +8,8 @@ import logging
 from pathlib import Path
 from subprocess import CalledProcessError
 
-import recorder.src.db.models as models
-from recorder.src.gcs import upload_to_gcs
+import src.db.models as models
+from src.gcs import upload_to_gcs
 
 from sqlmodel import Session
 

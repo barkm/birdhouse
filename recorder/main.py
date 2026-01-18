@@ -16,10 +16,10 @@ from common.auth import google
 from sqlalchemy import create_engine
 from sqlmodel import Session
 
-from recorder.src.db import queries
-from recorder.src.record import record_and_save
-from recorder.src.timelapse.create_save import create_and_save_timelapse
-import recorder.src.db.models as models
+from src.record import record_and_save
+from src.timelapse.create_save import create_and_save_timelapse
+import src.db.models as models
+import src.db.queries as queries
 
 logging.basicConfig(
     level=logging.INFO,

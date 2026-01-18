@@ -1,7 +1,6 @@
-import recorder.src.db.models as models
-from recorder.src.db import queries
-from recorder.src.gcs import upload_to_gcs
-from recorder.src.timelapse.timelapse import make_timelapse
+from src.db import queries, models
+from src.gcs import upload_to_gcs
+from src.timelapse.timelapse import make_timelapse
 
 
 from sqlmodel import Session

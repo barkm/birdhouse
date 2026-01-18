@@ -3,7 +3,7 @@ from sqlmodel import Session, select
 
 from common.auth import firebase
 
-import models
+import src.db.models as models
 
 
 def session_is_alive(session: Session) -> bool:
