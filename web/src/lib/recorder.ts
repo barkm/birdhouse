@@ -98,7 +98,7 @@ export const localRequestWithRelayFallback = async (
 ): Promise<{ response: Response; base_url: string }> => {
 	const base_url = (await checkDeviceAvailability(device_name))
 		? `https://${device_name}.local`
-		: `${PUBLIC_RECORDER_URL}/get/${device_name}`;
+		: `${PUBLIC_RECORDER_URL}get/${device_name}`;
 	const response = await authorizedRequest(user, base_url, endpoint);
 	return { response, base_url };
 };
