@@ -1,11 +1,13 @@
 import logging
+import os
 
-from common.auth.google import get_id_token
 import httpx
-from fastapi import FastAPI, Response
+from fastapi import FastAPI, HTTPException, Response
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic_settings import BaseSettings, SettingsConfigDict
 from pydantic import BaseModel
+from google.oauth2 import id_token
+from google.auth.transport import requests
 
 
 logging.basicConfig(
@@ -45,7 +47,7 @@ def register_device(register_request: RegisterRequest) -> Response:
     logging.info(
         f"Registering device {register_request.name} with url {register_request.url}"
     )
-    token = get_id_token(settings.recorder_url)
+    token = _get_id_token(settings.recorder_url)
     response = httpx.post(
         f"{settings.recorder_url}/register",
         headers={"Authorization": f"Bearer {token}"},
@@ -56,3 +58,12 @@ def register_device(register_request: RegisterRequest) -> Response:
         status_code=response.status_code,
         headers=response.headers,
     )
+
+
+def _get_id_token(audience: str) -> str:
+    token = os.getenv("GOOGLE_ID_TOKEN") or id_token.fetch_id_token(
+        requests.Request(), audience
+    )
+    if not token:
+        raise HTTPException(status_code=500, detail="Failed to fetch id token")
+    return token
