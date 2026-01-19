@@ -1,9 +1,8 @@
 import logging
 
 from common.auth.google import get_id_token
-from fastapi.responses import JSONResponse
 import httpx
-from fastapi import FastAPI, Request, Response
+from fastapi import FastAPI, Response
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic_settings import BaseSettings, SettingsConfigDict
 from pydantic import BaseModel
@@ -26,14 +25,6 @@ settings = Settings()
 
 
 app = FastAPI()
-
-
-@app.middleware("http")
-async def auth_middleware(request: Request, call_next):
-    headers = dict(request.headers)
-    if "x-external" in headers:
-        return JSONResponse({"detail": "Forbidden"}, status_code=403)
-    return await call_next(request)
 
 
 app.add_middleware(
