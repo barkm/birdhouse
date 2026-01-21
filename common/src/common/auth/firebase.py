@@ -36,19 +36,3 @@ def verify(token) -> tuple[str, str]:
         logger.exception(f"Token verification failed: {e}")
         raise AuthException("Token verification failed", status_code=401)
     return claims["uid"], claims["email"]
-
-
-def get_role(claims: dict) -> Role | None:
-    role = claims.get("role", None)
-    return Role(role) if role else None
-
-
-def set_role(uid: str, role: Role | None):
-    _set_claim(uid, "role", role.value if role else None)
-
-
-def _set_claim(uid: str, key: str, value):
-    user = auth.get_user(uid)
-    claims = user.custom_claims or {}
-    claims[key] = value
-    auth.set_custom_user_claims(uid, claims)
