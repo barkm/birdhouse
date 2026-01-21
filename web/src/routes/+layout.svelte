@@ -1,6 +1,7 @@
 <script lang="ts">
 	import './layout.css';
-	import { loginWithGoogle, logout, user, isLoading, Role } from '$lib/firebase';
+	import { loginWithGoogle, logout, user, isLoading } from '$lib/firebase';
+	import { Role } from '$lib/recorder';
 	import Navbar from '$lib/components/Navbar.svelte';
 	import AnimatedKobbar from '$lib/components/loader/AnimatedKobbar.svelte';
 	import { getRole } from '$lib/recorder';

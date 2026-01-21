@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { Role } from '$lib/firebase';
+		import { Role } from '$lib/recorder';
 	import { listDevices as listRecordedDevices, setDeviceRoles } from '$lib/recorder';
 	import { checkDeviceAvailability } from '$lib/recorder';
 	import { getStatus } from '$lib/recorder';

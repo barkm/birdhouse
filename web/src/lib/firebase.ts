@@ -10,11 +10,6 @@ import {
 } from 'firebase/auth';
 import { writable } from 'svelte/store';
 
-export enum Role {
-	ADMIN = 'admin',
-	USER = 'user'
-}
-
 const firebaseConfig = {
 	apiKey: PUBLIC_FIREBASE_API_KEY,
 	authDomain: PUBLIC_FIREBASE_AUTH_DOMAIN
