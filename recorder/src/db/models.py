@@ -25,7 +25,7 @@ class User(SQLModel, table=True):
         sa_column=Column(DateTime(timezone=True), nullable=False),
     )
     uid: str = Field(index=True, unique=True)
-    email: str | None = Field(default=None, index=True, unique=True)
+    email: str | None = Field(default=None, index=True)
     role: Role | None = Field(
         default=None,
         sa_column=Column(role_enum, nullable=True),
