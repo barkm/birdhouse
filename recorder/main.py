@@ -119,7 +119,6 @@ def healthz(session: Session = Depends(get_session)) -> dict[str, str]:
 
 @app.post("/register")
 def register_device(
-    request: Request,
     register_request: RegisterRequest,
     session: Session = Depends(get_session),
     role: firebase.Role = Depends(get_role),
@@ -163,7 +162,6 @@ def forward(
 
 @app.get("/list_devices")
 def list_devices(
-    request: Request,
     session: Session = Depends(get_session),
     role: firebase.Role = Depends(get_role),
 ) -> list[dict[str, str | bool | list[str]]]:
@@ -181,7 +179,6 @@ def list_devices(
 
 @app.post("/set_roles/{device_name}")
 def set_device_roles(
-    request: Request,
     device_name: str,
     roles: list[firebase.Role],
     session: Session = Depends(get_session),
@@ -198,7 +195,6 @@ def set_device_roles(
 
 @app.get("/record_sensors")
 def record_sensors(
-    request: Request,
     session: Session = Depends(get_session),
     role: firebase.Role = Depends(get_role),
 ) -> dict:
@@ -227,7 +223,6 @@ def record_sensors(
 
 @app.get("/sensors/{device_name}")
 def get_sensors(
-    request: Request,
     device_name: str,
     from_: Annotated[datetime | None, Query(alias="from")] = None,
     to: datetime | None = None,
@@ -271,7 +266,6 @@ def get_recording(path: str, _: firebase.Role = Depends(get_role)) -> FileRespon
 
 @app.get("/recordings/{device}")
 def list_recordings(
-    request: Request,
     device: str,
     from_: Annotated[datetime | None, Query(alias="from")] = None,
     to: datetime | None = None,
@@ -287,7 +281,6 @@ def list_recordings(
 
 @app.get("/timelapse")
 def create_timelapse(
-    request: Request,
     start: datetime,
     end: datetime,
     duration: int | None = None,
