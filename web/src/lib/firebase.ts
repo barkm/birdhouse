@@ -27,5 +27,3 @@ onAuthStateChanged(auth, (u: User | null) => {
 
 export const loginWithGoogle = () => signInWithPopup(auth, new GoogleAuthProvider());
 export const logout = () => signOut(auth);
-
-

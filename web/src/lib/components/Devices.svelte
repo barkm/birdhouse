@@ -1,11 +1,11 @@
 <script lang="ts">
-		import { Role } from '$lib/recorder';
+	import { Role } from '$lib/recorder';
 	import { listDevices as listRecordedDevices, setDeviceRoles } from '$lib/recorder';
 	import { checkDeviceAvailability } from '$lib/recorder';
 	import { getStatus } from '$lib/recorder';
 	import type { User } from 'firebase/auth';
 	import { onMount } from 'svelte';
-	import Select from 'svelte-select'
+	import Select from 'svelte-select';
 
 	interface Props {
 		user: User;
@@ -13,14 +13,16 @@
 
 	const { user }: Props = $props();
 
-	let devices_with_locality: {
-		name: string;
-		allowed_roles: Role[];
-		ui_allowed_roles?: {value: Role, label: string}[];
-		active: boolean;
-		status: string;
-		local: boolean;
-	}[] | null = $state(null);
+	let devices_with_locality:
+		| {
+				name: string;
+				allowed_roles: Role[];
+				ui_allowed_roles?: { value: Role; label: string }[];
+				active: boolean;
+				status: string;
+				local: boolean;
+		  }[]
+		| null = $state(null);
 
 	const load = async () => {
 		const recorded_devices = await listRecordedDevices(user);
@@ -29,7 +31,7 @@
 				const status = await getStatus(user, device.name);
 				return {
 					...device,
-					ui_allowed_roles: device.allowed_roles.map(role => ({ value: role, label: role })),
+					ui_allowed_roles: device.allowed_roles.map((role) => ({ value: role, label: role })),
 					status: status.status
 				};
 			})
@@ -42,10 +44,9 @@
 		);
 	};
 
-	onMount(load)
+	onMount(load);
 
 	$inspect(devices_with_locality);
-
 </script>
 
 <div class="flex flex-col gap-4">
@@ -77,18 +78,24 @@
 				<form class="mt-4 flex flex-row items-center gap-4">
 					<Select
 						class="mt-4"
-						items={Object.values(Role).map(role => ({ value: role, label: role }))}
+						items={Object.values(Role).map((role) => ({ value: role, label: role }))}
 						bind:value={device.ui_allowed_roles}
 						multiple
 					/>
 					<button
 						type="button"
-						class="rounded border hover:bg-gray-100 disabled:opacity-25 px-4 py-2"
-						disabled={!device.ui_allowed_roles || device.ui_allowed_roles.map(role => role.value).toString() === device.allowed_roles.toString()}
+						class="rounded border px-4 py-2 hover:bg-gray-100 disabled:opacity-25"
+						disabled={!device.ui_allowed_roles ||
+							device.ui_allowed_roles.map((role) => role.value).toString() ===
+								device.allowed_roles.toString()}
 						onclick={() => {
 							if (!device.ui_allowed_roles) return;
-							setDeviceRoles(user, device.name, device.ui_allowed_roles.map(role => role.value));
-							device.allowed_roles = device.ui_allowed_roles.map(role => role.value);
+							setDeviceRoles(
+								user,
+								device.name,
+								device.ui_allowed_roles.map((role) => role.value)
+							);
+							device.allowed_roles = device.ui_allowed_roles.map((role) => role.value);
 						}}
 						aria-label="Spara"
 					>
