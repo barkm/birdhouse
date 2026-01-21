@@ -7,7 +7,7 @@ def verify(
     token: str,
     allowed_emails: list[str] | None = None,
     audience: str | None = None,
-) -> str:
+) -> tuple[str, str]:
     try:
         decoded = id_token.verify_oauth2_token(
             token, requests.Request(), audience=audience
@@ -18,7 +18,9 @@ def verify(
     if decoded.get("iss") not in {"https://accounts.google.com", "accounts.google.com"}:
         raise AuthException("Wrong issuer", status_code=401)
 
-    if allowed_emails is not None and decoded.get("email") not in allowed_emails:
+    email = decoded["email"]
+
+    if allowed_emails is not None and email not in allowed_emails:
         raise AuthException("Unauthorized", status_code=403)
 
-    return decoded["sub"]
+    return decoded["sub"], email

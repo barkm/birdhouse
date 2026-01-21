@@ -56,26 +56,32 @@ def get_session():
         yield session
 
 
-def verify_token(token: str) -> str:
+def verify_token(token: str) -> tuple[str, str]:
     verifiers = [
         firebase.verify,
         lambda token: google.verify(token, settings.allowed_emails),
     ]
     responses = [get_auth_response(token, verify) for verify in verifiers]
-    if not any(isinstance(response, str) for response in responses):
+    print(responses)
+    if not any(isinstance(response, tuple) for response in responses):
         excpetion = next(
             response for response in responses if isinstance(response, AuthException)
         )
         raise HTTPException(status_code=excpetion.status_code, detail=excpetion.detail)
-    uids = [response for response in responses if isinstance(response, str)]
-    return uids[0]
+    uids_and_emails = [
+        response for response in responses if isinstance(response, tuple)
+    ]
+    return uids_and_emails[0]
 
 
 def get_role(
     token: str = Depends(oauth2_scheme), session: Session = Depends(get_session)
 ) -> firebase.Role:
-    uid = verify_token(token)
-    user = queries.get_user(session, uid)
+    uid, email = verify_token(token)
+    user = queries.get_user(session, uid) or models.User(
+        uid=uid, email=email, role=None
+    )
+    queries.add_user(session, user)
     if not user or not user.role:
         raise HTTPException(status_code=403, detail="User not authorized")
     return user.role
@@ -83,8 +89,8 @@ def get_role(
 
 def get_auth_response(
     token: str,
-    verify: Callable[[str], str],
-) -> AuthException | str:
+    verify: Callable[[str], tuple[str, str]],
+) -> AuthException | tuple[str, str]:
     try:
         return verify(token)
     except AuthException as e:

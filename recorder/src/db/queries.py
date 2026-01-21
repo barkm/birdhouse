@@ -125,3 +125,10 @@ def add_sensor(
 def get_user(session: Session, uid: str) -> models.User | None:
     statement = select(models.User).where(models.User.uid == uid)
     return session.exec(statement).first()
+
+
+def add_user(session: Session, user: models.User) -> models.User:
+    session.add(user)
+    session.commit()
+    session.refresh(user)
+    return user
