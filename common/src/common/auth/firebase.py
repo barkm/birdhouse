@@ -22,7 +22,7 @@ def initialize(cert_path: str | None = None):
     initialize_app(credentials.Certificate(cert_path) if cert_path else None)
 
 
-def verify(token) -> Role:
+def verify(token) -> str:
     try:
         claims = auth.verify_id_token(token, check_revoked=True)
     except auth.ExpiredIdTokenError:
@@ -34,13 +34,7 @@ def verify(token) -> Role:
     except Exception as e:
         logger.exception(f"Token verification failed: {e}")
         raise AuthException("Token verification failed", status_code=401)
-
-    role = get_role(claims)
-
-    if not role:
-        raise AuthException("User not authorized", status_code=403)
-
-    return role
+    return claims["uid"]
 
 
 def get_role(claims: dict) -> Role | None:

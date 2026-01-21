@@ -56,24 +56,30 @@ def get_session():
         yield session
 
 
-def verify_token(token: str) -> firebase.Role:
+def verify_token(token: str) -> str:
     verifiers = [
         firebase.verify,
         lambda headers: google.verify(headers, settings.allowed_emails),
     ]
     responses = [get_auth_response(token, verify) for verify in verifiers]
-    if not any(isinstance(response, firebase.Role) for response in responses):
+    if not any(isinstance(response, str) for response in responses):
         excpetion = next(
             response for response in responses if isinstance(response, AuthException)
         )
         raise HTTPException(status_code=excpetion.status_code, detail=excpetion.detail)
-    roles = [response for response in responses if isinstance(response, firebase.Role)]
+    roles = [response for response in responses if isinstance(response, str)]
     sorted_roles = sorted(roles, key=firebase.role_order, reverse=True)
     return sorted_roles[0]
 
 
-def get_role(token: str = Depends(oauth2_scheme)) -> firebase.Role:
-    return verify_token(token)
+def get_role(
+    token: str = Depends(oauth2_scheme), session: Session = Depends(get_session)
+) -> firebase.Role:
+    uid = verify_token(token)
+    user = queries.get_user(session, uid)
+    if not user or not user.role:
+        raise HTTPException(status_code=403, detail="User not authorized")
+    return user.role
 
 
 def get_auth_response(

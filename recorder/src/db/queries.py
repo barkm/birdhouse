@@ -120,3 +120,8 @@ def add_sensor(
     session.commit()
     session.refresh(sensor)
     return sensor
+
+
+def get_user(session: Session, uid: str) -> models.User | None:
+    statement = select(models.User).where(models.User.uid == uid)
+    return session.exec(statement).first()
