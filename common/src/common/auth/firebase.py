@@ -13,11 +13,6 @@ class Role(enum.StrEnum):
     ADMIN = "admin"
 
 
-def role_order(role: Role) -> int:
-    order = {Role.USER: 1, Role.ADMIN: 2}
-    return order.get(role, 0)
-
-
 def initialize(cert_path: str | None = None):
     initialize_app(credentials.Certificate(cert_path) if cert_path else None)
 
