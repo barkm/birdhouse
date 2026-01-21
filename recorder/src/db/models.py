@@ -21,8 +21,8 @@ class User(SQLModel, table=True):
     uid: str = Field(index=True, unique=True)
     email: str | None = Field(default=None, index=True, unique=True)
     role: Role | None = Field(
-        default=Role.USER,
-        sa_column=Column(role_enum, nullable=True, server_default=Role.USER.value),
+        default=None,
+        sa_column=Column(role_enum, nullable=True),
     )
 
 
