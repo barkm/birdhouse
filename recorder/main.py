@@ -59,7 +59,7 @@ def get_session():
 def verify_token(token: str) -> str:
     verifiers = [
         firebase.verify,
-        lambda headers: google.verify(headers, settings.allowed_emails),
+        lambda token: google.verify(token, settings.allowed_emails),
     ]
     responses = [get_auth_response(token, verify) for verify in verifiers]
     if not any(isinstance(response, str) for response in responses):
@@ -67,9 +67,8 @@ def verify_token(token: str) -> str:
             response for response in responses if isinstance(response, AuthException)
         )
         raise HTTPException(status_code=excpetion.status_code, detail=excpetion.detail)
-    roles = [response for response in responses if isinstance(response, str)]
-    sorted_roles = sorted(roles, key=firebase.role_order, reverse=True)
-    return sorted_roles[0]
+    uids = [response for response in responses if isinstance(response, str)]
+    return uids[0]
 
 
 def get_role(
@@ -84,8 +83,8 @@ def get_role(
 
 def get_auth_response(
     token: str,
-    verify: Callable[[str], firebase.Role],
-) -> AuthException | firebase.Role:
+    verify: Callable[[str], str],
+) -> AuthException | str:
     try:
         return verify(token)
     except AuthException as e:
