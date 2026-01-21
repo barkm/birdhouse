@@ -20,9 +20,9 @@ class User(SQLModel, table=True):
     )
     uid: str = Field(index=True, unique=True)
     email: str | None = Field(default=None, index=True, unique=True)
-    role: Role = Field(
+    role: Role | None = Field(
         default=Role.USER,
-        sa_column=Column(role_enum, nullable=False, server_default=Role.USER.value),
+        sa_column=Column(role_enum, nullable=True, server_default=Role.USER.value),
     )
 
 
