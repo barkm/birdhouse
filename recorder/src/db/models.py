@@ -12,6 +12,20 @@ role_enum = Enum(
 )
 
 
+class User(SQLModel, table=True):
+    id: uuid.UUID = Field(default_factory=uuid.uuid4, primary_key=True)
+    created_at: datetime = Field(
+        default_factory=lambda: datetime.now(timezone.utc),
+        sa_column=Column(DateTime(timezone=True), nullable=False),
+    )
+    uid: str = Field(index=True, unique=True)
+    email: str | None = Field(default=None, index=True, unique=True)
+    role: Role = Field(
+        default=Role.USER,
+        sa_column=Column(role_enum, nullable=False, server_default=Role.USER.value),
+    )
+
+
 class Device(SQLModel, table=True):
     id: uuid.UUID = Field(default_factory=uuid.uuid4, primary_key=True)
     name: str = Field(index=True, unique=True)
