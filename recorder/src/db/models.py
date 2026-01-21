@@ -1,8 +1,14 @@
+import enum
 import uuid
 from datetime import datetime, timezone
-from common.auth.firebase import Role
 from sqlmodel import ARRAY, Enum, SQLModel, Field
 from sqlalchemy import Column, DateTime
+
+
+class Role(enum.StrEnum):
+    USER = "user"
+    ADMIN = "admin"
+
 
 role_enum = Enum(
     Role,

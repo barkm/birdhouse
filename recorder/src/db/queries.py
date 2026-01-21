@@ -1,8 +1,6 @@
 from datetime import datetime
 from sqlmodel import Session, select
 
-from common.auth import firebase
-
 import src.db.models as models
 
 
@@ -15,7 +13,7 @@ def session_is_alive(session: Session) -> bool:
 
 
 def get_device(
-    session: Session, name: str, role: firebase.Role | None = None
+    session: Session, name: str, role: models.Role | None = None
 ) -> models.Device | None:
     statement = select(models.Device).where(models.Device.name == name)
     if role:
@@ -23,22 +21,20 @@ def get_device(
     return session.exec(statement).first()
 
 
-def get_devices(session: Session, role: firebase.Role) -> list[models.Device]:
+def get_devices(session: Session, role: models.Role) -> list[models.Device]:
     statement = select(models.Device).where(models.Device.allowed_roles.any(role))  # type: ignore
     return list(session.exec(statement).all())
 
 
 def add_device(session: Session, name: str) -> models.Device:
-    device = models.Device(name=name, allowed_roles=[firebase.Role.ADMIN])
+    device = models.Device(name=name, allowed_roles=[models.Role.ADMIN])
     session.add(device)
     session.commit()
     session.refresh(device)
     return device
 
 
-def set_device_roles(
-    session: Session, device: models.Device, roles: list[firebase.Role]
-):
+def set_device_roles(session: Session, device: models.Device, roles: list[models.Role]):
     device.allowed_roles = roles
     session.add(device)
     session.commit()
@@ -83,7 +79,7 @@ def get_recordings(
 
 def get_sensors(
     session: Session,
-    role: firebase.Role,
+    role: models.Role,
     device_name: str,
     start: datetime | None = None,
     end: datetime | None = None,

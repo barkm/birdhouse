@@ -75,7 +75,7 @@ def verify_token(token: str) -> tuple[str, str]:
 
 def get_role(
     token: str = Depends(oauth2_scheme), session: Session = Depends(get_session)
-) -> firebase.Role:
+) -> models.Role:
     uid, email = verify_token(token)
     user = queries.get_user(session, uid) or models.User(
         uid=uid, email=email, role=None
@@ -120,9 +120,9 @@ def healthz(session: Session = Depends(get_session)) -> dict[str, str]:
 def register_device(
     register_request: RegisterRequest,
     session: Session = Depends(get_session),
-    role: firebase.Role = Depends(get_role),
+    role: models.Role = Depends(get_role),
 ) -> dict[str, str]:
-    if role != firebase.Role.ADMIN:
+    if role != models.Role.ADMIN:
         raise HTTPException(status_code=403, detail="Unauthorized")
     logging.info(
         f"Registering device {register_request.name} with url {register_request.url}"
@@ -140,7 +140,7 @@ def forward(
     name: str,
     path: str,
     session: Session = Depends(get_session),
-    role: firebase.Role = Depends(get_role),
+    role: models.Role = Depends(get_role),
 ) -> Response:
     device = queries.get_device(session, name)
     if not device:
@@ -162,7 +162,7 @@ def forward(
 @app.get("/list_devices")
 def list_devices(
     session: Session = Depends(get_session),
-    role: firebase.Role = Depends(get_role),
+    role: models.Role = Depends(get_role),
 ) -> list[dict[str, str | bool | list[str]]]:
     return [
         {
@@ -179,11 +179,11 @@ def list_devices(
 @app.post("/set_roles/{device_name}")
 def set_device_roles(
     device_name: str,
-    roles: list[firebase.Role],
+    roles: list[models.Role],
     session: Session = Depends(get_session),
-    role: firebase.Role = Depends(get_role),
+    role: models.Role = Depends(get_role),
 ) -> dict[str, str]:
-    if role != firebase.Role.ADMIN:
+    if role != models.Role.ADMIN:
         raise HTTPException(status_code=403, detail="Unauthorized")
     device = queries.get_device(session, device_name)
     if not device:
@@ -195,7 +195,7 @@ def set_device_roles(
 @app.get("/record_sensors")
 def record_sensors(
     session: Session = Depends(get_session),
-    role: firebase.Role = Depends(get_role),
+    role: models.Role = Depends(get_role),
 ) -> dict:
     devices = [
         (d, url)
@@ -226,7 +226,7 @@ def get_sensors(
     from_: Annotated[datetime | None, Query(alias="from")] = None,
     to: datetime | None = None,
     session: Session = Depends(get_session),
-    role: firebase.Role = Depends(get_role),
+    role: models.Role = Depends(get_role),
 ) -> Sequence[models.Sensor]:
     return queries.get_sensors(session, role, device_name, from_, to)
 
@@ -236,7 +236,7 @@ def record(
     request: Request,
     duration: int = 10,
     session: Session = Depends(get_session),
-    role: firebase.Role = Depends(get_role),
+    role: models.Role = Depends(get_role),
 ) -> dict:
     devices = [
         (d, url)
@@ -259,7 +259,7 @@ def record(
 
 
 @app.get("/recording/{path:path}")
-def get_recording(path: str, _: firebase.Role = Depends(get_role)) -> FileResponse:
+def get_recording(path: str, _: models.Role = Depends(get_role)) -> FileResponse:
     return FileResponse(f"{settings.recording_dir}/{path}")
 
 
@@ -269,7 +269,7 @@ def list_recordings(
     from_: Annotated[datetime | None, Query(alias="from")] = None,
     to: datetime | None = None,
     session: Session = Depends(get_session),
-    role: firebase.Role = Depends(get_role),
+    role: models.Role = Depends(get_role),
 ) -> Sequence[models.Recording]:
     device_obj = queries.get_device(session, device, role)
     if not device_obj:
@@ -286,7 +286,7 @@ def create_timelapse(
     fade_duration: float | None = None,
     batch_size: int | None = None,
     session: Session = Depends(get_session),
-    role: firebase.Role = Depends(get_role),
+    role: models.Role = Depends(get_role),
 ) -> None:
     devices = queries.get_devices(session, role)
     for device in devices:

@@ -1,4 +1,3 @@
-import enum
 import logging
 
 from common.auth.exception import AuthException
@@ -6,11 +5,6 @@ from firebase_admin import credentials, initialize_app
 from firebase_admin import auth
 
 logger = logging.getLogger(__name__)
-
-
-class Role(enum.StrEnum):
-    USER = "user"
-    ADMIN = "admin"
 
 
 def initialize(cert_path: str | None = None):
