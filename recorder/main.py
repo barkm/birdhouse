@@ -116,6 +116,11 @@ def healthz(session: Session = Depends(get_session)) -> dict[str, str]:
     return {"status": "ok"}
 
 
+@app.get("/me")
+def me(role: models.Role = Depends(get_role)) -> dict[str, str]:
+    return {"role": role.value}
+
+
 @app.post("/register")
 def register_device(
     register_request: RegisterRequest,
