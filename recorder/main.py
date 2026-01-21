@@ -62,7 +62,6 @@ def verify_token(token: str) -> tuple[str, str]:
         lambda token: google.verify(token, settings.allowed_emails),
     ]
     responses = [get_auth_response(token, verify) for verify in verifiers]
-    print(responses)
     if not any(isinstance(response, tuple) for response in responses):
         excpetion = next(
             response for response in responses if isinstance(response, AuthException)
