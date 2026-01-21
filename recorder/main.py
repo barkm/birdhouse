@@ -4,7 +4,8 @@ import logging
 from typing import Annotated, Callable, Sequence
 
 from common.auth.exception import AuthException
-from fastapi.responses import FileResponse, JSONResponse
+from fastapi.responses import FileResponse
+from fastapi.security import OAuth2PasswordBearer
 import httpx
 from fastapi import Depends, FastAPI, HTTPException, Query, Request, Response
 from fastapi.middleware.cors import CORSMiddleware
@@ -44,6 +45,8 @@ async def lifespan(_: FastAPI):
 
 settings = Settings()
 app = FastAPI(lifespan=lifespan)
+oauth2_scheme = OAuth2PasswordBearer(tokenUrl="token")
+
 
 engine = create_engine(settings.database_url)
 
@@ -53,40 +56,34 @@ def get_session():
         yield session
 
 
-@app.middleware("http")
-async def auth_middleware(request: Request, call_next):
-    if request.url.path == "/healthz":
-        return await call_next(request)
-
-    headers = dict(request.headers)
-
+def verify_token(token: str) -> firebase.Role:
     verifiers = [
         firebase.verify,
         lambda headers: google.verify(headers, settings.allowed_emails),
     ]
-
-    responses = [get_auth_response(headers, verify) for verify in verifiers]
-
+    responses = [get_auth_response(token, verify) for verify in verifiers]
+    if not any(isinstance(response, firebase.Role) for response in responses):
+        excpetion = next(
+            response for response in responses if isinstance(response, AuthException)
+        )
+        raise HTTPException(status_code=excpetion.status_code, detail=excpetion.detail)
     roles = [response for response in responses if isinstance(response, firebase.Role)]
     sorted_roles = sorted(roles, key=firebase.role_order, reverse=True)
+    return sorted_roles[0]
 
-    if sorted_roles:
-        request.state.role = sorted_roles[0]
-        return await call_next(request)
 
-    return next(
-        response for response in responses if isinstance(response, JSONResponse)
-    )
+def get_role(token: str = Depends(oauth2_scheme)) -> firebase.Role:
+    return verify_token(token)
 
 
 def get_auth_response(
-    headers: dict[str, str],
-    verify: Callable[[dict[str, str]], firebase.Role],
-) -> JSONResponse | firebase.Role:
+    token: str,
+    verify: Callable[[str], firebase.Role],
+) -> AuthException | firebase.Role:
     try:
-        return verify(headers)
+        return verify(token)
     except AuthException as e:
-        return JSONResponse({"detail": e.detail}, status_code=e.status_code)
+        return e
 
 
 app.add_middleware(
@@ -114,8 +111,9 @@ def register_device(
     request: Request,
     register_request: RegisterRequest,
     session: Session = Depends(get_session),
+    role: firebase.Role = Depends(get_role),
 ) -> dict[str, str]:
-    if request.state.role != firebase.Role.ADMIN:
+    if role != firebase.Role.ADMIN:
         raise HTTPException(status_code=403, detail="Unauthorized")
     logging.info(
         f"Registering device {register_request.name} with url {register_request.url}"
@@ -129,12 +127,16 @@ def register_device(
 
 @app.get("/get/{name}/{path:path}")
 def forward(
-    request: Request, name: str, path: str, session: Session = Depends(get_session)
+    request: Request,
+    name: str,
+    path: str,
+    session: Session = Depends(get_session),
+    role: firebase.Role = Depends(get_role),
 ) -> Response:
     device = queries.get_device(session, name)
     if not device:
         raise HTTPException(status_code=404, detail="Name not registered")
-    if request.state.role not in device.allowed_roles:
+    if role not in device.allowed_roles:
         raise HTTPException(status_code=403, detail="Forbidden")
     base_url = queries.get_url(session, name)
     if not base_url:
@@ -150,7 +152,9 @@ def forward(
 
 @app.get("/list_devices")
 def list_devices(
-    request: Request, session: Session = Depends(get_session)
+    request: Request,
+    session: Session = Depends(get_session),
+    role: firebase.Role = Depends(get_role),
 ) -> list[dict[str, str | bool | list[str]]]:
     return [
         {
@@ -170,8 +174,9 @@ def set_device_roles(
     device_name: str,
     roles: list[firebase.Role],
     session: Session = Depends(get_session),
+    role: firebase.Role = Depends(get_role),
 ) -> dict[str, str]:
-    if request.state.role != firebase.Role.ADMIN:
+    if role != firebase.Role.ADMIN:
         raise HTTPException(status_code=403, detail="Unauthorized")
     device = queries.get_device(session, device_name)
     if not device:
@@ -181,10 +186,14 @@ def set_device_roles(
 
 
 @app.get("/record_sensors")
-def record_sensors(request: Request, session: Session = Depends(get_session)) -> dict:
+def record_sensors(
+    request: Request,
+    session: Session = Depends(get_session),
+    role: firebase.Role = Depends(get_role),
+) -> dict:
     devices = [
         (d, url)
-        for d in queries.get_devices(session, request.state.role)
+        for d in queries.get_devices(session, role)
         if (url := queries.get_url(session, d.name)) and _is_active(url)
     ]
     for device, url in devices:
@@ -212,17 +221,21 @@ def get_sensors(
     from_: Annotated[datetime | None, Query(alias="from")] = None,
     to: datetime | None = None,
     session: Session = Depends(get_session),
+    role: firebase.Role = Depends(get_role),
 ) -> Sequence[models.Sensor]:
-    return queries.get_sensors(session, request.state.role, device_name, from_, to)
+    return queries.get_sensors(session, role, device_name, from_, to)
 
 
 @app.get("/record")
 def record(
-    request: Request, duration: int = 10, session: Session = Depends(get_session)
+    request: Request,
+    duration: int = 10,
+    session: Session = Depends(get_session),
+    role: firebase.Role = Depends(get_role),
 ) -> dict:
     devices = [
         (d, url)
-        for d in queries.get_devices(session, request.state.role)
+        for d in queries.get_devices(session, role)
         if (url := queries.get_url(session, d.name)) and _is_active(url)
     ]
     for device, url in devices:
@@ -241,7 +254,7 @@ def record(
 
 
 @app.get("/recording/{path:path}")
-def get_recording(path: str) -> FileResponse:
+def get_recording(path: str, _: firebase.Role = Depends(get_role)) -> FileResponse:
     return FileResponse(f"{settings.recording_dir}/{path}")
 
 
@@ -252,8 +265,9 @@ def list_recordings(
     from_: Annotated[datetime | None, Query(alias="from")] = None,
     to: datetime | None = None,
     session: Session = Depends(get_session),
+    role: firebase.Role = Depends(get_role),
 ) -> Sequence[models.Recording]:
-    device_obj = queries.get_device(session, device, request.state.role)
+    device_obj = queries.get_device(session, device, role)
     if not device_obj:
         logging.error(f"Device {device} not found in database")
         return []
@@ -269,8 +283,9 @@ def create_timelapse(
     fade_duration: float | None = None,
     batch_size: int | None = None,
     session: Session = Depends(get_session),
+    role: firebase.Role = Depends(get_role),
 ) -> None:
-    devices = queries.get_devices(session, request.state.role)
+    devices = queries.get_devices(session, role)
     for device in devices:
         logging.info(f"Creating timelapse for device {device}")
         create_and_save_timelapse(

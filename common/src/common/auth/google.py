@@ -1,16 +1,14 @@
 from common.auth.exception import AuthException
 from common.auth.firebase import Role
-from common.auth.token import get_token
 from google.oauth2 import id_token
 from google.auth.transport import requests
 
 
 def verify(
-    headers: dict[str, str],
+    token: str,
     allowed_emails: list[str] | None = None,
     audience: str | None = None,
 ) -> Role:
-    token = get_token(headers)
     try:
         decoded = id_token.verify_oauth2_token(
             token, requests.Request(), audience=audience

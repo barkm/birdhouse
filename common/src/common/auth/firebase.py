@@ -2,7 +2,6 @@ import enum
 import logging
 
 from common.auth.exception import AuthException
-from common.auth.token import get_token
 from firebase_admin import credentials, initialize_app
 from firebase_admin import auth
 
@@ -23,8 +22,7 @@ def initialize(cert_path: str | None = None):
     initialize_app(credentials.Certificate(cert_path) if cert_path else None)
 
 
-def verify(headers: dict[str, str]) -> Role:
-    token = get_token(headers)
+def verify(token) -> Role:
     try:
         claims = auth.verify_id_token(token, check_revoked=True)
     except auth.ExpiredIdTokenError:
