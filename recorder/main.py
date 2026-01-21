@@ -175,7 +175,7 @@ def list_devices(
             if (url := queries.get_url(session, device.name))
             else False,
         }
-        for device in queries.get_devices(session, request.state.role)
+        for device in queries.get_devices(session, role)
     ]
 
 
