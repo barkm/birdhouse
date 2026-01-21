@@ -1,8 +1,13 @@
 <script lang="ts">
 	import { page } from '$app/state';
 	import { resolve } from '$app/paths';
-	import { role } from '$lib/firebase';
 	let path = $derived(page.url.pathname);
+
+	interface Props {
+		role: 'admin' | 'user' | null;
+	}
+
+	const { role }: Props = $props();
 </script>
 
 {#snippet navLink(href: '/now' | '/then' | '/devices', text: string)}
@@ -20,7 +25,7 @@
 	<div class="flex items-center justify-center gap-6">
 		{@render navLink('/now', 'Nu')}
 		{@render navLink('/then', 'Då')}
-		{#if $role === 'admin'}
+		{#if role === 'admin'}
 			{@render navLink('/devices', 'Enheter')}
 		{/if}
 	</div>

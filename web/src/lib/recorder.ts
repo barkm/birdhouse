@@ -1,7 +1,20 @@
 import type { User } from 'firebase/auth';
 import { authorizedRequest } from './request';
 import { PUBLIC_RECORDER_URL } from '$env/static/public';
-import type { Role } from './firebase';
+import { Role } from './firebase';
+
+export const getRole = async (u: User): Promise<Role | null> => {
+	const response = await authorizedRequest(u, PUBLIC_RECORDER_URL, 'me');
+	if (!response.ok) {
+		return null;
+	}
+	const data = await response.json();
+	const role = data.role;
+	if (role === Role.ADMIN) return Role.ADMIN;
+	if (role === Role.USER) return Role.USER;
+	return null;
+};
+
 
 export interface Recording {
 	url: string;
