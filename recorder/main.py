@@ -85,6 +85,24 @@ def me(role: models.Role = Depends(get_role)) -> dict[str, str]:
     return {"role": role.value}
 
 
+@app.get("/users")
+def users(
+    session: Session = Depends(get_session),
+    role: models.Role = Depends(get_role),
+) -> list[dict[str, str | None]]:
+    if role != models.Role.ADMIN:
+        raise HTTPException(status_code=403, detail="Unauthorized")
+    users = queries.get_users(session)
+    return [
+        {
+            "uid": user.uid,
+            "email": user.email,
+            "role": user.role.value if user.role else None,
+        }
+        for user in users
+    ]
+
+
 @app.post("/register")
 def register_device(
     register_request: RegisterRequest,

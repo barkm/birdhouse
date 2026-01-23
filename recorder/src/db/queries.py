@@ -128,3 +128,8 @@ def add_user(session: Session, user: models.User) -> models.User:
     session.commit()
     session.refresh(user)
     return user
+
+
+def get_users(session: Session) -> list[models.User]:
+    statement = select(models.User)
+    return list(session.exec(statement).all())
