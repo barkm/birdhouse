@@ -1,7 +1,7 @@
 from contextlib import asynccontextmanager
 from datetime import datetime
 import logging
-from typing import Annotated, Callable, Sequence
+from typing import Annotated, Sequence
 
 from fastapi.responses import FileResponse
 from fastapi.security import OAuth2PasswordBearer
@@ -14,9 +14,8 @@ from pydantic import BaseModel
 from sqlalchemy import create_engine
 from sqlmodel import Session
 
-from src.auth.types import DecodedToken
+from src.auth.verify import verify_token
 from src.auth import firebase
-from src.auth import google
 from src.record import record_and_save
 from src.timelapse.create_save import create_and_save_timelapse
 import src.db.models as models
@@ -55,25 +54,6 @@ def get_session():
         yield session
 
 
-def verify_token(token: str) -> DecodedToken:
-    verifiers: list[Callable[[str], DecodedToken | ValueError]] = [
-        verify_or_error(firebase.decode),
-        verify_or_error(google.decode),
-    ]
-    decoded_tokens_or_errors = [verify(token) for verify in verifiers]
-    decoded_tokens = (
-        dt for dt in decoded_tokens_or_errors if isinstance(dt, DecodedToken)
-    )
-    first_decoded_token = next(decoded_tokens, None)
-    if not first_decoded_token:
-        errors = (
-            err for err in decoded_tokens_or_errors if isinstance(err, ValueError)
-        )
-        first_error = next(errors, None)
-        raise HTTPException(status_code=401, detail=str(first_error))
-    return first_decoded_token
-
-
 def get_role(
     token: str = Depends(oauth2_scheme), session: Session = Depends(get_session)
 ) -> models.Role:
@@ -85,18 +65,6 @@ def get_role(
     if not user or not user.role:
         raise HTTPException(status_code=403, detail="User not authorized")
     return user.role
-
-
-def verify_or_error(
-    verify: Callable[[str], DecodedToken],
-) -> Callable[[str], ValueError | DecodedToken]:
-    def _verify(token: str) -> DecodedToken | ValueError:
-        try:
-            return verify(token)
-        except ValueError as e:
-            return e
-
-    return _verify
 
 
 app.add_middleware(
