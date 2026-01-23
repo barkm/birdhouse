@@ -12,7 +12,12 @@ def initialize(cert_path: str | None = None):
     initialize_app(credentials.Certificate(cert_path) if cert_path else None)
 
 
-def decode(token: str) -> DecodedToken:
+class FirebaseDecoder:
+    def decode(self, token: str) -> DecodedToken:
+        return _decode(token)
+
+
+def _decode(token: str) -> DecodedToken:
     try:
         claims = auth.verify_id_token(token, check_revoked=True)
     except auth.ExpiredIdTokenError:

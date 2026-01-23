@@ -14,7 +14,7 @@ from pydantic import BaseModel
 from sqlalchemy import create_engine
 from sqlmodel import Session
 
-from src.auth.decode import decode_token
+from src.auth.decode import Decoder
 from src.auth import firebase
 from src.record import record_and_save
 from src.timelapse.create_save import create_and_save_timelapse
@@ -57,7 +57,7 @@ def get_session():
 def get_role(
     token: str = Depends(oauth2_scheme), session: Session = Depends(get_session)
 ) -> models.Role:
-    decoded_token = decode_token(token)
+    decoded_token = Decoder().decode(token)
     user = queries.get_user(session, decoded_token.uid) or models.User(
         uid=decoded_token.uid, email=decoded_token.email, role=None
     )

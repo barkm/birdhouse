@@ -1,15 +1,21 @@
 from src.auth import firebase, google
-from src.auth.types import DecodedToken
+from src.auth.types import DecodedToken, TokenDecoder
 
 from typing import Callable
 
 
-def decode_token(token: str) -> DecodedToken:
-    decoders: list[Callable[[str], DecodedToken | ValueError]] = [
-        _decode_token_or_error(firebase.decode),
-        _decode_token_or_error(google.decode),
+class Decoder(TokenDecoder):
+    def decode(self, token: str) -> DecodedToken:
+        return _decode_token(token)
+
+
+def _decode_token(
+    token: str,
+) -> DecodedToken:
+    decoders: list[TokenDecoder] = [firebase.FirebaseDecoder(), google.GoogleDecoder()]
+    decoded_tokens_or_errors = [
+        _decode_token_or_error(decoder)(token) for decoder in decoders
     ]
-    decoded_tokens_or_errors = [decode(token) for decode in decoders]
     decoded_tokens = (
         dt for dt in decoded_tokens_or_errors if isinstance(dt, DecodedToken)
     )
@@ -23,11 +29,11 @@ def decode_token(token: str) -> DecodedToken:
 
 
 def _decode_token_or_error(
-    decode: Callable[[str], DecodedToken],
+    decoder: TokenDecoder,
 ) -> Callable[[str], ValueError | DecodedToken]:
     def _decode(token: str) -> DecodedToken | ValueError:
         try:
-            return decode(token)
+            return decoder.decode(token)
         except ValueError as e:
             return e
 

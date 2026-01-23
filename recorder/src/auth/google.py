@@ -4,7 +4,15 @@ from google.auth.transport import requests
 from src.auth.types import DecodedToken
 
 
-def decode(
+class GoogleDecoder:
+    def __init__(self, audience: str | None = None) -> None:
+        self._audience = audience
+
+    def decode(self, token: str) -> DecodedToken:
+        return _decode(token, audience=self._audience)
+
+
+def _decode(
     token: str,
     audience: str | None = None,
 ) -> DecodedToken:

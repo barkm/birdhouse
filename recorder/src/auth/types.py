@@ -1,5 +1,5 @@
 from dataclasses import dataclass
-from typing import NewType
+from typing import NewType, Protocol
 
 UID = NewType("UID", str)
 Email = NewType("Email", str)
@@ -9,3 +9,7 @@ Email = NewType("Email", str)
 class DecodedToken:
     uid: UID
     email: Email
+
+
+class TokenDecoder(Protocol):
+    def decode(self, token: str) -> DecodedToken: ...
