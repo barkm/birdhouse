@@ -10,7 +10,7 @@
 	const { role }: Props = $props();
 </script>
 
-{#snippet navLink(href: '/now' | '/then' | '/devices', text: string)}
+{#snippet navLink(href: '/now' | '/then' | '/devices' | '/users', text: string)}
 	<a
 		href={resolve(href)}
 		class="-mb-px border-b px-4 py-2 text-xl font-semibold transition-colors"
@@ -27,6 +27,7 @@
 		{@render navLink('/then', 'Då')}
 		{#if role === 'admin'}
 			{@render navLink('/devices', 'Enheter')}
+			{@render navLink('/users', 'Användare')}
 		{/if}
 	</div>
 </div>

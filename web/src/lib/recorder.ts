@@ -19,6 +19,18 @@ export const getRole = async (u: User): Promise<Role | null> => {
 	return null;
 };
 
+export const getUsers = async (u: User): Promise<{ email: string; role: Role }[] | null> => {
+	const response = await authorizedRequest(u, PUBLIC_RECORDER_URL, 'users');
+	if (!response.ok) {
+		return null;
+	}
+	const data = await response.json();
+	return data.map((entry: { email: string; role: string }) => ({
+		email: entry.email,
+		role: entry.role === Role.ADMIN ? Role.ADMIN : Role.USER
+	}));
+}
+
 export interface Recording {
 	url: string;
 	created_at: Date;
