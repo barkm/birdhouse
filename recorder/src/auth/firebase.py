@@ -1,6 +1,6 @@
 import logging
 
-from common.auth.exception import AuthException
+from src.auth.exception import AuthException
 from firebase_admin import credentials, initialize_app
 from firebase_admin import auth
 

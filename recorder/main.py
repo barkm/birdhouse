@@ -3,7 +3,6 @@ from datetime import datetime
 import logging
 from typing import Annotated, Callable, Sequence
 
-from common.auth.exception import AuthException
 from fastapi.responses import FileResponse
 from fastapi.security import OAuth2PasswordBearer
 import httpx
@@ -12,11 +11,12 @@ from fastapi.middleware.cors import CORSMiddleware
 from pydantic_settings import BaseSettings, SettingsConfigDict
 from pydantic import BaseModel
 
-from common.auth import firebase
-from common.auth import google
 from sqlalchemy import create_engine
 from sqlmodel import Session
 
+from src.auth.exception import AuthException
+from src.auth import firebase
+from src.auth import google
 from src.record import record_and_save
 from src.timelapse.create_save import create_and_save_timelapse
 import src.db.models as models
