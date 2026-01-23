@@ -56,17 +56,22 @@ def get_session():
 
 
 def verify_token(token: str) -> DecodedToken:
-    verifiers: list[Callable[[str], DecodedToken]] = [firebase.decode, google.decode]
-    decoded_tokens = [get_auth_response(token, verify) for verify in verifiers]
-    if not any(isinstance(response, DecodedToken) for response in decoded_tokens):
-        error = next(
-            response for response in decoded_tokens if isinstance(response, ValueError)
-        )
-        raise HTTPException(status_code=401, detail=str(error))
-    decoded_tokens = [
-        response for response in decoded_tokens if isinstance(response, DecodedToken)
+    verifiers: list[Callable[[str], DecodedToken | ValueError]] = [
+        verify_or_error(firebase.decode),
+        verify_or_error(google.decode),
     ]
-    return decoded_tokens[0]
+    decoded_tokens_or_errors = [verify(token) for verify in verifiers]
+    decoded_tokens = (
+        dt for dt in decoded_tokens_or_errors if isinstance(dt, DecodedToken)
+    )
+    first_decoded_token = next(decoded_tokens, None)
+    if not first_decoded_token:
+        errors = (
+            err for err in decoded_tokens_or_errors if isinstance(err, ValueError)
+        )
+        first_error = next(errors, None)
+        raise HTTPException(status_code=401, detail=str(first_error))
+    return first_decoded_token
 
 
 def get_role(
@@ -82,14 +87,16 @@ def get_role(
     return user.role
 
 
-def get_auth_response(
-    token: str,
+def verify_or_error(
     verify: Callable[[str], DecodedToken],
-) -> ValueError | DecodedToken:
-    try:
-        return verify(token)
-    except ValueError as e:
-        return e
+) -> Callable[[str], ValueError | DecodedToken]:
+    def _verify(token: str) -> DecodedToken | ValueError:
+        try:
+            return verify(token)
+        except ValueError as e:
+            return e
+
+    return _verify
 
 
 app.add_middleware(
