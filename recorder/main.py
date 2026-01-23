@@ -31,7 +31,6 @@ logging.basicConfig(
 
 class Settings(BaseSettings):
     recording_dir: str = "/recordings"
-    allowed_emails: list[str] | None = None
     database_url: str = "postgresql+psycopg://moja:moja@localhost/moja"
 
     model_config = SettingsConfigDict(env_file=".env", extra="ignore")
@@ -59,7 +58,7 @@ def get_session():
 def verify_token(token: str) -> tuple[str, str]:
     verifiers = [
         firebase.verify,
-        lambda token: google.verify(token, settings.allowed_emails),
+        lambda token: google.verify(token),
     ]
     responses = [get_auth_response(token, verify) for verify in verifiers]
     if not any(isinstance(response, tuple) for response in responses):
