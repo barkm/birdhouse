@@ -1,4 +1,3 @@
-from src.auth.exception import AuthException
 from google.oauth2 import id_token
 from google.auth.transport import requests
 
@@ -12,9 +11,9 @@ def verify(
             token, requests.Request(), audience=audience
         )
     except ValueError:
-        raise AuthException("Token verification failed", status_code=401)
+        raise ValueError("Invalid token")
 
     if decoded.get("iss") not in {"https://accounts.google.com", "accounts.google.com"}:
-        raise AuthException("Wrong issuer", status_code=401)
+        raise ValueError("Wrong issuer")
 
     return decoded["sub"], decoded["email"]

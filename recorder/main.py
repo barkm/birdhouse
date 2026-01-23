@@ -14,7 +14,6 @@ from pydantic import BaseModel
 from sqlalchemy import create_engine
 from sqlmodel import Session
 
-from src.auth.exception import AuthException
 from src.auth import firebase
 from src.auth import google
 from src.record import record_and_save
@@ -62,10 +61,10 @@ def verify_token(token: str) -> tuple[str, str]:
     ]
     responses = [get_auth_response(token, verify) for verify in verifiers]
     if not any(isinstance(response, tuple) for response in responses):
-        excpetion = next(
-            response for response in responses if isinstance(response, AuthException)
+        error = next(
+            response for response in responses if isinstance(response, ValueError)
         )
-        raise HTTPException(status_code=excpetion.status_code, detail=excpetion.detail)
+        raise HTTPException(status_code=401, detail=str(error))
     uids_and_emails = [
         response for response in responses if isinstance(response, tuple)
     ]
@@ -88,10 +87,10 @@ def get_role(
 def get_auth_response(
     token: str,
     verify: Callable[[str], tuple[str, str]],
-) -> AuthException | tuple[str, str]:
+) -> ValueError | tuple[str, str]:
     try:
         return verify(token)
-    except AuthException as e:
+    except ValueError as e:
         return e
 
 
