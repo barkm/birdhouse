@@ -1,11 +1,13 @@
 from google.oauth2 import id_token
 from google.auth.transport import requests
 
+from src.auth.types import DecodedToken
 
-def verify(
+
+def decode(
     token: str,
     audience: str | None = None,
-) -> tuple[str, str]:
+) -> DecodedToken:
     try:
         decoded = id_token.verify_oauth2_token(
             token, requests.Request(), audience=audience
@@ -16,4 +18,4 @@ def verify(
     if decoded.get("iss") not in {"https://accounts.google.com", "accounts.google.com"}:
         raise ValueError("Wrong issuer")
 
-    return decoded["sub"], decoded["email"]
+    return DecodedToken(uid=decoded["sub"], email=decoded["email"])

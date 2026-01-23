@@ -14,6 +14,7 @@ from pydantic import BaseModel
 from sqlalchemy import create_engine
 from sqlmodel import Session
 
+from src.auth.types import DecodedToken
 from src.auth import firebase
 from src.auth import google
 from src.record import record_and_save
@@ -54,29 +55,26 @@ def get_session():
         yield session
 
 
-def verify_token(token: str) -> tuple[str, str]:
-    verifiers = [
-        firebase.verify,
-        lambda token: google.verify(token),
-    ]
-    responses = [get_auth_response(token, verify) for verify in verifiers]
-    if not any(isinstance(response, tuple) for response in responses):
+def verify_token(token: str) -> DecodedToken:
+    verifiers: list[Callable[[str], DecodedToken]] = [firebase.decode, google.decode]
+    decoded_tokens = [get_auth_response(token, verify) for verify in verifiers]
+    if not any(isinstance(response, DecodedToken) for response in decoded_tokens):
         error = next(
-            response for response in responses if isinstance(response, ValueError)
+            response for response in decoded_tokens if isinstance(response, ValueError)
         )
         raise HTTPException(status_code=401, detail=str(error))
-    uids_and_emails = [
-        response for response in responses if isinstance(response, tuple)
+    decoded_tokens = [
+        response for response in decoded_tokens if isinstance(response, DecodedToken)
     ]
-    return uids_and_emails[0]
+    return decoded_tokens[0]
 
 
 def get_role(
     token: str = Depends(oauth2_scheme), session: Session = Depends(get_session)
 ) -> models.Role:
-    uid, email = verify_token(token)
-    user = queries.get_user(session, uid) or models.User(
-        uid=uid, email=email, role=None
+    decoded_token = verify_token(token)
+    user = queries.get_user(session, decoded_token.uid) or models.User(
+        uid=decoded_token.uid, email=decoded_token.email, role=None
     )
     queries.add_user(session, user)
     if not user or not user.role:
@@ -86,8 +84,8 @@ def get_role(
 
 def get_auth_response(
     token: str,
-    verify: Callable[[str], tuple[str, str]],
-) -> ValueError | tuple[str, str]:
+    verify: Callable[[str], DecodedToken],
+) -> ValueError | DecodedToken:
     try:
         return verify(token)
     except ValueError as e:

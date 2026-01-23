@@ -3,6 +3,8 @@ import logging
 from firebase_admin import credentials, initialize_app
 from firebase_admin import auth
 
+from src.auth.types import DecodedToken
+
 logger = logging.getLogger(__name__)
 
 
@@ -10,7 +12,7 @@ def initialize(cert_path: str | None = None):
     initialize_app(credentials.Certificate(cert_path) if cert_path else None)
 
 
-def verify(token) -> tuple[str, str]:
+def decode(token: str) -> DecodedToken:
     try:
         claims = auth.verify_id_token(token, check_revoked=True)
     except auth.ExpiredIdTokenError:
@@ -22,4 +24,4 @@ def verify(token) -> tuple[str, str]:
     except Exception as e:
         logger.exception(f"Token verification failed: {e}")
         raise ValueError("Token verification failed")
-    return claims["uid"], claims["email"]
+    return DecodedToken(uid=claims["uid"], email=claims["email"])
