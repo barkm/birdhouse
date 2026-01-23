@@ -1,6 +1,6 @@
 import logging
 
-from firebase_admin import credentials, initialize_app
+from firebase_admin import initialize_app
 from firebase_admin import auth
 
 from src.auth.types import DecodedToken
@@ -8,11 +8,10 @@ from src.auth.types import DecodedToken
 logger = logging.getLogger(__name__)
 
 
-def initialize(cert_path: str | None = None):
-    initialize_app(credentials.Certificate(cert_path) if cert_path else None)
-
-
 class FirebaseDecoder:
+    def __init__(self) -> None:
+        initialize_app()
+
     def decode(self, token: str) -> DecodedToken:
         return _decode(token)
 

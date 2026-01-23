@@ -1,4 +1,3 @@
-from contextlib import asynccontextmanager
 from datetime import datetime
 import logging
 from typing import Annotated, Sequence
@@ -15,7 +14,6 @@ from sqlalchemy import create_engine
 from sqlmodel import Session
 
 from src.auth.decode import Decoder
-from src.auth import firebase
 from src.record import record_and_save
 from src.timelapse.create_save import create_and_save_timelapse
 import src.db.models as models
@@ -35,14 +33,9 @@ class Settings(BaseSettings):
     model_config = SettingsConfigDict(env_file=".env", extra="ignore")
 
 
-@asynccontextmanager
-async def lifespan(_: FastAPI):
-    firebase.initialize()
-    yield
-
-
+decoder = Decoder()
 settings = Settings()
-app = FastAPI(lifespan=lifespan)
+app = FastAPI()
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="token")
 
 
@@ -57,7 +50,7 @@ def get_session():
 def get_role(
     token: str = Depends(oauth2_scheme), session: Session = Depends(get_session)
 ) -> models.Role:
-    decoded_token = Decoder().decode(token)
+    decoded_token = decoder.decode(token)
     user = queries.get_user(session, decoded_token.uid) or models.User(
         uid=decoded_token.uid, email=decoded_token.email, role=None
     )

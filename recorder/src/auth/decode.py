@@ -5,14 +5,17 @@ from typing import Callable
 
 
 class Decoder(TokenDecoder):
+    def __init__(self) -> None:
+        self.decoders: list[TokenDecoder] = [
+            firebase.FirebaseDecoder(),
+            google.GoogleDecoder(),
+        ]
+
     def decode(self, token: str) -> DecodedToken:
-        return _decode_token(token)
+        return _decode_token(token, self.decoders)
 
 
-def _decode_token(
-    token: str,
-) -> DecodedToken:
-    decoders: list[TokenDecoder] = [firebase.FirebaseDecoder(), google.GoogleDecoder()]
+def _decode_token(token: str, decoders: list[TokenDecoder]) -> DecodedToken:
     decoded_tokens_or_errors = [
         _decode_token_or_error(decoder)(token) for decoder in decoders
     ]
