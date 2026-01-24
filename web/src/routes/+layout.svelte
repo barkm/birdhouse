@@ -9,10 +9,11 @@
 	const { children } = $props();
 
 	let role_promise = $derived($user ? getRole($user) : undefined);
+
 </script>
 
-{#if !$isLoading && role_promise !== undefined}
-	{#if $user}
+{#if !$isLoading}
+	{#if $user && role_promise !== undefined}
 		{#await role_promise then role}
 			{#if role}
 				<div class="mx-auto max-w-4xl space-y-4 p-6">
