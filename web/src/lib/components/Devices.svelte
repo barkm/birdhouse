@@ -45,8 +45,6 @@
 	};
 
 	onMount(load);
-
-	$inspect(devices_with_locality);
 </script>
 
 <div class="flex flex-col gap-4">
