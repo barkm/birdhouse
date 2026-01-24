@@ -1,4 +1,5 @@
 from datetime import datetime
+from uuid import UUID
 from sqlmodel import Session, select
 
 import src.db.models as models
@@ -118,8 +119,13 @@ def add_sensor(
     return sensor
 
 
-def get_user(session: Session, uid: str) -> models.User | None:
+def get_user_by_uid(session: Session, uid: str) -> models.User | None:
     statement = select(models.User).where(models.User.uid == uid)
+    return session.exec(statement).first()
+
+
+def get_user_by_id(session: Session, id: UUID) -> models.User | None:
+    statement = select(models.User).where(models.User.id == id)
     return session.exec(statement).first()
 
 

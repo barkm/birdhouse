@@ -1,6 +1,7 @@
 from datetime import datetime
 import logging
 from typing import Annotated, Sequence
+from uuid import UUID
 
 from fastapi.responses import FileResponse
 from fastapi.security import OAuth2PasswordBearer
@@ -51,7 +52,7 @@ def get_role(
     token: str = Depends(oauth2_scheme), session: Session = Depends(get_session)
 ) -> models.Role:
     decoded_token = decoder.decode(token)
-    user = queries.get_user(session, decoded_token.uid) or models.User(
+    user = queries.get_user_by_uid(session, decoded_token.uid) or models.User(
         uid=decoded_token.uid, email=decoded_token.email, role=None
     )
     queries.add_user(session, user)
@@ -89,31 +90,30 @@ def me(role: models.Role = Depends(get_role)) -> dict[str, str]:
 def users(
     session: Session = Depends(get_session),
     role: models.Role = Depends(get_role),
-) -> list[dict[str, str | None]]:
+) -> list[dict[str, UUID | str | None]]:
     if role != models.Role.ADMIN:
         raise HTTPException(status_code=403, detail="Unauthorized")
     users = queries.get_users(session)
-    return [{"uid": user.uid, "email": user.email, "role": user.role} for user in users]
+    return [{"id": user.id, "email": user.email, "role": user.role} for user in users]
 
 
 class SetUserRoleRequest(BaseModel):
     role: models.Role | None
 
 
-@app.post("/set_user_role/{uid}")
+@app.post("/set_user_role/{id}")
 def set_user_role(
-    uid: str,
+    id: UUID,
     set_user_role_request: SetUserRoleRequest,
     session: Session = Depends(get_session),
     client_role: models.Role = Depends(get_role),
 ) -> dict[str, str]:
     if client_role != models.Role.ADMIN:
         raise HTTPException(status_code=403, detail="Unauthorized")
-    user = queries.get_user(session, uid)
+    user = queries.get_user_by_id(session, id)
     if not user:
         raise HTTPException(status_code=404, detail="User not found")
     user.role = set_user_role_request.role
-    print(user)
     queries.add_user(session, user)
     return {"status": "OK"}
 
