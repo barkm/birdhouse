@@ -2,6 +2,7 @@
 	import { getUsers, Role, setUserRole } from '$lib/recorder';
 	import type { User } from 'firebase/auth';
 	import { onMount } from 'svelte';
+	import { asset } from '$app/paths';
 
 	interface Props {
 		user: User;
@@ -23,7 +24,7 @@
 		{#each users as u}
 			<div class="rounded-lg border border-gray-300 p-4">
 				<div class="flex items-center mb-2 gap-2">
-				<img src={u.provider === 'google' ? '/google.svg' : '/firebase.svg'} alt="provider" class="inline-block w-5 h-5 ml-2 align-middle"/>
+				<img src={u.provider === 'google' ? asset('/google.svg') : asset('/firebase.svg')} alt="provider" class="inline-block w-5 h-5 ml-2 align-middle"/>
 				<span class="font-semibold">{u.email}</span>
 				</div>
 				<select
