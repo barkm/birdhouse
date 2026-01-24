@@ -21,13 +21,27 @@
 	</a>
 {/snippet}
 
-<div class="sticky top-0 z-50 border-b border-gray-300 bg-white">
-	<div class="flex items-center justify-center gap-6">
-		{@render navLink('/now', 'Nu')}
-		{@render navLink('/then', 'Då')}
-		{#if role === 'admin'}
-			{@render navLink('/devices', 'Enheter')}
-			{@render navLink('/users', 'Användare')}
-		{/if}
+<div class="sticky top-0 z-50 bg-white">
+	<div class="scrollbar-hide overflow-x-auto whitespace-nowrap">
+		<div class="flex min-w-full w-max items-center gap-6 border-b border-gray-300 px-2 md:justify-center">
+			{@render navLink('/now', 'Nu')}
+			{@render navLink('/then', 'Då')}
+			{#if role === 'admin'}
+				{@render navLink('/devices', 'Enheter')}
+				{@render navLink('/users', 'Användare')}
+			{/if}
+		</div>
 	</div>
 </div>
+
+
+<style>
+	.scrollbar-hide {
+		-ms-overflow-style: none;
+		scrollbar-width: none;
+	}
+
+	.scrollbar-hide::-webkit-scrollbar {
+		display: none;
+	}
+</style>
