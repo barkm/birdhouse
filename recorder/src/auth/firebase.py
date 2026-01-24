@@ -28,4 +28,4 @@ def _decode(token: str) -> DecodedToken:
     except Exception as e:
         logger.exception(f"Token verification failed: {e}")
         raise ValueError("Token verification failed")
-    return DecodedToken(uid=claims["uid"], email=claims["email"])
+    return DecodedToken(uid=claims["uid"], email=claims["email"], provider="firebase")

@@ -30,6 +30,7 @@ class User(SQLModel, table=True):
         default=None,
         sa_column=Column(role_enum, nullable=True),
     )
+    provider: str | None = Field()
 
 
 class Device(SQLModel, table=True):

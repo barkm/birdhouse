@@ -26,4 +26,4 @@ def _decode(
     if decoded.get("iss") not in {"https://accounts.google.com", "accounts.google.com"}:
         raise ValueError("Wrong issuer")
 
-    return DecodedToken(uid=decoded["sub"], email=decoded["email"])
+    return DecodedToken(uid=decoded["sub"], email=decoded["email"], provider="google")

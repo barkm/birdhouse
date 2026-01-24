@@ -9,6 +9,7 @@ Email = NewType("Email", str)
 class DecodedToken:
     uid: UID
     email: Email
+    provider: str
 
 
 class TokenDecoder(Protocol):

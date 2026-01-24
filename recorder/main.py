@@ -53,7 +53,10 @@ def get_role(
 ) -> models.Role:
     decoded_token = decoder.decode(token)
     user = queries.get_user_by_uid(session, decoded_token.uid) or models.User(
-        uid=decoded_token.uid, email=decoded_token.email, role=None
+        uid=decoded_token.uid,
+        email=decoded_token.email,
+        role=None,
+        provider=decoded_token.provider,
     )
     queries.add_user(session, user)
     if not user or not user.role:
