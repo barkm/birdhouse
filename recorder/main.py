@@ -93,14 +93,7 @@ def users(
     if role != models.Role.ADMIN:
         raise HTTPException(status_code=403, detail="Unauthorized")
     users = queries.get_users(session)
-    return [
-        {
-            "uid": user.uid,
-            "email": user.email,
-            "role": user.role.value if user.role else None,
-        }
-        for user in users
-    ]
+    return [{"uid": user.uid, "email": user.email, "role": user.role} for user in users]
 
 
 class SetUserRoleRequest(BaseModel):
