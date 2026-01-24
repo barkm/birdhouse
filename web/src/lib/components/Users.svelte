@@ -9,7 +9,7 @@
 
 	const { user }: Props = $props();
 
-	let users: { id: string; email: string; role: Role | null }[] | null = $state(null);
+	let users: { id: string; email: string; role: Role | null, provider: string | null }[] | null = $state(null);
 
 	const loadUsers = async () => {
 		users = await getUsers(user);
@@ -22,7 +22,10 @@
 	<div class="flex flex-col gap-4">
 		{#each users as u}
 			<div class="rounded-lg border border-gray-300 p-4">
-				<div class="font-semibold">{u.email}</div>
+				<div class="flex items-center mb-2 gap-2">
+				<img src={u.provider === 'google' ? '/google.svg' : '/firebase.svg'} alt="provider" class="inline-block w-5 h-5 ml-2 align-middle"/>
+				<span class="font-semibold">{u.email}</span>
+				</div>
 				<select
 					bind:value={u.role}
 					onchange={() => setUserRole(user, u.id, u.role)}
