@@ -104,7 +104,7 @@ def users(
 
 
 class SetUserRoleRequest(BaseModel):
-    role: models.Role
+    role: models.Role | None
 
 
 @app.post("/set_user_role/{uid}")
