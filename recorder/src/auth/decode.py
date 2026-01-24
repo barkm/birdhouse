@@ -1,4 +1,4 @@
-from src.auth import firebase
+from src.auth import firebase, google
 from src.auth.types import DecodedToken, TokenDecoder
 
 from typing import Callable
@@ -8,6 +8,7 @@ class Decoder(TokenDecoder):
     def __init__(self) -> None:
         self.decoders: list[TokenDecoder] = [
             firebase.FirebaseDecoder(),
+            google.GoogleDecoder(),
         ]
 
     def decode(self, token: str) -> DecodedToken:
