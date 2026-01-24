@@ -103,6 +103,28 @@ def users(
     ]
 
 
+class SetUserRoleRequest(BaseModel):
+    role: models.Role
+
+
+@app.post("/set_user_role/{uid}")
+def set_user_role(
+    uid: str,
+    set_user_role_request: SetUserRoleRequest,
+    session: Session = Depends(get_session),
+    client_role: models.Role = Depends(get_role),
+) -> dict[str, str]:
+    if client_role != models.Role.ADMIN:
+        raise HTTPException(status_code=403, detail="Unauthorized")
+    user = queries.get_user(session, uid)
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+    user.role = set_user_role_request.role
+    print(user)
+    queries.add_user(session, user)
+    return {"status": "OK"}
+
+
 @app.post("/register")
 def register_device(
     register_request: RegisterRequest,
