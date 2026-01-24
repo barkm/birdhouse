@@ -19,7 +19,9 @@ export const getRole = async (u: User): Promise<Role | null> => {
 	return null;
 };
 
-export const getUsers = async (u: User): Promise<{ id: string, email: string; role: Role | null }[] | null> => {
+export const getUsers = async (
+	u: User
+): Promise<{ id: string; email: string; role: Role | null }[] | null> => {
 	const response = await authorizedRequest(u, PUBLIC_RECORDER_URL, 'users');
 	if (!response.ok) {
 		return null;
@@ -28,15 +30,11 @@ export const getUsers = async (u: User): Promise<{ id: string, email: string; ro
 	return data.map((entry: { id: string; email: string; role: string }) => ({
 		id: entry.id,
 		email: entry.email,
-		role: entry.role ? entry.role === Role.ADMIN ? Role.ADMIN : Role.USER : null
+		role: entry.role ? (entry.role === Role.ADMIN ? Role.ADMIN : Role.USER) : null
 	}));
-}
+};
 
-export const setUserRole = async (
-	user: User,
-	id: string,
-	role: Role | null
-): Promise<void> => {
+export const setUserRole = async (user: User, id: string, role: Role | null): Promise<void> => {
 	const response = await authorizedRequest(
 		user,
 		PUBLIC_RECORDER_URL,
@@ -48,8 +46,7 @@ export const setUserRole = async (
 		}
 	);
 	await response.json();
-}
-
+};
 
 export interface Recording {
 	url: string;
