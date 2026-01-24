@@ -9,7 +9,7 @@
 
     const { user }: Props = $props();
 
-    let users: { uid: string; email: string; role: Role }[] | null = $state(null);
+    let users: { uid: string; email: string; role: Role | null }[] | null = $state(null);
 
     const loadUsers = async () => {
         users = await getUsers(user);
@@ -27,7 +27,7 @@
                 <select bind:value={u.role} onchange={() => setUserRole(user, u.uid, u.role)} class="mt-2 p-2 border border-gray-300 rounded">
                     <option value="user">User</option>
                     <option value="admin">Admin</option>
-                    <option value="none">None</option>
+                    <option value={null}>None</option>
                 </select>
             </div>
         {/each}

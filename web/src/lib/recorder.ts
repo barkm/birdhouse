@@ -19,7 +19,7 @@ export const getRole = async (u: User): Promise<Role | null> => {
 	return null;
 };
 
-export const getUsers = async (u: User): Promise<{ uid: string, email: string; role: Role }[] | null> => {
+export const getUsers = async (u: User): Promise<{ uid: string, email: string; role: Role | null }[] | null> => {
 	const response = await authorizedRequest(u, PUBLIC_RECORDER_URL, 'users');
 	if (!response.ok) {
 		return null;
@@ -28,14 +28,14 @@ export const getUsers = async (u: User): Promise<{ uid: string, email: string; r
 	return data.map((entry: { uid: string; email: string; role: string }) => ({
 		uid: entry.uid,
 		email: entry.email,
-		role: entry.role === Role.ADMIN ? Role.ADMIN : Role.USER
+		role: entry.role ? entry.role === Role.ADMIN ? Role.ADMIN : Role.USER : null
 	}));
 }
 
 export const setUserRole = async (
 	user: User,
 	uid: string,
-	role: Role
+	role: Role | null
 ): Promise<void> => {
 	const response = await authorizedRequest(
 		user,
