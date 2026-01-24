@@ -23,7 +23,7 @@
 	<div class="flex flex-col gap-4">
 		{#each users as u}
 			<div class="rounded-lg border border-gray-300 p-4">
-				<div class="flex items-center mb-2 gap-2">
+				<div class="flex items-center mb-2 gap-2 overflow-x-auto">
 				<img src={u.provider === 'google' ? asset('/google.svg') : asset('/firebase.svg')} alt="provider" class="inline-block w-5 h-5 ml-2 align-middle"/>
 				<span class="font-semibold">{u.email}</span>
 				</div>
