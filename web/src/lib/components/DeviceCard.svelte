@@ -15,7 +15,7 @@
 	const local_promise = checkDeviceAvailability(name);
 </script>
 
-<a class="rounded-lg border border-gray-300 p-4 text-left" href={resolve(`/device/${name}`)}>
+<a class="rounded-lg border border-gray-300 p-4 text-left" href={resolve('/device') + `?name=${name}`}>
 	<div class="flex items-center justify-between">
 		<div class="text-xl font-semibold">{name}</div>
 		{#await local_promise then local}

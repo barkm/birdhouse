@@ -2,9 +2,13 @@
     import { page } from '$app/state';
 	import Device from '$lib/components/Device.svelte';
 	import { user } from '$lib/firebase';
+
+    const name = $derived(page.url.searchParams.get('name'));
 </script>
 
-<Device
+{#if name !== null}
+    <Device
     user={$user!}
-    name={page.params.name!}
-/>
+    {name}
+    />
+{/if}
