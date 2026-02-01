@@ -1,26 +1,24 @@
 <script lang="ts">
-	import { getRecordings, type Recording } from "$lib/recorder";
-	import type { User } from "firebase/auth";
-	import Loader from "./loader/Loader.svelte";
-	import VideoWithLoader from "./video/VideoWithLoader.svelte";
+	import { getRecordings, type Recording } from '$lib/recorder';
+	import type { User } from 'firebase/auth';
+	import Loader from './loader/Loader.svelte';
+	import VideoWithLoader from './video/VideoWithLoader.svelte';
 
-
-    interface Props {
-        user: User;
-        device_name: string;
+	interface Props {
+		user: User;
+		device_name: string;
 		from?: Date;
 		to?: Date;
-    }
+	}
 
-    const { user, device_name, from, to }: Props = $props();
-    const compare_recordings = (a: Recording, b: Recording) => {
+	const { user, device_name, from, to }: Props = $props();
+	const compare_recordings = (a: Recording, b: Recording) => {
 		return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
 	};
 
-    const recordings_promise = getRecordings(user, device_name, from, to).then((recordings) =>
-        recordings.sort(compare_recordings)
-    );
-
+	const recordings_promise = getRecordings(user, device_name, from, to).then((recordings) =>
+		recordings.sort(compare_recordings)
+	);
 </script>
 
 <div class="grid grid-cols-1 gap-4 md:grid-cols-2">

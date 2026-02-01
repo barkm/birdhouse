@@ -189,6 +189,23 @@ def list_devices(
     ]
 
 
+@app.get("/device/{device_name}")
+def get_device(
+    device_name: str,
+    session: Session = Depends(get_session),
+    role: models.Role = Depends(get_role),
+) -> dict[str, str | bool | list[str]]:
+    device = queries.get_device(session, device_name, role)
+    if not device:
+        raise HTTPException(status_code=404, detail="Device not found")
+    url = queries.get_url(session, device.name)
+    return {
+        "name": device.name,
+        "allowed_roles": [role.value for role in device.allowed_roles],
+        "active": _is_active(url) if url else False,
+    }
+
+
 @app.post("/set_roles/{device_name}")
 def set_device_roles(
     device_name: str,
@@ -198,7 +215,7 @@ def set_device_roles(
 ) -> dict[str, str]:
     if role != models.Role.ADMIN:
         raise HTTPException(status_code=403, detail="Unauthorized")
-    device = queries.get_device(session, device_name)
+    device = queries.get_device(session, device_name, role)
     if not device:
         raise HTTPException(status_code=404, detail="Device not found")
     queries.set_device_roles(session, device, roles)

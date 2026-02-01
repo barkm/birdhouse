@@ -91,7 +91,6 @@
 	const average_inside_sensor_promise = $derived(
 		filtered_inside_sensor_data_promise.then(average_sensor_data)
 	);
-
 </script>
 
 <DateRangePicker bind:start_date bind:end_date />
@@ -190,9 +189,4 @@
 		</LineChart>
 	</div>
 {/await}
-<RecordingsGrid
-	{user}
-	device_name="birdhouse"
-	from={start_date}
-	to={end_date}
-/>
+<RecordingsGrid {user} device_name="birdhouse" from={start_date} to={end_date} />

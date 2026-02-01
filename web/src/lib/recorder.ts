@@ -114,6 +114,17 @@ export const listDevices = async (
 	return response.json();
 };
 
+export const getDevice = async (
+	user: User,
+	device_name: string
+): Promise<{ name: string; allowed_roles: Role[]; active: boolean } | null> => {
+	const response = await authorizedRequest(user, PUBLIC_RECORDER_URL, `device/${device_name}`);
+	if (!response.ok) {
+		return null;
+	}
+	return response.json();
+};
+
 export const setDeviceRoles = async (
 	user: User,
 	device_name: string,
