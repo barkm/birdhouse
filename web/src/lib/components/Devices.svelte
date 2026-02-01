@@ -1,11 +1,11 @@
 <script lang="ts">
 	import { Role } from '$lib/recorder';
-	import { listDevices as listRecordedDevices, setDeviceRoles } from '$lib/recorder';
+	import { listDevices as listRecordedDevices } from '$lib/recorder';
 	import { checkDeviceAvailability } from '$lib/recorder';
 	import { getStatus } from '$lib/recorder';
 	import type { User } from 'firebase/auth';
 	import { onMount } from 'svelte';
-	import Select from 'svelte-select';
+	import DeviceCard from './DeviceCard.svelte';
 
 	interface Props {
 		user: User;
@@ -57,50 +57,14 @@
 		{/each}
 	{:else}
 		{#each devices_with_locality as device}
-			<div class="rounded-lg border border-gray-300 p-4">
-				<div class="flex items-center justify-between">
-					<div class="text-xl font-semibold">{device.name}</div>
-					{#if device.active}
-						<div class="rounded bg-green-100 px-2 py-1 text-sm font-medium text-green-800">
-							Aktiv {device.local ? '(Lokal)' : '(Fjärr)'}
-						</div>
-					{:else}
-						<div class="rounded bg-gray-100 px-2 py-1 text-sm font-medium text-gray-800">
-							Inaktiv {device.local ? '(Lokal)' : '(Fjärr)'}
-						</div>
-					{/if}
-				</div>
-				{#if device.active}
-					<div class="mt-2 text-gray-600">Status: {device.status ?? 'Okänd'}</div>
-				{/if}
-				<form class="mt-4 flex flex-row items-center gap-4">
-					<Select
-						class="mt-4"
-						items={Object.values(Role).map((role) => ({ value: role, label: role }))}
-						bind:value={device.ui_allowed_roles}
-						multiple
-					/>
-					<button
-						type="button"
-						class="rounded border px-4 py-2 hover:bg-gray-100 disabled:opacity-25"
-						disabled={!device.ui_allowed_roles ||
-							device.ui_allowed_roles.map((role) => role.value).toString() ===
-								device.allowed_roles.toString()}
-						onclick={() => {
-							if (!device.ui_allowed_roles) return;
-							setDeviceRoles(
-								user,
-								device.name,
-								device.ui_allowed_roles.map((role) => role.value)
-							);
-							device.allowed_roles = device.ui_allowed_roles.map((role) => role.value);
-						}}
-						aria-label="Spara"
-					>
-						Spara
-					</button>
-				</form>
-			</div>
+			<DeviceCard
+				user={user}
+				name={device.name}
+				local={device.local}
+				allowed_roles={device.allowed_roles}
+				active={device.active}
+				status={device.status}
+			/>
 		{/each}
 	{/if}
 </div>
