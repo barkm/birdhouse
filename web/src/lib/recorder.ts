@@ -21,18 +21,20 @@ export const getRole = async (u: User): Promise<Role | null> => {
 
 export const getUsers = async (
 	u: User
-): Promise<{ id: string; email: string; role: Role | null , provider: string | null }[] | null> => {
+): Promise<{ id: string; email: string; role: Role | null; provider: string | null }[] | null> => {
 	const response = await authorizedRequest(u, PUBLIC_RECORDER_URL, 'users');
 	if (!response.ok) {
 		return null;
 	}
 	const data = await response.json();
-	return data.map((entry: { id: string; email: string; role: string; provider: string | null }) => ({
-		id: entry.id,
-		email: entry.email,
-		role: entry.role ? (entry.role === Role.ADMIN ? Role.ADMIN : Role.USER) : null,
-		provider: entry.provider 
-	}));
+	return data.map(
+		(entry: { id: string; email: string; role: string; provider: string | null }) => ({
+			id: entry.id,
+			email: entry.email,
+			role: entry.role ? (entry.role === Role.ADMIN ? Role.ADMIN : Role.USER) : null,
+			provider: entry.provider
+		})
+	);
 };
 
 export const setUserRole = async (user: User, id: string, role: Role | null): Promise<void> => {

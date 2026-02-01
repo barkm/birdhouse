@@ -9,7 +9,6 @@
 	const { children } = $props();
 
 	let role_promise = $derived($user ? getRole($user) : undefined);
-
 </script>
 
 {#if !$isLoading}

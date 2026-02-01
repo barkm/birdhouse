@@ -10,7 +10,8 @@
 
 	const { user }: Props = $props();
 
-	let users: { id: string; email: string; role: Role | null, provider: string | null }[] | null = $state(null);
+	let users: { id: string; email: string; role: Role | null; provider: string | null }[] | null =
+		$state(null);
 
 	const loadUsers = async () => {
 		users = await getUsers(user);
@@ -23,9 +24,13 @@
 	<div class="flex flex-col gap-4">
 		{#each users as u}
 			<div class="rounded-lg border border-gray-300 p-4">
-				<div class="flex items-center mb-2 gap-2 overflow-x-auto">
-				<img src={u.provider === 'google' ? asset('/google.svg') : asset('/firebase.svg')} alt="provider" class="inline-block w-5 h-5 ml-2 align-middle"/>
-				<span class="font-semibold">{u.email}</span>
+				<div class="mb-2 flex items-center gap-2 overflow-x-auto">
+					<img
+						src={u.provider === 'google' ? asset('/google.svg') : asset('/firebase.svg')}
+						alt="provider"
+						class="ml-2 inline-block h-5 w-5 align-middle"
+					/>
+					<span class="font-semibold">{u.email}</span>
 				</div>
 				<select
 					bind:value={u.role}

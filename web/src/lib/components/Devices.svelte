@@ -58,7 +58,7 @@
 	{:else}
 		{#each devices_with_locality as device}
 			<DeviceCard
-				user={user}
+				{user}
 				name={device.name}
 				local={device.local}
 				allowed_roles={device.allowed_roles}

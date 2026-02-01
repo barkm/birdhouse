@@ -23,7 +23,9 @@
 
 <div class="sticky top-0 z-50 bg-white">
 	<div class="scrollbar-hide overflow-x-auto whitespace-nowrap">
-		<div class="flex min-w-full w-max items-center gap-6 border-b border-gray-300 px-2 md:justify-center">
+		<div
+			class="flex w-max min-w-full items-center gap-6 border-b border-gray-300 px-2 md:justify-center"
+		>
 			{@render navLink('/now', 'Nu')}
 			{@render navLink('/then', 'Då')}
 			{#if role === 'admin'}
@@ -33,7 +35,6 @@
 		</div>
 	</div>
 </div>
-
 
 <style>
 	.scrollbar-hide {
