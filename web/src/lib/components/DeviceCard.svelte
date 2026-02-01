@@ -1,34 +1,36 @@
 <script lang="ts">
-	import { getStatus, Role } from '$lib/recorder';
+	import { checkDeviceAvailability, getStatus, Role } from '$lib/recorder';
 	import { setDeviceRoles } from '$lib/recorder';
 	import type { User } from 'firebase/auth';
 	import Select from 'svelte-select';
 
 	interface Props {
 		name: string;
-		local: boolean;
 		allowed_roles: Role[];
 		active: boolean;
 		user: User;
 	}
 
-	let { user, name, local, allowed_roles = $bindable(), active }: Props = $props();
+	let { user, name, allowed_roles = $bindable(), active }: Props = $props();
 	const status_promise = getStatus(user, name);
+	const local_promise = checkDeviceAvailability(name);
 	let ui_allowed_roles = $state(allowed_roles.map((role) => ({ value: role, label: role })));
 </script>
 
 <div class="rounded-lg border border-gray-300 p-4">
 	<div class="flex items-center justify-between">
 		<div class="text-xl font-semibold">{name}</div>
-		{#if active}
-			<div class="rounded bg-green-100 px-2 py-1 text-sm font-medium text-green-800">
-				Aktiv {local ? '(Lokal)' : '(Fjärr)'}
-			</div>
-		{:else}
-			<div class="rounded bg-gray-100 px-2 py-1 text-sm font-medium text-gray-800">
-				Inaktiv {local ? '(Lokal)' : '(Fjärr)'}
-			</div>
-		{/if}
+		{#await local_promise then local}
+			{#if active}
+				<div class="rounded bg-green-100 px-2 py-1 text-sm font-medium text-green-800">
+					Aktiv {local ? '(Lokal)' : '(Fjärr)'}
+				</div>
+			{:else}
+				<div class="rounded bg-gray-100 px-2 py-1 text-sm font-medium text-gray-800">
+					Inaktiv {local ? '(Lokal)' : '(Fjärr)'}
+				</div>
+			{/if}
+		{/await}
 	</div>
 	{#if active}
 		{#await status_promise}
