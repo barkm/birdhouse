@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { Role } from '$lib/recorder';
+	import { getStatus, Role } from '$lib/recorder';
 	import { setDeviceRoles } from '$lib/recorder';
 	import type { User } from 'firebase/auth';
 	import Select from 'svelte-select';
@@ -9,11 +9,11 @@
 		local: boolean;
 		allowed_roles: Role[];
 		active: boolean;
-		status: string;
 		user: User;
 	}
 
-	let { user, name, local, allowed_roles = $bindable(), active, status }: Props = $props();
+	let { user, name, local, allowed_roles = $bindable(), active }: Props = $props();
+	const status_promise = getStatus(user, name);
 	let ui_allowed_roles = $state(allowed_roles.map((role) => ({ value: role, label: role })));
 </script>
 
@@ -31,7 +31,11 @@
 		{/if}
 	</div>
 	{#if active}
-		<div class="mt-2 text-gray-600">Status: {status ?? 'Okänd'}</div>
+		{#await status_promise}
+			<div class="rounded-log mt-3 mb-3 h-4 w-24 animate-pulse rounded bg-gray-300"></div>
+		{:then status}
+			<div class="mt-2 text-gray-600">Status: {status.status ?? 'Okänd'}</div>
+		{/await}
 	{/if}
 	<form class="mt-4 flex flex-row items-center gap-4">
 		<Select

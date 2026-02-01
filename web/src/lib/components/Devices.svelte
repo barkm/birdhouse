@@ -2,7 +2,6 @@
 	import { Role } from '$lib/recorder';
 	import { listDevices as listRecordedDevices } from '$lib/recorder';
 	import { checkDeviceAvailability } from '$lib/recorder';
-	import { getStatus } from '$lib/recorder';
 	import type { User } from 'firebase/auth';
 	import { onMount } from 'svelte';
 	import DeviceCard from './DeviceCard.svelte';
@@ -19,25 +18,14 @@
 				allowed_roles: Role[];
 				ui_allowed_roles?: { value: Role; label: string }[];
 				active: boolean;
-				status: string;
 				local: boolean;
 		  }[]
 		| null = $state(null);
 
 	const load = async () => {
 		const recorded_devices = await listRecordedDevices(user);
-		const statuses = await Promise.all(
-			recorded_devices.map(async (device) => {
-				const status = await getStatus(user, device.name);
-				return {
-					...device,
-					ui_allowed_roles: device.allowed_roles.map((role) => ({ value: role, label: role })),
-					status: status.status
-				};
-			})
-		);
 		devices_with_locality = await Promise.all(
-			statuses.map(async (device) => ({
+			recorded_devices.map(async (device) => ({
 				...device,
 				local: await checkDeviceAvailability(device.name)
 			}))
@@ -63,7 +51,6 @@
 				local={device.local}
 				allowed_roles={device.allowed_roles}
 				active={device.active}
-				status={device.status}
 			/>
 		{/each}
 	{/if}
