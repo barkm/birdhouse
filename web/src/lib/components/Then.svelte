@@ -15,6 +15,7 @@
 	import Loader from '$lib/components/loader/Loader.svelte';
 	import colors from 'tailwindcss/colors';
 	import type { User } from 'firebase/auth';
+	import RecordingsGrid from './RecordingsGrid.svelte';
 
 	interface Props {
 		user: User;
@@ -66,10 +67,6 @@
 		};
 	};
 
-	const compare_recordings = (a: Recording, b: Recording) => {
-		return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
-	};
-
 	const outside_sensor_data_promise = $derived(
 		getSensorData(user, 'birdhouse', start_date, end_date)
 	);
@@ -95,11 +92,6 @@
 		filtered_inside_sensor_data_promise.then(average_sensor_data)
 	);
 
-	const recordings_promise = $derived(
-		getRecordings(user, 'birdhouse', start_date, end_date).then((recordings) =>
-			recordings.sort(compare_recordings)
-		)
-	);
 </script>
 
 <DateRangePicker bind:start_date bind:end_date />
@@ -198,30 +190,9 @@
 		</LineChart>
 	</div>
 {/await}
-<div class="grid grid-cols-1 gap-4 md:grid-cols-2">
-	{#await recordings_promise}
-		{#each Array(4) as _}
-			<div class="flex aspect-video flex-col items-center justify-center">
-				<div class="mb-3 h-4 w-30 rounded bg-gray-100"></div>
-				<Loader />
-			</div>
-		{/each}
-	{:then recordings}
-		{#each recordings as recording}
-			<div>
-				<span class="mb-2 block text-center text-sm text-gray-600">
-					{new Date(recording.created_at).toLocaleString()}
-				</span>
-				<VideoWithLoader
-					class="w-full rounded-sm"
-					src={recording.url}
-					controls
-					autoplay
-					playsinline
-					muted
-					loop
-				/>
-			</div>
-		{/each}
-	{/await}
-</div>
+<RecordingsGrid
+	{user}
+	device_name="birdhouse"
+	from={start_date}
+	to={end_date}
+/>
