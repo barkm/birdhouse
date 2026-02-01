@@ -16,7 +16,6 @@
 		| {
 				name: string;
 				allowed_roles: Role[];
-				ui_allowed_roles?: { value: Role; label: string }[];
 				active: boolean;
 				local: boolean;
 		  }[]
