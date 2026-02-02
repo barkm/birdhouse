@@ -19,6 +19,15 @@
 	let stream_url: string | undefined = $state(undefined);
 	let id_token: string | undefined = $state(undefined);
 
+	const get_previous_days = () => {
+		const date = new Date();
+		date.setDate(date.getDate() - 6);
+		return date;
+	};
+
+	const from = get_previous_days();
+	const to = new Date();
+
 	onMount(async () => {
 		const device = await getDevice(user, name);
 		allowed_roles = device?.allowed_roles || [];
@@ -78,4 +87,4 @@
 	<VideoWithLoader {id_token} src={stream_url} autoplay muted playsinline controls />
 {/if}
 
-<RecordingsGrid {user} device_name={name} />
+<RecordingsGrid {user} device_name={name} from={from} to={to} />
