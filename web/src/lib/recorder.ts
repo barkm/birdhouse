@@ -161,7 +161,10 @@ export const getCurrentSensorData = async (
 	};
 };
 
-export const startAndGetStreamUrl = async (user: User, device_name: string): Promise<string | null> => {
+export const startAndGetStreamUrl = async (
+	user: User,
+	device_name: string
+): Promise<string | null> => {
 	const { response, base_url } = await localRequestWithRelayFallback(
 		user,
 		device_name,

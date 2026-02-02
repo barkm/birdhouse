@@ -87,4 +87,4 @@
 	<VideoWithLoader {id_token} src={stream_url} autoplay muted playsinline controls />
 {/if}
 
-<RecordingsGrid {user} device_name={name} from={from} to={to} />
+<RecordingsGrid {user} device_name={name} {from} {to} />
