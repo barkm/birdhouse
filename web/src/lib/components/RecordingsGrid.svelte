@@ -16,8 +16,10 @@
 		return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
 	};
 
-	const recordings_promise = getRecordings(user, device_name, from, to).then((recordings) =>
-		recordings.sort(compare_recordings)
+	const recordings_promise = $derived(
+		getRecordings(user, device_name, from, to).then((recordings) =>
+			recordings.sort(compare_recordings)
+		)
 	);
 </script>
 
