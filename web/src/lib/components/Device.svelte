@@ -1,9 +1,10 @@
 <script lang="ts">
 	import type { User } from 'firebase/auth';
 	import RecordingsGrid from './RecordingsGrid.svelte';
-	import { getDevice, Role, setDeviceRoles } from '$lib/recorder';
+	import { getDevice, Role, setDeviceRoles, startAndGetStreamUrl } from '$lib/recorder';
 	import { onMount } from 'svelte';
 	import Select from 'svelte-select';
+	import VideoWithLoader from './video/VideoWithLoader.svelte';
 
 	interface Props {
 		user: User;
@@ -15,10 +16,25 @@
 	let allowed_roles: string[] = $state([]);
 	let ui_allowed_roles: { value: Role; label: string }[] | null = $state(null);
 
+	let stream_url: string | undefined = $state(undefined);
+	let id_token: string | undefined = $state(undefined);
+
 	onMount(async () => {
 		const device = await getDevice(user, name);
 		allowed_roles = device?.allowed_roles || [];
 		ui_allowed_roles = device?.allowed_roles.map((role) => ({ value: role, label: role })) || [];
+
+		const url_promise = startAndGetStreamUrl(user, name);
+		const id_token_promise = user.getIdToken();
+		Promise.all([url_promise, id_token_promise]).then(([url, token]) => {
+			if (!url) {
+				stream_url = undefined;
+				id_token = undefined;
+				return;
+			}
+			stream_url = url;
+			id_token = token;
+		});
 	});
 </script>
 
@@ -57,5 +73,9 @@
 		</form>
 	{/if}
 </div>
+
+{#if stream_url && id_token}
+	<VideoWithLoader {id_token} src={stream_url} autoplay muted playsinline controls />
+{/if}
 
 <RecordingsGrid {user} device_name={name} />

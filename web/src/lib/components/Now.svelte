@@ -21,6 +21,11 @@
 		const url_promise = startAndGetStreamUrl(user, 'birdhouse');
 		const id_token_promise = user.getIdToken();
 		Promise.all([url_promise, id_token_promise]).then(([url, token]) => {
+			if (!url) {
+				stream_url = undefined;
+				id_token = undefined;
+				return;
+			}
 			stream_url = url;
 			id_token = token;
 		});

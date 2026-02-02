@@ -161,12 +161,15 @@ export const getCurrentSensorData = async (
 	};
 };
 
-export const startAndGetStreamUrl = async (user: User, device_name: string): Promise<string> => {
+export const startAndGetStreamUrl = async (user: User, device_name: string): Promise<string | null> => {
 	const { response, base_url } = await localRequestWithRelayFallback(
 		user,
 		device_name,
 		`/start?bitrate=500000&framerate=24`
 	);
+	if (!response.ok) {
+		return null;
+	}
 	const playlist_endpoint = (await response.json()).playlist;
 	return `${base_url}${playlist_endpoint}`;
 };
