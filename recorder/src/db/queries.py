@@ -90,7 +90,7 @@ def get_sensors(
         .join(models.Device)
         .order_by(models.Sensor.created_at.desc())  # type: ignore
         .where(models.Device.name == device_name)
-        .where(models.Sensor.temperature is None or models.Sensor.temperature > -30)
+        .where(models.Sensor.temperature.is_(None) | (models.Sensor.temperature > -30))
         .where(models.Device.allowed_roles.any(role))  # type: ignore
     )
     if start:
