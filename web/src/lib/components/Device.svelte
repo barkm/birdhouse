@@ -1,6 +1,7 @@
 <script lang="ts">
 	import type { User } from 'firebase/auth';
 	import RecordingsGrid from './RecordingsGrid.svelte';
+	import SensorGraph from './SensorGraph.svelte';
 	import { getDevice, Role, setDeviceRoles, startAndGetStreamUrl } from '$lib/recorder';
 	import { onMount } from 'svelte';
 	import Select from 'svelte-select';
@@ -89,5 +90,7 @@
 {#if stream_url && id_token}
 	<VideoWithLoader {id_token} src={stream_url} autoplay muted playsinline controls />
 {/if}
+
+<SensorGraph {user} device_name={name} />
 
 <RecordingsGrid {user} device_name={name} {from} {to} />
