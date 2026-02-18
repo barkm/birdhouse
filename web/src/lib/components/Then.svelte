@@ -59,8 +59,8 @@
 	const get_temperature_limits = (data: SensorData[]) => {
 		const temperatures = data.map((d) => d.temperature);
 		return {
-			max: Math.max(...temperatures),
-			min: Math.min(...temperatures)
+			max: temperatures.reduce((a, b) => Math.max(a, b), -Infinity),
+			min: temperatures.reduce((a, b) => Math.min(a, b), Infinity)
 		};
 	};
 
