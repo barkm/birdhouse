@@ -25,11 +25,13 @@
 		{#each users as u}
 			<div class="rounded-lg border border-gray-300 p-4">
 				<div class="mb-2 flex items-center gap-2 overflow-x-auto">
-					<img
-						src={u.provider === 'google' ? asset('/google.svg') : asset('/firebase.svg')}
-						alt="provider"
-						class="ml-2 inline-block h-5 w-5 align-middle"
-					/>
+				{#if u.provider === 'google'}
+					<img src={asset('/google.svg')} alt="google" class="ml-2 inline-block h-5 w-5 align-middle" />
+				{:else if u.provider === 'firebase'}
+					<img src={asset('/firebase.svg')} alt="firebase" class="ml-2 inline-block h-5 w-5 align-middle" />
+				{:else}
+					<span class="ml-2 inline-flex h-5 w-5 items-center justify-center rounded-full bg-gray-200 text-xs text-gray-500 align-middle">?</span>
+				{/if}
 					<span class="font-semibold">{u.email}</span>
 				</div>
 				<select
