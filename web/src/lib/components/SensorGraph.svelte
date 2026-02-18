@@ -15,7 +15,7 @@
 
 	const { user, device_name }: Props = $props();
 
-	type Aspect = 'temperature' | 'humidity';
+	type Aspect = 'temperature' | 'humidity' | 'cpu_temperature';
 
 	const get_previous_days = () => {
 		const date = new Date();
@@ -27,7 +27,7 @@
 	let end_date = $state(new Date());
 	let aspect = $state<Aspect>('temperature');
 
-	const unit = $derived(aspect === 'temperature' ? '°C' : '%');
+	const unit = $derived(aspect === 'humidity' ? '%' : '°C');
 
 	const sensor_data_promise = $derived(getSensorData(user, device_name, start_date, end_date));
 
@@ -59,6 +59,7 @@
 	>
 		<option value="temperature">Temperature</option>
 		<option value="humidity">Humidity</option>
+		<option value="cpu_temperature">CPU temperature</option>
 	</select>
 </div>
 
