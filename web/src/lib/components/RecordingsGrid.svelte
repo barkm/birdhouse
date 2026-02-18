@@ -2,7 +2,7 @@
 	import { getRecordings, type Recording } from '$lib/recorder';
 	import type { User } from 'firebase/auth';
 	import Loader from './loader/Loader.svelte';
-	import VideoWithLoader from './video/VideoWithLoader.svelte';
+	import LazyVideo from './video/LazyVideo.svelte';
 
 	interface Props {
 		user: User;
@@ -37,11 +37,10 @@
 				<span class="mb-2 block text-center text-sm text-gray-600">
 					{new Date(recording.created_at).toLocaleString()}
 				</span>
-				<VideoWithLoader
+				<LazyVideo
 					class="w-full rounded-sm"
 					src={recording.url}
 					controls
-					autoplay
 					playsinline
 					muted
 					loop
