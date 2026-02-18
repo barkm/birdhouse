@@ -17,8 +17,8 @@
 	let allowed_roles: string[] = $state([]);
 	let ui_allowed_roles: { value: Role; label: string }[] | null = $state(null);
 
-	let stream_url: string | undefined = $state(undefined);
-	let id_token: string | undefined = $state(undefined);
+	type StreamState = 'loading' | 'unavailable' | { url: string; token: string };
+	let stream: StreamState = $state('loading');
 
 	const get_previous_days = () => {
 		const date = new Date();
@@ -37,17 +37,8 @@
 				.filter((role) => role !== Role.ADMIN)
 				.map((role) => ({ value: role, label: role })) || [];
 
-		const url_promise = startAndGetStreamUrl(user, name);
-		const id_token_promise = user.getIdToken();
-		Promise.all([url_promise, id_token_promise]).then(([url, token]) => {
-			if (!url) {
-				stream_url = undefined;
-				id_token = undefined;
-				return;
-			}
-			stream_url = url;
-			id_token = token;
-		});
+		const [url, token] = await Promise.all([startAndGetStreamUrl(user, name), user.getIdToken()]);
+		stream = url ? { url, token } : 'unavailable';
 	});
 </script>
 
@@ -87,8 +78,19 @@
 	{/if}
 </div>
 
-{#if stream_url && id_token}
-	<VideoWithLoader {id_token} src={stream_url} autoplay muted playsinline controls />
+{#if stream === 'unavailable'}
+	<div class="flex w-full items-center justify-center rounded-lg bg-gray-100 text-gray-400" style="aspect-ratio: 16/9">
+		No stream available
+	</div>
+{:else}
+	<VideoWithLoader
+		id_token={typeof stream === 'object' ? stream.token : undefined}
+		src={typeof stream === 'object' ? stream.url : undefined}
+		autoplay
+		muted
+		playsinline
+		controls
+	/>
 {/if}
 
 <SensorGraph {user} device_name={name} />
