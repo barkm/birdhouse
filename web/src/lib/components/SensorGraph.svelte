@@ -1,7 +1,6 @@
 <script lang="ts">
 	import type { User } from 'firebase/auth';
 	import { getSensorData } from '$lib/recorder';
-	import DateRangePicker from '$lib/components/DateRangePicker.svelte';
 	import Loader from '$lib/components/loader/Loader.svelte';
 	import { LineChart, Tooltip } from 'layerchart';
 	import { format, PeriodType } from '@layerstack/utils';
@@ -11,20 +10,14 @@
 	interface Props {
 		user: User;
 		device_name: string;
+		start_date: Date;
+		end_date: Date;
 	}
 
-	const { user, device_name }: Props = $props();
+	const { user, device_name, start_date, end_date }: Props = $props();
 
 	type Aspect = 'temperature' | 'humidity' | 'cpu_temperature';
 
-	const get_previous_days = () => {
-		const date = new Date();
-		date.setDate(date.getDate() - 6);
-		return date;
-	};
-
-	let start_date = $state(get_previous_days());
-	let end_date = $state(new Date());
 	let aspect = $state<Aspect>('temperature');
 
 	const unit = $derived(aspect === 'humidity' ? '%' : '°C');
@@ -52,7 +45,6 @@
 </script>
 
 <div class="flex flex-wrap items-center gap-2">
-	<DateRangePicker bind:start_date bind:end_date />
 	<select
 		bind:value={aspect}
 		class="rounded-md border border-gray-300 bg-white p-2 text-sm focus:border-blue-500 focus:ring-1 focus:ring-blue-500"

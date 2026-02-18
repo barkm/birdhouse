@@ -3,6 +3,7 @@
 	import RecordingsGrid from './RecordingsGrid.svelte';
 	import SensorGraph from './SensorGraph.svelte';
 	import { getDevice, Role, setDeviceRoles, startAndGetStreamUrl } from '$lib/recorder';
+	import DateRangePicker from '$lib/components/DateRangePicker.svelte';
 	import { onMount } from 'svelte';
 	import Select from 'svelte-select';
 	import VideoWithLoader from './video/VideoWithLoader.svelte';
@@ -26,8 +27,8 @@
 		return date;
 	};
 
-	const from = get_previous_days();
-	const to = new Date();
+	let start_date = $state(get_previous_days());
+	let end_date = $state(new Date());
 
 	onMount(async () => {
 		const device = await getDevice(user, name);
@@ -93,6 +94,8 @@
 	/>
 {/if}
 
-<SensorGraph {user} device_name={name} />
+<DateRangePicker bind:start_date bind:end_date />
 
-<RecordingsGrid {user} device_name={name} {from} {to} />
+<SensorGraph {user} device_name={name} {start_date} {end_date} />
+
+<RecordingsGrid {user} device_name={name} from={start_date} to={end_date} />
