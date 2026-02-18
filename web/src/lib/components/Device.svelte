@@ -31,7 +31,10 @@
 	onMount(async () => {
 		const device = await getDevice(user, name);
 		allowed_roles = device?.allowed_roles || [];
-		ui_allowed_roles = device?.allowed_roles.map((role) => ({ value: role, label: role })) || [];
+		ui_allowed_roles =
+			device?.allowed_roles
+				.filter((role) => role !== Role.ADMIN)
+				.map((role) => ({ value: role, label: role })) || [];
 
 		const url_promise = startAndGetStreamUrl(user, name);
 		const id_token_promise = user.getIdToken();
@@ -57,7 +60,9 @@
 		<form class="mt-4 flex flex-row items-center gap-4">
 			<Select
 				class="mt-4"
-				items={Object.values(Role).map((role) => ({ value: role, label: role }))}
+				items={Object.values(Role)
+					.filter((role) => role !== Role.ADMIN)
+					.map((role) => ({ value: role, label: role }))}
 				bind:value={ui_allowed_roles}
 				multiple
 			/>
@@ -65,15 +70,13 @@
 				type="button"
 				class="rounded border px-4 py-2 hover:bg-gray-100 disabled:opacity-25"
 				disabled={!ui_allowed_roles ||
-					ui_allowed_roles.map((role) => role.value).toString() === allowed_roles.toString()}
+					ui_allowed_roles.map((role) => role.value).toString() ===
+						allowed_roles.filter((r) => r !== Role.ADMIN).toString()}
 				onclick={() => {
 					if (!ui_allowed_roles) return;
-					setDeviceRoles(
-						user,
-						name,
-						ui_allowed_roles.map((role) => role.value)
-					);
-					allowed_roles = ui_allowed_roles.map((role) => role.value);
+					const roles = [Role.ADMIN, ...ui_allowed_roles.map((role) => role.value)];
+					setDeviceRoles(user, name, roles);
+					allowed_roles = roles;
 				}}
 				aria-label="Spara"
 			>
