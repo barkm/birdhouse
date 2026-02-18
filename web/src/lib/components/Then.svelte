@@ -3,15 +3,12 @@
 	import SensorCard from '$lib/components/SensorCard.svelte';
 	import SensorLoader from '$lib/components/SensorLoader.svelte';
 	import {
-		getRecordings,
 		getSensorData,
-		type Recording,
 		type SensorData as OptionalSensorData
 	} from '$lib/recorder';
 	import { LineChart, Tooltip } from 'layerchart';
 	import { format, PeriodType } from '@layerstack/utils';
 	import { curveCatmullRom } from 'd3-shape';
-	import VideoWithLoader from '$lib/components/video/VideoWithLoader.svelte';
 	import Loader from '$lib/components/loader/Loader.svelte';
 	import colors from 'tailwindcss/colors';
 	import type { User } from 'firebase/auth';
