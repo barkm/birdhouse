@@ -49,9 +49,9 @@
 		bind:value={aspect}
 		class="rounded-md border border-gray-300 bg-white p-2 text-sm focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
 	>
-		<option value="temperature">Temperature</option>
-		<option value="humidity">Humidity</option>
-		<option value="cpu_temperature">CPU temperature</option>
+		<option value="temperature">Temperatur</option>
+		<option value="humidity">Luftfuktighet</option>
+		<option value="cpu_temperature">CPU-temperatur</option>
 	</select>
 </div>
 
@@ -62,7 +62,7 @@
 {:then [data, y_domain]}
 	{#if data.length === 0}
 		<div class="flex h-[300px] items-center justify-center rounded-lg border border-gray-300 text-gray-400">
-			No data for this period
+			Inga data för denna period
 		</div>
 	{:else}
 		<div class="h-[300px] rounded-lg border border-gray-300 p-4">

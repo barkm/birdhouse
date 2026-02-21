@@ -40,5 +40,5 @@
 			<span>max {temperature_limits.max.toFixed(1)}°C</span>
 		</div>
 	{/if}
-	<p class="text-lg">Humidity: {humidity ? humidity.toFixed(0) : '---'}%</p>
+	<p class="text-sm md:text-lg">Luftfuktighet: {humidity ? humidity.toFixed(0) : '---'}%</p>
 </div>
