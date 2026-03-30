@@ -75,3 +75,18 @@ class Registration(SQLModel, table=True):
     )
     device_id: uuid.UUID = Field(foreign_key="device.id", index=True)
     url: str
+
+
+class Location(SQLModel, table=True):
+    id: uuid.UUID = Field(default_factory=uuid.uuid4, primary_key=True)
+    name: str = Field(index=True, unique=True)
+
+
+class DeviceLocation(SQLModel, table=True):
+    id: uuid.UUID = Field(default_factory=uuid.uuid4, primary_key=True)
+    assigned_at: datetime = Field(
+        default_factory=lambda: datetime.now(timezone.utc),
+        sa_column=Column(DateTime(timezone=True), nullable=False),
+    )
+    device_id: uuid.UUID = Field(foreign_key="device.id", index=True)
+    location_id: uuid.UUID = Field(foreign_key="location.id")
