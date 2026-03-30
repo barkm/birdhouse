@@ -308,6 +308,47 @@ def list_recordings(
     return queries.get_recordings(session, device_obj.name, from_, to)
 
 
+@app.get("/locations")
+def list_locations(
+    session: Session = Depends(get_session),
+    role: models.Role = Depends(get_role),
+) -> list[dict]:
+    locations = queries.get_locations(session)
+    result = []
+    for loc in locations:
+        dev = queries.get_current_device_for_location(session, role, loc.name)
+        result.append(
+            {
+                "id": loc.id,
+                "name": loc.name,
+                "current_device_name": dev.name if dev else None,
+            }
+        )
+    return result
+
+
+@app.get("/sensors_by_location/{location_name}")
+def get_sensors_by_location(
+    location_name: str,
+    from_: Annotated[datetime | None, Query(alias="from")] = None,
+    to: datetime | None = None,
+    session: Session = Depends(get_session),
+    role: models.Role = Depends(get_role),
+) -> Sequence[models.Sensor]:
+    return queries.get_sensors_by_location(session, role, location_name, from_, to)
+
+
+@app.get("/recordings_by_location/{location_name}")
+def get_recordings_by_location(
+    location_name: str,
+    from_: Annotated[datetime | None, Query(alias="from")] = None,
+    to: datetime | None = None,
+    session: Session = Depends(get_session),
+    role: models.Role = Depends(get_role),
+) -> Sequence[models.Recording]:
+    return queries.get_recordings_by_location(session, role, location_name, from_, to)
+
+
 @app.get("/timelapse")
 def create_timelapse(
     start: datetime,

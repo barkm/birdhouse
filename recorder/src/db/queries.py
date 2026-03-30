@@ -1,5 +1,6 @@
 from datetime import datetime
 from uuid import UUID
+from sqlalchemy import func
 from sqlmodel import Session, select
 
 import src.db.models as models
@@ -138,4 +139,108 @@ def add_user(session: Session, user: models.User) -> models.User:
 
 def get_users(session: Session) -> list[models.User]:
     statement = select(models.User)
+    return list(session.exec(statement).all())
+
+
+def get_locations(session: Session) -> list[models.Location]:
+    return list(session.exec(select(models.Location)).all())
+
+
+def get_current_device_for_location(
+    session: Session, role: models.Role, location_name: str
+) -> models.Device | None:
+    latest_per_device_sq = (
+        select(
+            models.DeviceLocation.device_id,
+            func.max(models.DeviceLocation.assigned_at).label("max_assigned_at"),
+        )
+        .group_by(models.DeviceLocation.device_id)
+        .subquery()
+    )
+    statement = (
+        select(models.Device)
+        .join(
+            latest_per_device_sq, latest_per_device_sq.c.device_id == models.Device.id
+        )
+        .join(
+            models.DeviceLocation,
+            (models.DeviceLocation.device_id == models.Device.id)
+            & (
+                models.DeviceLocation.assigned_at
+                == latest_per_device_sq.c.max_assigned_at
+            ),
+        )
+        .join(models.Location, models.Location.id == models.DeviceLocation.location_id)
+        .where(models.Location.name == location_name)
+        .where(models.Device.allowed_roles.any(role))  # type: ignore
+    )
+    return session.exec(statement).first()
+
+
+def get_sensors_by_location(
+    session: Session,
+    role: models.Role,
+    location_name: str,
+    start: datetime | None = None,
+    end: datetime | None = None,
+) -> list[models.Sensor]:
+    latest_assignment_sq = (
+        select(func.max(models.DeviceLocation.assigned_at))
+        .where(models.DeviceLocation.device_id == models.Sensor.device_id)
+        .where(models.DeviceLocation.assigned_at <= models.Sensor.created_at)
+        .correlate(models.Sensor)
+        .scalar_subquery()
+    )
+    statement = (
+        select(models.Sensor)
+        .join(models.Device, models.Device.id == models.Sensor.device_id)
+        .join(
+            models.DeviceLocation,
+            (models.DeviceLocation.device_id == models.Sensor.device_id)
+            & (models.DeviceLocation.assigned_at == latest_assignment_sq),
+        )
+        .join(models.Location, models.Location.id == models.DeviceLocation.location_id)
+        .where(models.Location.name == location_name)
+        .where(models.Device.allowed_roles.any(role))  # type: ignore
+        .where(models.Sensor.temperature.is_(None) | (models.Sensor.temperature > -30))
+        .order_by(models.Sensor.created_at.desc())  # type: ignore
+    )
+    if start:
+        statement = statement.where(models.Sensor.created_at >= start)
+    if end:
+        statement = statement.where(models.Sensor.created_at <= end)
+    return list(session.exec(statement).all())
+
+
+def get_recordings_by_location(
+    session: Session,
+    role: models.Role,
+    location_name: str,
+    start: datetime | None = None,
+    end: datetime | None = None,
+) -> list[models.Recording]:
+    latest_assignment_sq = (
+        select(func.max(models.DeviceLocation.assigned_at))
+        .where(models.DeviceLocation.device_id == models.Recording.device_id)
+        .where(models.DeviceLocation.assigned_at <= models.Recording.created_at)
+        .correlate(models.Recording)
+        .scalar_subquery()
+    )
+    statement = (
+        select(models.Recording)
+        .join(models.Device, models.Device.id == models.Recording.device_id)
+        .join(
+            models.DeviceLocation,
+            (models.DeviceLocation.device_id == models.Recording.device_id)
+            & (models.DeviceLocation.assigned_at == latest_assignment_sq),
+        )
+        .join(models.Location, models.Location.id == models.DeviceLocation.location_id)
+        .where(models.Location.name == location_name)
+        .where(models.Device.allowed_roles.any(role))  # type: ignore
+        .order_by(models.Recording.created_at.desc())  # type: ignore
+    )
+    if start:
+        statement = statement.where(models.Recording.created_at >= start)
+    if end:
+        statement = statement.where(models.Recording.created_at <= end)
     return list(session.exec(statement).all())
