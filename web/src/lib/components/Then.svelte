@@ -3,7 +3,8 @@
 	import SensorCard from '$lib/components/SensorCard.svelte';
 	import SensorLoader from '$lib/components/SensorLoader.svelte';
 	import {
-		getSensorData,
+		getLocations,
+		getSensorDataByLocation,
 		type SensorData as OptionalSensorData
 	} from '$lib/recorder';
 	import { LineChart, Tooltip } from 'layerchart';
@@ -28,6 +29,8 @@
 
 	let start_date = $state(get_previous_day_from_midnight());
 	let end_date = $state(new Date());
+
+	const CHART_COLORS = [colors.blue[400], colors.amber[400], colors.green[400], colors.rose[400]];
 
 	const average = (arr: number[]) => {
 		if (arr.length === 0) return 0;
@@ -57,6 +60,7 @@
 	};
 
 	const get_temperature_limits = (data: SensorData[]) => {
+		if (data.length === 0) return null;
 		const temperatures = data.map((d) => d.temperature);
 		return {
 			max: temperatures.reduce((a, b) => Math.max(a, b), -Infinity),
@@ -64,87 +68,72 @@
 		};
 	};
 
-	const outside_sensor_data_promise = $derived(
-		getSensorData(user, 'birdhouse', start_date, end_date)
-	);
-	const inside_sensor_data_promise = $derived(getSensorData(user, 'house', start_date, end_date));
+	const capitalize = (s: string) => s.charAt(0).toUpperCase() + s.slice(1);
 
-	const filtered_outside_sensor_data_promise = $derived(
-		outside_sensor_data_promise.then(filter_sensor_data)
-	);
-	const filtered_inside_sensor_data_promise = $derived(
-		inside_sensor_data_promise.then(filter_sensor_data)
-	);
-
-	const outside_temperature_limits_promise = $derived(
-		filtered_outside_sensor_data_promise.then(get_temperature_limits)
-	);
-	const inside_temperature_limits_promise = $derived(
-		filtered_inside_sensor_data_promise.then(get_temperature_limits)
-	);
-	const average_outside_sensor_promise = $derived(
-		filtered_outside_sensor_data_promise.then(average_sensor_data)
-	);
-	const average_inside_sensor_promise = $derived(
-		filtered_inside_sensor_data_promise.then(average_sensor_data)
+	const location_data_promise = $derived(
+		(() => {
+			const start = start_date;
+			const end = end_date;
+			return getLocations(user).then((locs) =>
+				Promise.all(
+					locs.map(async (loc, i) => {
+						const raw = await getSensorDataByLocation(user, loc.name, start, end);
+						const filtered = filter_sensor_data(raw);
+						return {
+							name: loc.name,
+							color: CHART_COLORS[i % CHART_COLORS.length],
+							data: filtered,
+							average: average_sensor_data(filtered),
+							limits: get_temperature_limits(filtered)
+						};
+					})
+				)
+			);
+		})()
 	);
 </script>
 
 <DateRangePicker bind:start_date bind:end_date />
 <div class="grid grid-cols-2 gap-4">
-	{#await Promise.all([average_outside_sensor_promise, outside_temperature_limits_promise])}
+	{#await location_data_promise}
 		<SensorLoader limits />
-	{:then [average_outside_sensor, outside_temperature_limits]}
-		<SensorCard
-			title={'Utomhus'}
-			temperature={average_outside_sensor.temperature}
-			temperature_limits={outside_temperature_limits}
-			humidity={average_outside_sensor.humidity}
-		/>
-	{/await}
-	{#await Promise.all([average_inside_sensor_promise, inside_temperature_limits_promise])}
 		<SensorLoader limits />
-	{:then [average_inside_sensor, inside_temperature_limits]}
-		<SensorCard
-			title={'Inomhus'}
-			temperature={average_inside_sensor.temperature}
-			temperature_limits={inside_temperature_limits}
-			humidity={average_inside_sensor.humidity}
-		/>
+	{:then location_data}
+		{#each location_data as loc}
+			<SensorCard
+				title={capitalize(loc.name)}
+				temperature={loc.average.temperature}
+				temperature_limits={loc.limits ?? undefined}
+				humidity={loc.average.humidity}
+			/>
+		{/each}
 	{/await}
 </div>
-{#await Promise.all( [filtered_outside_sensor_data_promise, filtered_inside_sensor_data_promise, outside_temperature_limits_promise, inside_temperature_limits_promise] )}
+{#await location_data_promise}
 	<div class="h-[300px]">
 		<Loader />
 	</div>
-{:then [outside_data, inside_data, outside_limits, inside_limits]}
+{:then location_data}
+	{@const valid_limits = location_data.map((l) => l.limits).filter((l) => l !== null)}
+	{@const y_domain =
+		valid_limits.length > 0
+			? [
+					Math.min(...valid_limits.map((l) => l.min)) - 5,
+					Math.max(...valid_limits.map((l) => l.max)) + 5
+				]
+			: [-10, 30]}
 	<div class="h-[300px] rounded-lg border border-gray-300 p-4">
 		<LineChart
 			x="created_at"
 			y="temperature"
-			series={[
-				{
-					key: 'Utomhus',
-					data: outside_data.map((d) => ({ ...d, sensor: 'Utomhus' })),
-					color: colors.blue[400],
-					props: {
-						strokeWidth: 2
-					}
-				},
-				{
-					key: 'Inomhus',
-					data: inside_data.map((d) => ({ ...d, sensor: 'Inomhus' })),
-					color: colors.amber[400],
-					props: {
-						strokeWidth: 2
-					}
-				}
-			]}
+			series={location_data.map((loc) => ({
+				key: capitalize(loc.name),
+				data: loc.data.map((d) => ({ ...d, sensor: capitalize(loc.name) })),
+				color: loc.color,
+				props: { strokeWidth: 2 }
+			}))}
 			renderContext="svg"
-			yDomain={[
-				Math.min(outside_limits.min, inside_limits.min) - 5,
-				Math.max(outside_limits.max, inside_limits.max) + 5
-			]}
+			yDomain={y_domain}
 			legend
 			props={{
 				spline: { curve: curveCatmullRom },
@@ -185,5 +174,7 @@
 			{/snippet}
 		</LineChart>
 	</div>
+	{#each location_data as loc}
+		<RecordingsGrid {user} location_name={loc.name} from={start_date} to={end_date} />
+	{/each}
 {/await}
-<RecordingsGrid {user} device_name="birdhouse" from={start_date} to={end_date} />

@@ -2,7 +2,7 @@
 	import SensorCard from '$lib/components/SensorCard.svelte';
 	import SensorLoader from '$lib/components/SensorLoader.svelte';
 	import VideoWithLoader from '$lib/components/video/VideoWithLoader.svelte';
-	import { getCurrentSensorData, startAndGetStreamUrl } from '$lib/recorder';
+	import { getLocations, getCurrentSensorData, startAndGetStreamUrl } from '$lib/recorder';
 	import type { User } from 'firebase/auth';
 
 	interface Props {
@@ -11,45 +11,54 @@
 
 	const { user }: Props = $props();
 
-	const inside_sensor_data_promise = getCurrentSensorData(user, 'house');
-	const outside_sensor_data_promise = getCurrentSensorData(user, 'birdhouse');
+	const capitalize = (s: string) => s.charAt(0).toUpperCase() + s.slice(1);
+
+	const sensor_data_promise = getLocations(user).then((locs) =>
+		Promise.all(
+			locs.map(async (loc) => ({
+				name: loc.name,
+				data: loc.current_device_name
+					? await getCurrentSensorData(user, loc.current_device_name)
+					: null
+			}))
+		)
+	);
 
 	let stream_url: string | undefined = $state(undefined);
 	let id_token: string | undefined = $state(undefined);
 
 	$effect(() => {
-		const url_promise = startAndGetStreamUrl(user, 'birdhouse');
-		const id_token_promise = user.getIdToken();
-		Promise.all([url_promise, id_token_promise]).then(([url, token]) => {
-			if (!url) {
-				stream_url = undefined;
-				id_token = undefined;
-				return;
+		getLocations(user).then(async (locs) => {
+			for (const loc of locs) {
+				if (!loc.current_device_name) continue;
+				const [url, token] = await Promise.all([
+					startAndGetStreamUrl(user, loc.current_device_name),
+					user.getIdToken()
+				]);
+				if (url) {
+					stream_url = url;
+					id_token = token;
+					break;
+				}
 			}
-			stream_url = url;
-			id_token = token;
 		});
 	});
 </script>
 
 <div class="grid grid-cols-2 gap-4">
-	{#await outside_sensor_data_promise}
+	{#await sensor_data_promise}
 		<SensorLoader limits={false} />
-	{:then outsideSensorData}
-		<SensorCard
-			title={'Utomhus'}
-			temperature={outsideSensorData.temperature}
-			humidity={outsideSensorData.humidity}
-		/>
-	{/await}
-	{#await inside_sensor_data_promise}
 		<SensorLoader limits={false} />
-	{:then insideSensorData}
-		<SensorCard
-			title={'Inomhus'}
-			temperature={insideSensorData.temperature}
-			humidity={insideSensorData.humidity}
-		/>
+	{:then location_sensors}
+		{#each location_sensors as loc}
+			{#if loc.data}
+				<SensorCard
+					title={capitalize(loc.name)}
+					temperature={loc.data.temperature}
+					humidity={loc.data.humidity}
+				/>
+			{/if}
+		{/each}
 	{/await}
 </div>
 <VideoWithLoader {id_token} src={stream_url} autoplay muted playsinline controls />

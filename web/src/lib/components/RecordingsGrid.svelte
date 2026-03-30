@@ -1,25 +1,27 @@
 <script lang="ts">
-	import { getRecordings, type Recording } from '$lib/recorder';
+	import { getRecordings, getRecordingsByLocation, type Recording } from '$lib/recorder';
 	import type { User } from 'firebase/auth';
 	import Loader from './loader/Loader.svelte';
 	import LazyVideo from './video/LazyVideo.svelte';
 
 	interface Props {
 		user: User;
-		device_name: string;
+		device_name?: string;
+		location_name?: string;
 		from?: Date;
 		to?: Date;
 	}
 
-	const { user, device_name, from, to }: Props = $props();
+	const { user, device_name, location_name, from, to }: Props = $props();
 	const compare_recordings = (a: Recording, b: Recording) => {
 		return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
 	};
 
 	const recordings_promise = $derived(
-		getRecordings(user, device_name, from, to).then((recordings) =>
-			recordings.sort(compare_recordings)
-		)
+		(location_name
+			? getRecordingsByLocation(user, location_name, from, to)
+			: getRecordings(user, device_name!, from, to)
+		).then((recordings) => recordings.sort(compare_recordings))
 	);
 </script>
 

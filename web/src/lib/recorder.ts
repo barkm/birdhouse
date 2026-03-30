@@ -109,6 +109,62 @@ export const getSensorData = async (
 	}));
 };
 
+export interface Location {
+	id: string;
+	name: string;
+	current_device_name: string | null;
+}
+
+export const getLocations = async (user: User): Promise<Location[]> => {
+	const response = await authorizedRequest(user, PUBLIC_RECORDER_URL, 'locations');
+	return response.json();
+};
+
+export const getSensorDataByLocation = async (
+	user: User,
+	location_name: string,
+	from?: Date,
+	to?: Date
+): Promise<SensorData[]> => {
+	const url_params = new URLSearchParams();
+	if (from) url_params.append('from', from.toISOString());
+	if (to) url_params.append('to', to.toISOString());
+	const url = `sensors_by_location/${location_name}?${url_params.toString()}`;
+	const response = await authorizedRequest(user, PUBLIC_RECORDER_URL, url);
+	const data = await response.json();
+	return data.map(
+		(entry: {
+			created_at: string;
+			temperature: number | null;
+			humidity: number | null;
+			cpu_temperature: number | null;
+		}) => ({
+			created_at: new Date(entry.created_at),
+			...(entry.temperature != null && { temperature: entry.temperature }),
+			...(entry.humidity != null && { humidity: entry.humidity }),
+			...(entry.cpu_temperature != null && { cpu_temperature: entry.cpu_temperature })
+		})
+	);
+};
+
+export const getRecordingsByLocation = async (
+	user: User,
+	location_name: string,
+	from?: Date,
+	to?: Date
+): Promise<Recording[]> => {
+	const url_params = new URLSearchParams();
+	if (from) url_params.append('from', from.toISOString());
+	if (to) url_params.append('to', to.toISOString());
+	const url = `recordings_by_location/${location_name}?${url_params.toString()}`;
+	const response = await authorizedRequest(user, PUBLIC_RECORDER_URL, url);
+	const data = await response.json();
+	return data.map((entry: { url: string; created_at: string }) => ({
+		url: entry.url,
+		created_at: new Date(entry.created_at)
+	}));
+};
+
 export const listDevices = async (
 	user: User
 ): Promise<{ name: string; allowed_roles: Role[]; active: boolean }[]> => {
