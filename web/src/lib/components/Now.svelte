@@ -13,7 +13,9 @@
 
 	const capitalize = (s: string) => s.charAt(0).toUpperCase() + s.slice(1);
 
-	const sensor_data_promise = getLocations(user).then((locs) =>
+	const locations_promise = getLocations(user);
+
+	const sensor_data_promise = locations_promise.then((locs) =>
 		Promise.all(
 			locs.map(async (loc) => ({
 				name: loc.name,
@@ -24,24 +26,17 @@
 		)
 	);
 
-	let stream_url: string | undefined = $state(undefined);
-	let id_token: string | undefined = $state(undefined);
-
-	$effect(() => {
-		getLocations(user).then(async (locs) => {
-			for (const loc of locs) {
-				if (!loc.current_device_name) continue;
-				const [url, token] = await Promise.all([
-					startAndGetStreamUrl(user, loc.current_device_name),
-					user.getIdToken()
-				]);
-				if (url) {
-					stream_url = url;
-					id_token = token;
-					break;
-				}
-			}
-		});
+	const streams_promise = locations_promise.then(async (locs) => {
+		const id_token = await user.getIdToken();
+		const results = await Promise.all(
+			locs
+				.filter((loc) => loc.current_device_name)
+				.map(async (loc) => {
+					const url = await startAndGetStreamUrl(user, loc.current_device_name!);
+					return url ? { stream_url: url, id_token } : null;
+				})
+		);
+		return results.filter((r): r is { stream_url: string; id_token: string } => r !== null);
 	});
 </script>
 
@@ -61,4 +56,8 @@
 		{/each}
 	{/await}
 </div>
-<VideoWithLoader {id_token} src={stream_url} autoplay muted playsinline controls />
+{#await streams_promise then streams}
+	{#each streams as stream}
+		<VideoWithLoader id_token={stream.id_token} src={stream.stream_url} autoplay muted playsinline controls />
+	{/each}
+{/await}
