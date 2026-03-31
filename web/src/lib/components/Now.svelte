@@ -59,8 +59,14 @@
 		{/await}
 	{/await}
 </div>
-{#await streams_promise then streams}
-	{#each streams as stream}
-		<VideoWithLoader id_token={stream.id_token} src={stream.stream_url} autoplay muted playsinline controls />
-	{/each}
+{#await locations_promise then locs}
+	{#await streams_promise}
+		{#each locs.filter((l) => l.current_device_name) as _}
+			<VideoWithLoader autoplay muted playsinline controls />
+		{/each}
+	{:then streams}
+		{#each streams as stream}
+			<VideoWithLoader id_token={stream.id_token} src={stream.stream_url} autoplay muted playsinline controls />
+		{/each}
+	{/await}
 {/await}
