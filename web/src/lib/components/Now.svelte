@@ -41,19 +41,22 @@
 </script>
 
 <div class="grid grid-cols-2 gap-4">
-	{#await sensor_data_promise}
-		<SensorLoader limits={false} />
-		<SensorLoader limits={false} />
-	{:then location_sensors}
-		{#each location_sensors as loc}
-			{#if loc.data}
-				<SensorCard
-					title={capitalize(loc.name)}
-					temperature={loc.data.temperature}
-					humidity={loc.data.humidity}
-				/>
-			{/if}
-		{/each}
+	{#await locations_promise then locs}
+		{#await sensor_data_promise}
+			{#each locs as _}
+				<SensorLoader limits={false} />
+			{/each}
+		{:then location_sensors}
+			{#each location_sensors as loc}
+				{#if loc.data}
+					<SensorCard
+						title={capitalize(loc.name)}
+						temperature={loc.data.temperature}
+						humidity={loc.data.humidity}
+					/>
+				{/if}
+			{/each}
+		{/await}
 	{/await}
 </div>
 {#await streams_promise then streams}
