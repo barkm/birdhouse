@@ -2,7 +2,7 @@ import enum
 import uuid
 from datetime import datetime, timezone
 from sqlmodel import ARRAY, Enum, SQLModel, Field
-from sqlalchemy import Column, DateTime
+from sqlalchemy import Boolean, Column, DateTime
 
 
 class Role(enum.StrEnum):
@@ -41,6 +41,13 @@ class Device(SQLModel, table=True):
             ARRAY(role_enum),
             nullable=False,
             server_default="{admin}",
+        )
+    )
+    recording_enabled: bool = Field(
+        sa_column=Column(
+            Boolean,
+            nullable=False,
+            server_default="true",
         )
     )
 
