@@ -271,7 +271,9 @@ def record(
     devices = [
         (d, url)
         for d in queries.get_devices(session, role)
-        if (url := queries.get_url(session, d.name)) and _is_active(url)
+        if d.recording_enabled
+        and (url := queries.get_url(session, d.name))
+        and _is_active(url)
     ]
     for device, url in devices:
         try:
