@@ -17,12 +17,16 @@
 
 	const sensor_data_promise = locations_promise.then((locs) =>
 		Promise.all(
-			locs.map(async (loc) => ({
-				name: loc.name,
-				data: loc.current_device_name
-					? await getCurrentSensorData(user, loc.current_device_name)
-					: null
-			}))
+			locs.map(async (loc) => {
+				if (!loc.current_device_name) return { name: loc.name, data: null };
+				try {
+					const data = await getCurrentSensorData(user, loc.current_device_name);
+					return { name: loc.name, data };
+				} catch (error) {
+					console.error(`Failed to load sensor data for ${loc.name}:`, error);
+					return { name: loc.name, data: null };
+				}
+			})
 		)
 	);
 
@@ -32,8 +36,13 @@
 			locs
 				.filter((loc) => loc.current_device_name)
 				.map(async (loc) => {
-					const url = await startAndGetStreamUrl(user, loc.current_device_name!);
-					return url ? { stream_url: url, id_token } : null;
+					try {
+						const url = await startAndGetStreamUrl(user, loc.current_device_name!);
+						return url ? { stream_url: url, id_token } : null;
+					} catch (error) {
+						console.error(`Failed to load stream for ${loc.name}:`, error);
+						return null;
+					}
 				})
 		);
 		return results.filter((r): r is { stream_url: string; id_token: string } => r !== null);
