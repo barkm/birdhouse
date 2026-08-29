@@ -56,6 +56,7 @@ def get_url(session: Session, name: str) -> str | None:
         .join(models.Device)
         .where(models.Device.name == name)
         .order_by(models.Registration.created_at.desc())  # type: ignore
+        .limit(1)
     )
     register = session.exec(statement).first()
     return register.url if register else None
