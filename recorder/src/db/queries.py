@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import datetime, timezone
 from uuid import UUID
 from sqlalchemy import func
 from sqlmodel import Session, select
@@ -44,7 +44,18 @@ def set_device_roles(session: Session, device: models.Device, roles: list[models
 
 
 def register_device(session: Session, device: models.Device, url: str):
-    register = models.Registration(device_id=device.id, url=url)
+    statement = (
+        select(models.Registration)
+        .where(models.Registration.device_id == device.id)
+        .order_by(models.Registration.created_at.desc())  # type: ignore
+        .limit(1)
+    )
+    register = session.exec(statement).first()
+    if register:
+        register.url = url
+        register.created_at = datetime.now(timezone.utc)
+    else:
+        register = models.Registration(device_id=device.id, url=url)
     session.add(register)
     session.commit()
     session.refresh(register)

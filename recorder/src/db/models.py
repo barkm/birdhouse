@@ -80,7 +80,7 @@ class Registration(SQLModel, table=True):
         default_factory=lambda: datetime.now(timezone.utc),
         sa_column=Column(DateTime(timezone=True), nullable=False),
     )
-    device_id: uuid.UUID = Field(foreign_key="device.id", index=True)
+    device_id: uuid.UUID = Field(foreign_key="device.id", index=True, unique=True)
     url: str
 
 
