@@ -5,6 +5,7 @@ import httpx
 
 
 import logging
+import time
 from pathlib import Path
 from subprocess import CalledProcessError
 
@@ -53,6 +54,7 @@ def _record(device_url: str, device: str, output_path: str, duration: int) -> No
         raise RuntimeError(f"Failed to start recording for {device}: {e}") from e
     playlist_path = start_response.json()["playlist"]
     playlist_url = f"{device_url}{playlist_path}"
+    _wait_for_playlist(playlist_url, device)
     Path(output_path).parent.mkdir(parents=True, exist_ok=True)
     input_ = ffmpeg.input(playlist_url, t=duration)
     output = ffmpeg.output(
@@ -73,6 +75,18 @@ def _record(device_url: str, device: str, output_path: str, duration: int) -> No
             f"stderr: {e.stderr}\n"
             f"stdout: {e.stdout}"
         )
+
+
+def _wait_for_playlist(playlist_url: str, device: str, timeout: float = 60.0) -> None:
+    # /start returns before the camera has produced its first segment, so
+    # poll until the playlist exists.
+    deadline = time.monotonic() + timeout
+    while time.monotonic() < deadline:
+        response = httpx.get(playlist_url, timeout=10.0)
+        if response.status_code == 200:
+            return
+        time.sleep(1)
+    raise RuntimeError(f"Timed out waiting for stream playlist for {device}")
 
 
 def _get_local_recording_url(url: str, recording_dir: str, path: Path) -> str:
