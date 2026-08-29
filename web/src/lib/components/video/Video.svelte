@@ -40,7 +40,18 @@
 			}
 			if (data.type === Hls.ErrorTypes.NETWORK_ERROR && retries < 30) {
 				retries += 1;
-				setTimeout(() => hls?.startLoad(), 1000);
+				setTimeout(() => {
+					if (!hls) {
+						return;
+					}
+					if (data.details === Hls.ErrorDetails.MANIFEST_LOAD_ERROR) {
+						// startLoad() is a no-op until a manifest has been
+						// parsed, so reload the source to refetch it.
+						hls.loadSource(src);
+					} else {
+						hls.startLoad();
+					}
+				}, 1000);
 			} else if (data.type === Hls.ErrorTypes.MEDIA_ERROR) {
 				hls.recoverMediaError();
 			} else {
