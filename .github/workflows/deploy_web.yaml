@@ -6,7 +6,7 @@ on:
     branches: main
     paths:
       - web/**
-      - ./github/workflows/deploy_web.yaml
+      - .github/workflows/deploy_web.yaml
 
 jobs:
   build_site:
@@ -29,7 +29,7 @@ jobs:
 
       - name: build
         env:
-          BASE_PATH: '/${{ github.event.repository.name }}'
+          BASE_PATH: ''
           PUBLIC_RECORDER_URL: ${{ vars.RECORDER_URL }}
           PUBLIC_FIREBASE_API_KEY: ${{ vars.FIREBASE_API_KEY }}
           PUBLIC_FIREBASE_AUTH_DOMAIN: ${{ vars.FIREBASE_AUTH_DOMAIN }}
