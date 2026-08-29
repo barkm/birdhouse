@@ -5,7 +5,6 @@ import re
 import subprocess
 import tempfile
 import uuid
-import time
 from threading import Lock, Timer
 import logging
 
@@ -42,6 +41,7 @@ class Stream:
 
     def start(self, bitrate: int = 500000, framerate: int = 24) -> Path:
         with self.video_lock:
+            self._stop_if_dead()
             if self.video:
                 self.video.timer.cancel()
                 self.video.timer = self._get_video_timer()
@@ -72,15 +72,27 @@ class Stream:
 
     def stop(self) -> None:
         with self.video_lock:
-            if self.video:
-                logger.info("Stopping video stream")
-                for process in self.video.processes:
-                    process.terminate()
-                for process in self.video.processes:
-                    process.wait()
-                _remove_directory(self.video.directory)
-                self.video.timer.cancel()
-                self.video = None
+            self._stop()
+
+    def _stop(self) -> None:
+        # Must be called with video_lock held.
+        if self.video:
+            logger.info("Stopping video stream")
+            for process in self.video.processes:
+                process.terminate()
+            for process in self.video.processes:
+                process.wait()
+            _remove_directory(self.video.directory)
+            self.video.timer.cancel()
+            self.video = None
+
+    def _stop_if_dead(self) -> None:
+        # Must be called with video_lock held.
+        if self.video and any(
+            process.poll() is not None for process in self.video.processes
+        ):
+            logger.warning("Stream process died, restarting")
+            self._stop()
 
 
 def _remove_directory(dirpath: Path) -> None:
@@ -99,7 +111,6 @@ def _start_hls_video_stream(
     playlist_path, processes = _start_stream_processes(
         work_dir, test_stream, bitrate, framerate
     )
-    _wait_until_exists(playlist_path)
     return playlist_path.relative_to(work_dir), processes
 
 
@@ -116,11 +127,6 @@ def _start_stream_processes(
     if _is_mac():
         return _start_hls_video_stream_mac(work_dir)
     raise RuntimeError("Unsupported platform for HLS streaming")
-
-
-def _wait_until_exists(path: Path) -> None:
-    while not path.exists():
-        time.sleep(0.1)
 
 
 def _start_test_stream(work_dir: Path) -> tuple[Path, list[subprocess.Popen]]:
