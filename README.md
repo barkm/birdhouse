@@ -1,5 +1,11 @@
 # moja
 
+Remote video streaming and sensor data.
+
+<p align="center">
+<img width="75%" src="./moja.gif">
+</p>
+
 ## Development
 
 Run containers with
