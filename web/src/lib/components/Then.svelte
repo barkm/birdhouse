@@ -21,13 +21,13 @@
 
 	const { user }: Props = $props();
 
-	const get_previous_day_from_midnight = () => {
+	const get_seven_days_ago = () => {
 		const date = new Date();
-		date.setDate(date.getDate() - 2);
+		date.setDate(date.getDate() - 7);
 		return date;
 	};
 
-	let start_date = $state(get_previous_day_from_midnight());
+	let start_date = $state(get_seven_days_ago());
 	let end_date = $state(new Date());
 
 	const CHART_COLORS = [colors.blue[400], colors.amber[400], colors.green[400], colors.rose[400]];
