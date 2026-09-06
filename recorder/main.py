@@ -227,25 +227,27 @@ def record_sensors(
     session: Session = Depends(get_session),
     role: models.Role = Depends(get_role),
 ) -> dict:
-    devices = [
-        (d, url)
-        for d in queries.get_devices(session, role)
-        if (url := queries.get_url(session, d.name)) and _is_active(url)
-    ]
-    for device, url in devices:
-        try:
-            response = httpx.get(f"{url}/sensor")
-            response.raise_for_status()
-        except (httpx.HTTPError, httpx.HTTPStatusError) as e:
-            logging.error(f"Failed to get sensor data for {device.name}: {e}")
-            continue
-        sensor_data = response.json()
+    for device in queries.get_devices(session, role):
+        sensor_data = {}
+        url = queries.get_url(session, device.name)
+        if url and _is_active(url):
+            try:
+                response = httpx.get(f"{url}/sensor")
+                response.raise_for_status()
+                sensor_data = response.json()
+            except (httpx.HTTPError, ValueError) as e:
+                logging.error(f"Failed to get sensor data for {device.name}: {e}")
+        else:
+            logging.warning(f"Device {device.name} is not reachable")
+        # Every attempt is recorded, failed ones with null readings, so that a
+        # period without readings is distinguishable from one that was never
+        # attempted and can be drawn as a gap rather than interpolated over.
         queries.add_sensor(
             session,
             device,
-            sensor_data["temperature"],
-            sensor_data["humidity"],
-            sensor_data["cpu_temperature"],
+            sensor_data.get("temperature"),
+            sensor_data.get("humidity"),
+            sensor_data.get("cpu_temperature"),
         )
     return {}
 
