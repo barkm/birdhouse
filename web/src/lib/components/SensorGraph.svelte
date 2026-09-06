@@ -24,19 +24,22 @@
 
 	const sensor_data_promise = $derived(getSensorData(user, device_name, start_date, end_date));
 
-	const filtered_data_promise = $derived.by(() => {
+	// A failed reading comes back without a value, and is kept rather than filtered
+	// out: the chart breaks its line wherever a point has no value, so the missing
+	// period shows up as a gap instead of a straight line drawn across it.
+	const chart_data_promise = $derived.by(() => {
 		const currentAspect = aspect;
 		return sensor_data_promise.then((data) =>
 			data
-				.filter((d) => d[currentAspect] !== undefined)
-				.map((d) => ({ ...d, value: d[currentAspect] as number }))
+				.map((d) => ({ created_at: d.created_at, value: d[currentAspect] }))
+				.sort((a, b) => a.created_at.getTime() - b.created_at.getTime())
 		);
 	});
 
 	const y_domain_promise = $derived(
-		filtered_data_promise.then((data) => {
-			if (data.length === 0) return [0, 1];
-			const values = data.map((d) => d.value);
+		chart_data_promise.then((data) => {
+			const values = data.map((d) => d.value).filter((v) => v !== undefined);
+			if (values.length === 0) return [0, 1];
 			const min = values.reduce((a, b) => Math.min(a, b), Infinity);
 			const max = values.reduce((a, b) => Math.max(a, b), -Infinity);
 			return [min - 5, max + 5];
@@ -55,13 +58,15 @@
 	</select>
 </div>
 
-{#await Promise.all([filtered_data_promise, y_domain_promise])}
+{#await Promise.all([chart_data_promise, y_domain_promise])}
 	<div class="h-[300px]">
 		<Loader />
 	</div>
 {:then [data, y_domain]}
-	{#if data.length === 0}
-		<div class="flex h-[300px] items-center justify-center rounded-lg border border-gray-300 text-gray-400">
+	{#if data.every((d) => d.value === undefined)}
+		<div
+			class="flex h-[300px] items-center justify-center rounded-lg border border-gray-300 text-gray-400"
+		>
 			Inga data för denna period
 		</div>
 	{:else}
@@ -103,7 +108,7 @@
 							<Tooltip.List>
 								<Tooltip.Item
 									label={aspect}
-									value={d.value.toFixed(1) + ' ' + unit}
+									value={d.value !== undefined ? d.value.toFixed(1) + ' ' + unit : 'Inga data'}
 									color={colors.blue[400]}
 								/>
 							</Tooltip.List>
